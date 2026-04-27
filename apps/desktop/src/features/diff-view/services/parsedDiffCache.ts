@@ -7,6 +7,7 @@ import {
 import type { DiffFile } from "@/features/source-control/types";
 
 export type ParsedDiff = Awaited<ReturnType<typeof parseDiffInWorker>>;
+export type ParsedPatch = Awaited<ReturnType<typeof parsePatchInWorker>>;
 
 type ParseWorkerFile = DiffFile & { cacheKey?: string };
 
@@ -24,6 +25,7 @@ type ParsedPatchRequest = {
 const MAX_PARSED_DIFF_CACHE_SIZE = 64;
 
 const parsedDiffCache = new Map<string, ParsedDiff | null>();
+const parsedPatchCache = new Map<string, ParsedPatch | null>();
 
 type InFlightParse = {
   promise: Promise<ParsedDiff | null>;
@@ -32,6 +34,14 @@ type InFlightParse = {
 };
 
 const inFlightParses = new Map<string, InFlightParse>();
+
+type InFlightPatchParse = {
+  promise: Promise<ParsedPatch | null>;
+  priority: ParsePriority;
+  controller: AbortController;
+};
+
+const inFlightPatchParses = new Map<string, InFlightPatchParse>();
 
 function isAbortError(error: unknown): boolean {
   return error instanceof DOMException && error.name === "AbortError";
@@ -74,6 +84,25 @@ function touchParsedDiff(key: string, diff: ParsedDiff | null) {
   }
 }
 
+function touchParsedPatch(key: string, patch: ParsedPatch | null) {
+  parsedPatchCache.delete(key);
+  parsedPatchCache.set(key, patch);
+
+  while (parsedPatchCache.size > MAX_PARSED_DIFF_CACHE_SIZE) {
+    const oldestKey = parsedPatchCache.keys().next().value;
+    if (!oldestKey) break;
+    parsedPatchCache.delete(oldestKey);
+  }
+}
+
+function getCachedParsedPatch(key: string): ParsedPatch | null | undefined {
+  if (!parsedPatchCache.has(key)) return undefined;
+
+  const patch = parsedPatchCache.get(key) ?? null;
+  touchParsedPatch(key, patch);
+  return patch;
+}
+
 export function getParsedDiffRequest(
   activePath: string | null,
   oldFile: DiffFile | null,
@@ -112,11 +141,14 @@ export function getParsedPatchRequest(
   cacheSalt = "",
   options: { allowLargeDiff?: boolean } = {},
 ): ParsedPatchRequest | null {
-  const diffRenderGate = getDiffRenderGate(activePath, null, null);
+  if (!activePath || patchText == null) return null;
+
+  const diffRenderGate = getDiffRenderGate(activePath, null, {
+    name: activePath,
+    contents: patchText,
+  });
   if (!diffRenderGate || diffRenderGate === "unrenderable") return null;
   if (diffRenderGate === "large" && !options.allowLargeDiff) return null;
-
-  if (patchText == null) return null;
 
   const patchHash = hashStringFNV1a(patchText + cacheSalt);
   const key = `p-${patchHash}:${patchText.length}`;
@@ -179,11 +211,11 @@ export async function loadParsedDiff(
 export async function loadParsedPatch(
   request: ParsedPatchRequest,
   priority: ParsePriority = "high",
-): Promise<ParsedDiff | null> {
-  const cached = getCachedParsedDiff(request.key);
+): Promise<ParsedPatch | null> {
+  const cached = getCachedParsedPatch(request.key);
   if (cached !== undefined) return cached;
 
-  const inFlight = inFlightParses.get(request.key);
+  const inFlight = inFlightPatchParses.get(request.key);
   if (inFlight && (priority === "low" || inFlight.priority === "high")) {
     return inFlight.promise;
   }
@@ -194,11 +226,8 @@ export async function loadParsedPatch(
 
   const parsePromise = parsePatchInWorker(request.patchText, controller.signal)
     .then((parsedPatches) => {
-      // For patch parsing we will store the first parsed file as the cached value
-      // to align with getCachedParsedDiff semantics which stores single file diffs.
-      const parsed = parsedPatches.length > 0 ? parsedPatches[0].files[0] : null;
-      touchParsedDiff(request.key, parsed);
-      return parsed;
+      touchParsedPatch(request.key, parsedPatches);
+      return parsedPatches;
     })
     .catch((error) => {
       if (isAbortError(error)) {
@@ -207,13 +236,13 @@ export async function loadParsedPatch(
       return null;
     })
     .finally(() => {
-      const currentInFlight = inFlightParses.get(request.key);
+      const currentInFlight = inFlightPatchParses.get(request.key);
       if (currentInFlight?.promise === parsePromise) {
-        inFlightParses.delete(request.key);
+        inFlightPatchParses.delete(request.key);
       }
     });
 
-  inFlightParses.set(request.key, { promise: parsePromise, priority, controller });
+  inFlightPatchParses.set(request.key, { promise: parsePromise, priority, controller });
   return parsePromise;
 }
 
