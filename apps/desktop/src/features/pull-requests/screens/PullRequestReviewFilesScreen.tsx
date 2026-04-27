@@ -4,10 +4,10 @@ import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { ResizableSidebarLayout } from "@/components/layout/ResizableSidebarLayout";
 import { DiffWorkspace } from "@/features/diff-view/DiffWorkspace";
-import { useGetPullRequestConversationQuery } from "@/features/hosted-repos/api";
-import { LspStatusNotice } from "@/features/lsp/components/LspStatusNotice";
-import { useCurrentLspDocument } from "@/features/lsp/hooks/useCurrentLspDocument";
-import { useDiffDiagnostics } from "@/features/lsp/hooks/useDiffDiagnostics";
+import {
+  useGetPullRequestConversationQuery,
+  useGetPullRequestDiffCachedQuery,
+} from "@/features/hosted-repos/api";
 import ReviewCommentsCopyToolbar from "@/features/pull-requests/components/ReviewCopyBar";
 import { PullRequestFilesSidebar } from "@/features/pull-requests/components/PullRequestFilesSidebar";
 import { usePullRequestMentionCandidates } from "@/features/pull-requests/hooks/usePullRequestMentionCandidates";
@@ -17,10 +17,7 @@ import {
   setPullRequestFilesViewMode,
 } from "@/features/pull-requests/pullRequestsSlice";
 import { buildPullRequestAnchorAnnotations } from "@/features/pull-requests/utils/reviewAnchors";
-import {
-  useGetBranchFilesQuery,
-  useGetBranchFileVersionsQuery,
-} from "@/features/source-control/api";
+import { useGetBranchFilesQuery } from "@/features/source-control/api";
 import { GeneralFileViewer } from "@/features/source-control/components/GeneralFileViewer";
 import { useThrottledDiffSelection } from "@/features/source-control/hooks/useThrottledDiffSelection";
 import { errorMessageFrom } from "@/features/source-control/shared-utils/errorMessage";
@@ -93,31 +90,15 @@ function PullRequestDiffPane({
       })
     : [];
 
-  const branchFileVersionsQuery = useGetBranchFileVersionsQuery(
-    readyForDiff && previewSelection
-      ? {
-          repoPath: activeRepo,
-          baseRef: reviewBaseRef,
-          headRef: reviewHeadRef,
-          relPath: previewSelection.path,
-          previousPath: previewSelection.previousPath,
-        }
-      : skipToken,
+  const pullRequestDiffQuery = useGetPullRequestDiffCachedQuery(
+    readyForDiff ? { repoPath: activeRepo, pullRequestNumber } : skipToken,
   );
 
-  const reviewVersions = branchFileVersionsQuery.currentData ?? branchFileVersionsQuery.data;
-  const oldFile = reviewVersions?.oldFile ?? null;
-  const newFile = reviewVersions?.newFile ?? null;
-  const loadingPatch = !reviewVersions && branchFileVersionsQuery.isLoading;
-  const errorMessage = reviewVersions ? "" : errorMessageFrom(branchFileVersionsQuery.error, "");
-  const lspText = !loadingPatch && newFile ? newFile.contents : null;
-  const lspHoverDocument =
-    activeRepo && previewPath && lspText !== null
-      ? { repoPath: activeRepo, relPath: previewPath }
-      : undefined;
-  const lspDiagnostics = useDiffDiagnostics(activeRepo, previewPath ?? "");
-
-  useCurrentLspDocument(activeRepo, previewPath ?? "", lspText);
+  const patchText = pullRequestDiffQuery.currentData ?? pullRequestDiffQuery.data;
+  const oldFile = null;
+  const newFile = null;
+  const loadingPatch = !patchText && pullRequestDiffQuery.isLoading;
+  const errorMessage = patchText ? "" : errorMessageFrom(pullRequestDiffQuery.error, "");
 
   const hasContent = oldFile || newFile;
 
@@ -136,7 +117,6 @@ function PullRequestDiffPane({
           <div className="text-muted-foreground p-3 text-sm">Select a file to view diff.</div>
         ) : (
           <div className="relative flex h-full min-h-0 min-w-0 flex-col" key="pr-diff-viewer">
-            <LspStatusNotice repoPath={activeRepo} relPath={previewPath ?? ""} active />
             <DiffWorkspace
               oldFile={oldFile}
               newFile={newFile}
@@ -144,10 +124,7 @@ function PullRequestDiffPane({
               commentContext={{ kind: "review", baseRef: reviewBaseRef, headRef: reviewHeadRef }}
               canComment
               includeCurrentFileComments={false}
-              lspDiagnostics={lspDiagnostics}
               fileViewerRevision={reviewHeadRef}
-              lspHoverDocument={lspHoverDocument}
-              lspJumpContextKind="pull-request"
               focusedLineNumber={focusedLineNumber}
               focusedLineIndex={focusedLineIndex}
               focusedLineKey={focusedLineKey}
