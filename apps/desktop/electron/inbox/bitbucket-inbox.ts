@@ -1,6 +1,7 @@
-import type { HostedRepoRef } from "../../src/platform/desktop/contracts";
+import type { BuildStatus, HostedRepoRef } from "../../src/platform/desktop/contracts";
 import {
   bitbucketAuthorLogin,
+  bitbucketRequest,
   fetchBitbucketPaginatedValues,
   toBitbucketPullRequestSummary,
   type BitbucketPullRequestResponse,
@@ -11,7 +12,7 @@ import type { ProviderConnectionSecret } from "../providerConnections";
 import { InboxSection, type InboxParticipant, type InboxPullRequest } from "./types";
 
 const BITBUCKET_INBOX_FIELDS =
-  "+values.participants,+values.participants.user,+values.participants.user.uuid,+values.participants.user.account_id,+values.participants.role,+values.participants.approved,+values.participants.state,+values.reviewers,+values.reviewers.user,+values.reviewers.user.uuid,+values.reviewers.user.account_id,+values.reviewers.role,+values.reviewers.approved,+values.author.uuid,+values.author.account_id,-values.summary,-values.rendered,-values.description";
+  "+values.participants,+values.participants.user,+values.participants.user.uuid,+values.participants.user.account_id,+values.participants.role,+values.participants.approved,+values.participants.state,+values.reviewers,+values.reviewers.user,+values.reviewers.user.uuid,+values.reviewers.user.account_id,+values.reviewers.role,+values.reviewers.approved,+values.author.uuid,+values.author.account_id,+values.comment_count,+values.source.commit.hash,-values.summary,-values.rendered,-values.description";
 const BITBUCKET_INBOX_PAGE_LENGTH = 20;
 const BITBUCKET_INBOX_MAX_PAGES = 25;
 const BITBUCKET_INBOX_MAX_RESULTS = BITBUCKET_INBOX_PAGE_LENGTH * BITBUCKET_INBOX_MAX_PAGES;
@@ -153,19 +154,62 @@ function dedupePullRequests(pullRequests: InboxPullRequest[]): InboxPullRequest[
 }
 
 function toBitbucketInboxPullRequest(
-  pullRequest: BitbucketPullRequestResponse,
+  pullRequest: BitbucketPullRequestResponse & { comment_count?: number },
   hostedRepo: HostedRepoRef,
   section: InboxSection,
 ): InboxPullRequest {
   const summary = toBitbucketPullRequestSummary(pullRequest, hostedRepo);
+  const rawCommentCount = (pullRequest as Record<string, unknown>).comment_count;
   return {
     ...summary,
     authorUuid: pullRequest.author?.uuid ?? summary.authorUuid ?? null,
     authorAccountId: pullRequest.author?.account_id ?? summary.authorAccountId ?? null,
+    commentCount: typeof rawCommentCount === "number" ? rawCommentCount : 0,
     participants: toInboxParticipants(pullRequest.participants),
     reviewers: toInboxReviewers(pullRequest),
     section,
   };
+}
+
+type BitbucketCommitStatusResponse = {
+  state: string;
+  name?: string;
+  url?: string;
+  key: string;
+};
+
+type BitbucketCommitStatusesResponse = {
+  values: BitbucketCommitStatusResponse[];
+  next?: string;
+};
+
+function mapBuildStatusState(state: string): BuildStatus["state"] {
+  const lower = state.toLowerCase();
+  if (
+    lower === "successful" ||
+    lower === "failed" ||
+    lower === "inprogress" ||
+    lower === "stopped"
+  ) {
+    return lower;
+  }
+  return "stopped";
+}
+
+async function fetchBuildStatusesForCommit(
+  hostedRepo: HostedRepoRef,
+  connection: ProviderConnectionSecret,
+  commitHash: string,
+): Promise<BuildStatus[]> {
+  const path = `/repositories/${encodeURIComponent(hostedRepo.owner)}/${encodeURIComponent(hostedRepo.repo)}/commit/${encodeURIComponent(commitHash)}/statuses`;
+  const { data } = await bitbucketRequest<BitbucketCommitStatusesResponse>(path, connection);
+  const values = Array.isArray(data.values) ? data.values : [];
+  return values.map((status) => ({
+    state: mapBuildStatusState(status.state),
+    name: status.name ?? "",
+    url: status.url ?? "",
+    key: status.key,
+  }));
 }
 
 function buildBitbucketPullRequestPath(hostedRepo: HostedRepoRef, query: string) {
@@ -196,6 +240,23 @@ async function fetchBitbucketPullRequests(
         .map((pullRequest) => toBitbucketInboxPullRequest(pullRequest, hostedRepo, section))
         .toSorted((left, right) => right.updatedAt.localeCompare(left.updatedAt)),
     );
+
+    const statusResults = await Promise.allSettled(
+      prs.map((pr) => {
+        const commitHash = pullRequests.find(
+          (raw) => `${hostedRepo.providerId}:${String(raw.id)}` === pr.id,
+        )?.source?.commit?.hash;
+        if (!commitHash) {
+          return Promise.resolve([] as BuildStatus[]);
+        }
+        return fetchBuildStatusesForCommit(hostedRepo, connection, commitHash);
+      }),
+    );
+
+    for (let i = 0; i < prs.length; i += 1) {
+      const statusResult = statusResults[i];
+      prs[i].buildStatuses = statusResult?.status === "fulfilled" ? statusResult.value : [];
+    }
 
     return {
       prs,

@@ -63,6 +63,7 @@ function createPullRequest(id: number, updatedAt: string) {
     },
     source: {
       branch: { name: `feature/${String(id)}` },
+      commit: { hash: `abc123hash${String(id)}` },
       repository: {
         full_name: "workspace-slug/repo-slug",
         name: "repo-slug",
@@ -134,11 +135,13 @@ describe("bitbucket inbox queries", () => {
   });
 
   it("fetches open inbox PRs with the filtered query, fields, and mapped participants", async () => {
-    fetchMock.mockResolvedValueOnce(
-      jsonResponse({
-        values: [createPullRequest(101, "2026-04-27T11:59:00.000Z")],
-      }),
-    );
+    fetchMock
+      .mockResolvedValueOnce(
+        jsonResponse({
+          values: [createPullRequest(101, "2026-04-27T11:59:00.000Z")],
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse({ values: [] }));
 
     const result = await fetchBitbucketInboxPullRequests(hostedRepo, connection, USER_IDENTITY);
 
@@ -161,6 +164,8 @@ describe("bitbucket inbox queries", () => {
           headOwner: "workspace-slug",
           headRepo: "repo-slug",
           updatedAt: "2026-04-27T11:59:00.000Z",
+          commentCount: 0,
+          buildStatuses: [],
           section: "NEEDS_REVIEW",
           participants: [
             {
@@ -192,7 +197,7 @@ describe("bitbucket inbox queries", () => {
       totalFetched: 1,
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
     const [url, init] = fetchMock.mock.calls[0] ?? [];
     const searchParams = new URL(String(url)).searchParams;
 
@@ -203,7 +208,7 @@ describe("bitbucket inbox queries", () => {
       'state="OPEN" AND (author.account_id="user-account-id" OR reviewers.account_id="user-account-id")',
     );
     expect(searchParams.get("fields")).toBe(
-      "+values.participants,+values.participants.user,+values.participants.user.uuid,+values.participants.user.account_id,+values.participants.role,+values.participants.approved,+values.participants.state,+values.reviewers,+values.reviewers.user,+values.reviewers.user.uuid,+values.reviewers.user.account_id,+values.reviewers.role,+values.reviewers.approved,+values.author.uuid,+values.author.account_id,-values.summary,-values.rendered,-values.description",
+      "+values.participants,+values.participants.user,+values.participants.user.uuid,+values.participants.user.account_id,+values.participants.role,+values.participants.approved,+values.participants.state,+values.reviewers,+values.reviewers.user,+values.reviewers.user.uuid,+values.reviewers.user.account_id,+values.reviewers.role,+values.reviewers.approved,+values.author.uuid,+values.author.account_id,+values.comment_count,+values.source.commit.hash,-values.summary,-values.rendered,-values.description",
     );
     expect(init).toMatchObject({
       method: "GET",
@@ -215,11 +220,13 @@ describe("bitbucket inbox queries", () => {
   });
 
   it("fetches recently merged inbox PRs with a seven day updated_on filter", async () => {
-    fetchMock.mockResolvedValueOnce(
-      jsonResponse({
-        values: [createPullRequest(102, "2026-04-26T10:00:00.000Z")],
-      }),
-    );
+    fetchMock
+      .mockResolvedValueOnce(
+        jsonResponse({
+          values: [createPullRequest(102, "2026-04-26T10:00:00.000Z")],
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse({ values: [] }));
 
     const result = await fetchBitbucketRecentlyMergedPullRequests(
       hostedRepo,
@@ -277,11 +284,13 @@ describe("bitbucket inbox queries", () => {
       },
     ];
 
-    fetchMock.mockResolvedValueOnce(
-      jsonResponse({
-        values: [duplicatedPullRequest, duplicatedPullRequest],
-      }),
-    );
+    fetchMock
+      .mockResolvedValueOnce(
+        jsonResponse({
+          values: [duplicatedPullRequest, duplicatedPullRequest],
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse({ values: [] }));
 
     const result = await fetchBitbucketInboxPullRequests(hostedRepo, connection, USER_IDENTITY);
 
@@ -301,11 +310,13 @@ describe("bitbucket inbox queries", () => {
   });
 
   it("falls back to uuid filters when accountId is unavailable", async () => {
-    fetchMock.mockResolvedValueOnce(
-      jsonResponse({
-        values: [createPullRequest(103, "2026-04-27T10:30:00.000Z")],
-      }),
-    );
+    fetchMock
+      .mockResolvedValueOnce(
+        jsonResponse({
+          values: [createPullRequest(103, "2026-04-27T10:30:00.000Z")],
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse({ values: [] }));
 
     await fetchBitbucketInboxPullRequests(hostedRepo, connection, {
       accountId: null,
@@ -331,11 +342,13 @@ describe("bitbucket inbox queries", () => {
         jsonResponse({
           values: [createPullRequest(202, "2026-04-27T10:00:00.000Z")],
         }),
-      );
+      )
+      .mockResolvedValueOnce(jsonResponse({ values: [] }))
+      .mockResolvedValueOnce(jsonResponse({ values: [] }));
 
     const result = await fetchBitbucketInboxPullRequests(hostedRepo, connection, USER_IDENTITY);
 
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(4);
     expect(result.totalFetched).toBe(2);
     expect(result.isPartial).toBe(false);
     expect(result.prs.map((pr) => pr.number)).toEqual([201, 202]);
@@ -345,6 +358,8 @@ describe("bitbucket inbox queries", () => {
   });
 
   it("caps inbox fetches at 500 pull requests and marks the result as partial", async () => {
+    // Default mock for build status fetches (returns empty statuses)
+    fetchMock.mockResolvedValue(jsonResponse({ values: [] }));
     for (let pageIndex = 0; pageIndex < 26; pageIndex += 1) {
       fetchMock.mockResolvedValueOnce(
         jsonResponse({
@@ -364,7 +379,7 @@ describe("bitbucket inbox queries", () => {
 
     const result = await fetchBitbucketInboxPullRequests(hostedRepo, connection, USER_IDENTITY);
 
-    expect(fetchMock).toHaveBeenCalledTimes(25);
+    expect(fetchMock).toHaveBeenCalledTimes(525);
     expect(result.totalFetched).toBe(500);
     expect(result.prs).toHaveLength(500);
     expect(result.isPartial).toBe(true);
@@ -400,5 +415,93 @@ describe("bitbucket inbox queries", () => {
       isPartial: false,
       totalFetched: 0,
     });
+  });
+
+  it("maps comment_count to commentCount on returned PR summary", async () => {
+    const pr = createPullRequest(501, "2026-04-27T11:00:00.000Z");
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
+    const prWithComments = { ...pr, comment_count: 7 } as Record<string, unknown>;
+
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse({ values: [prWithComments] }))
+      .mockResolvedValueOnce(jsonResponse({ values: [] }));
+
+    const result = await fetchBitbucketInboxPullRequests(hostedRepo, connection, USER_IDENTITY);
+
+    expect(result.prs[0]?.commentCount).toBe(7);
+  });
+
+  it("defaults commentCount to 0 when comment_count is missing", async () => {
+    const pr = createPullRequest(502, "2026-04-27T11:00:00.000Z");
+
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse({ values: [pr] }))
+      .mockResolvedValueOnce(jsonResponse({ values: [] }));
+
+    const result = await fetchBitbucketInboxPullRequests(hostedRepo, connection, USER_IDENTITY);
+
+    expect(result.prs[0]?.commentCount).toBe(0);
+  });
+
+  it("fetches build statuses from commit statuses endpoint and maps state to lowercase", async () => {
+    const pr = createPullRequest(503, "2026-04-27T11:00:00.000Z");
+
+    fetchMock.mockResolvedValueOnce(jsonResponse({ values: [pr] })).mockResolvedValueOnce(
+      jsonResponse({
+        values: [
+          {
+            state: "SUCCESSFUL",
+            name: "build-pipeline",
+            url: "https://ci.example.com/1",
+            key: "ci-1",
+          },
+          { state: "FAILED", name: "lint-check", url: "https://ci.example.com/2", key: "ci-2" },
+          { state: "INPROGRESS", name: "deploy", url: "https://ci.example.com/3", key: "ci-3" },
+          { state: "STOPPED", name: "e2e-tests", url: "https://ci.example.com/4", key: "ci-4" },
+        ],
+      }),
+    );
+
+    const result = await fetchBitbucketInboxPullRequests(hostedRepo, connection, USER_IDENTITY);
+
+    expect(result.prs[0]?.buildStatuses).toEqual([
+      { state: "successful", name: "build-pipeline", url: "https://ci.example.com/1", key: "ci-1" },
+      { state: "failed", name: "lint-check", url: "https://ci.example.com/2", key: "ci-2" },
+      { state: "inprogress", name: "deploy", url: "https://ci.example.com/3", key: "ci-3" },
+      { state: "stopped", name: "e2e-tests", url: "https://ci.example.com/4", key: "ci-4" },
+    ]);
+
+    const statusUrl = String(fetchMock.mock.calls[1]?.[0] ?? "");
+    expect(statusUrl).toContain(
+      "/repositories/workspace-slug/repo-slug/commit/abc123hash503/statuses",
+    );
+  });
+
+  it("returns empty buildStatuses when status fetch fails (graceful degradation)", async () => {
+    const pr = createPullRequest(504, "2026-04-27T11:00:00.000Z");
+
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse({ values: [pr] }))
+      .mockResolvedValueOnce(new Response("server error", { status: 500 }));
+
+    const result = await fetchBitbucketInboxPullRequests(hostedRepo, connection, USER_IDENTITY);
+
+    expect(result.prs).toHaveLength(1);
+    expect(result.prs[0]?.buildStatuses).toEqual([]);
+  });
+
+  it("returns empty buildStatuses when source commit hash is missing", async () => {
+    const pr = createPullRequest(505, "2026-04-27T11:00:00.000Z");
+    const prNoCommit = {
+      ...pr,
+      source: { ...pr.source, commit: undefined },
+    };
+
+    fetchMock.mockResolvedValueOnce(jsonResponse({ values: [prNoCommit] }));
+
+    const result = await fetchBitbucketInboxPullRequests(hostedRepo, connection, USER_IDENTITY);
+
+    expect(result.prs).toHaveLength(1);
+    expect(result.prs[0]?.buildStatuses).toEqual([]);
   });
 });
