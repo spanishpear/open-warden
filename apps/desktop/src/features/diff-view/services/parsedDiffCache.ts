@@ -137,8 +137,6 @@ export async function loadParsedDiff(
       if (isAbortError(error)) {
         return null;
       }
-
-      touchParsedDiff(request.key, null);
       return null;
     })
     .finally(() => {
