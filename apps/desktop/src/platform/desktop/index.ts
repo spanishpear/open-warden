@@ -60,6 +60,7 @@ export type {
   RepoFileItem,
   GitSnapshot,
   HostedRepoRef,
+  InboxPullRequestsResult,
   HistoryCommit,
   LspDiagnostic,
   LspDiagnosticsEvent,

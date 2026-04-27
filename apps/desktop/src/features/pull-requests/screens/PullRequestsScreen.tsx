@@ -1,11 +1,12 @@
 import { skipToken } from "@reduxjs/toolkit/query";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { GitBranch, GitPullRequest, Plug, Unplug } from "lucide-react";
 
-import { useAppSelector } from "@/app/hooks";
+import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { Button } from "@/components/ui/button";
 import {
+  hostedReposApi,
   useDisconnectProviderMutation,
   useListProviderConnectionsQuery,
   useListPullRequestsQuery,
@@ -48,15 +49,21 @@ const PULL_REQUESTS_PAGE_SIZE = 25;
 function PullRequestRow({
   pullRequest,
   onOpen,
+  onHoverStart,
+  onHoverEnd,
 }: {
   pullRequest: PullRequestSummary;
   onOpen: () => void;
+  onHoverStart?: () => void;
+  onHoverEnd?: () => void;
 }) {
   return (
     <button
       type="button"
       className="hover:bg-surface-1 block w-full rounded-lg px-3 py-2.5 text-left transition-colors"
       onClick={onOpen}
+      onMouseEnter={onHoverStart}
+      onMouseLeave={onHoverEnd}
     >
       <div className="flex items-start gap-3">
         <div className="mt-0.5 shrink-0 text-muted-foreground">
@@ -91,10 +98,13 @@ function PullRequestRow({
 
 export function PullRequestsScreen() {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
   const [githubDialogOpen, setGithubDialogOpen] = useState(false);
   const [bitbucketDialogOpen, setBitbucketDialogOpen] = useState(false);
   const [pullRequestsPage, setPullRequestsPage] = useState(1);
+  const prefetchedInbox = useRef(false);
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { connections, loadingConnections } = useListProviderConnectionsQuery(undefined, {
     selectFromResult: ({ data, isLoading, isFetching }) => ({
@@ -162,6 +172,27 @@ export function PullRequestsScreen() {
     }
   }, [hasNextPullRequestsPage, loadingPullRequests, pullRequests.length, pullRequestsPage]);
 
+  useEffect(() => {
+    prefetchedInbox.current = false;
+  }, [activeRepo]);
+
+
+  useEffect(() => {
+    if (activeRepo && hostedRepo && activeProviderConnection && !prefetchedInbox.current) {
+      prefetchedInbox.current = true;
+      void dispatch(hostedReposApi.util.prefetch("getInboxPullRequests", activeRepo, { force: false }));
+    }
+  }, [activeRepo, hostedRepo, activeProviderConnection, dispatch]);
+
+  useEffect(() => {
+    return () => {
+      if (hoverTimerRef.current) {
+        clearTimeout(hoverTimerRef.current);
+        hoverTimerRef.current = null;
+      }
+    };
+  }, []);
+
   function onConnectProvider(providerId: GitProviderId) {
     if (providerId === "github") {
       setGithubDialogOpen(true);
@@ -195,6 +226,48 @@ export function PullRequestsScreen() {
         pullRequestNumber: pullRequest.number,
       }),
     );
+  }
+
+  function onPullRequestHoverStart(pullRequest: PullRequestSummary) {
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+
+    hoverTimerRef.current = setTimeout(() => {
+      if (!hostedRepo || !activeProviderConnection || !activeRepo) {
+        return;
+      }
+
+      void dispatch(
+        hostedReposApi.util.prefetch(
+          "getPullRequestConversation",
+          {
+            repoPath: activeRepo,
+            pullRequestNumber: pullRequest.number,
+          },
+          { force: false },
+        ),
+      );
+      void dispatch(
+        hostedReposApi.util.prefetch(
+          "getPullRequestFiles",
+          {
+            repoPath: activeRepo,
+            pullRequestNumber: pullRequest.number,
+          },
+          { force: false },
+        ),
+      );
+      hoverTimerRef.current = null;
+    }, 200);
+  }
+
+  function onPullRequestHoverEnd() {
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
   }
 
   if (!activeRepo) {
@@ -370,6 +443,10 @@ export function PullRequestsScreen() {
               onOpen={() => {
                 onOpenPullRequest(pullRequest);
               }}
+              onHoverStart={() => {
+                onPullRequestHoverStart(pullRequest);
+              }}
+              onHoverEnd={onPullRequestHoverEnd}
             />
           ))}
         </div>

@@ -17,6 +17,8 @@ export const DESKTOP_API_METHODS = [
   "disconnectProvider",
   "resolveHostedRepo",
   "listPullRequests",
+  "getInboxPullRequests",
+  "refreshInboxPullRequests",
   "resolveActivePullRequestForBranch",
   "getPullRequestConversation",
   "getPullRequestFiles",

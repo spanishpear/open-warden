@@ -102,6 +102,15 @@ export type HostedRepoRef = {
 
 export type PullRequestState = "open" | "closed" | "merged";
 
+export type PullRequestParticipant = {
+  login: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+  role: "REVIEWER" | "PARTICIPANT";
+  approved: boolean;
+  state: "approved" | "changes_requested" | null;
+};
+
 export type PullRequestSummary = {
   id: string;
   providerId: GitProviderId;
@@ -117,12 +126,20 @@ export type PullRequestSummary = {
   headOwner: string;
   headRepo: string;
   updatedAt: string;
+  participants?: PullRequestParticipant[];
+  reviewers?: PullRequestParticipant[];
+  authorUuid?: string | null;
+  authorAccountId?: string | null;
 };
 
 export type ListPullRequestsInput = {
   repoPath: string;
   page: number;
   perPage: number;
+};
+
+export type ListInboxPullRequestsInput = {
+  repoPath: string;
 };
 
 export type ResolveActivePullRequestForBranchInput = {
@@ -135,6 +152,13 @@ export type PullRequestPage = {
   page: number;
   perPage: number;
   hasNextPage: boolean;
+};
+
+export type InboxPullRequestsResult = {
+  sections: Record<string, PullRequestSummary[]>;
+  userLogin: string | null;
+  fetchedAt: number;
+  isStale: boolean;
 };
 
 export type PullRequestPerson = {
@@ -389,6 +413,8 @@ export type DesktopApi = {
   disconnectProvider(providerId: GitProviderId): Promise<void>;
   resolveHostedRepo(repoPath: string): Promise<HostedRepoRef | null>;
   listPullRequests(input: ListPullRequestsInput): Promise<PullRequestPage>;
+  getInboxPullRequests(input: ListInboxPullRequestsInput): Promise<InboxPullRequestsResult>;
+  refreshInboxPullRequests(input: ListInboxPullRequestsInput): Promise<InboxPullRequestsResult>;
   resolveActivePullRequestForBranch(
     input: ResolveActivePullRequestForBranchInput,
   ): Promise<PullRequestSummary | null>;

@@ -18,6 +18,7 @@ import type {
   SetPullRequestThreadResolvedInput,
   SubmitPullRequestReviewCommentsInput,
   SubmitPullRequestReviewCommentsResult,
+  InboxPullRequestsResult,
 } from "@/platform/desktop";
 import {
   addPullRequestComment,
@@ -26,6 +27,8 @@ import {
   getPullRequestConversation,
   getPullRequestFiles,
   getPullRequestPatch,
+  getInboxPullRequests,
+  refreshInboxPullRequests,
   listProviderConnections,
   listPullRequests,
   resolveActivePullRequestForBranch,
@@ -49,6 +52,7 @@ export const hostedReposApi = createApi({
     "ProviderConnections",
     "HostedRepo",
     "PullRequests",
+    "InboxPullRequests",
     "PullRequestConversation",
     "PullRequestFiles",
     "PullRequestPatch",
@@ -104,7 +108,26 @@ export const hostedReposApi = createApi({
           return { error: toErrorResult(error) };
         }
       },
-      providesTags: (_result, _error, { repoPath }) => [{ type: "PullRequests", id: repoPath }],
+    }),
+    getInboxPullRequests: builder.query<InboxPullRequestsResult, string>({
+      async queryFn(repoPath) {
+        try {
+          return { data: await getInboxPullRequests(repoPath) };
+        } catch (error) {
+          return { error: toErrorResult(error) };
+        }
+      },
+      providesTags: (_result, _error, repoPath) => [{ type: "InboxPullRequests", id: repoPath }],
+    }),
+    refreshInboxPullRequests: builder.mutation<InboxPullRequestsResult, string>({
+      async queryFn(repoPath) {
+        try {
+          return { data: await refreshInboxPullRequests(repoPath) };
+        } catch (error) {
+          return { error: toErrorResult(error) };
+        }
+      },
+      invalidatesTags: (_result, _error, repoPath) => [{ type: "InboxPullRequests", id: repoPath }],
     }),
     resolveActivePullRequestForBranch: builder.query<
       PullRequestSummary | null,
@@ -236,7 +259,8 @@ export const {
   useDisconnectProviderMutation,
   useGetPullRequestConversationQuery,
   useGetPullRequestFilesQuery,
-
+  useGetInboxPullRequestsQuery,
+  useRefreshInboxPullRequestsMutation,
   useListProviderConnectionsQuery,
   useListPullRequestsQuery,
   usePreparePullRequestCompareRefsQuery,

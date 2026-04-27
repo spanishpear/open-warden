@@ -4,6 +4,7 @@ import type {
   PullRequestConversation,
   PullRequestDetail,
   PullRequestIssueComment,
+  PullRequestParticipant,
   PullRequestPerson,
   PullRequestReviewComment,
   PullRequestReviewThread,
@@ -45,7 +46,25 @@ type BitbucketPullRequestSide = {
   repository?: BitbucketRepoRef | null;
 };
 
-type BitbucketPullRequestResponse = {
+type BitbucketPullRequestParticipantResponse = {
+  user?: {
+    username?: string;
+    nickname?: string;
+    display_name?: string;
+    uuid?: string;
+    account_id?: string;
+    links?: {
+      avatar?: {
+        href?: string;
+      };
+    };
+  } | null;
+  role?: "REVIEWER" | "PARTICIPANT";
+  approved?: boolean;
+  state?: "approved" | "changes_requested" | null;
+};
+
+export type BitbucketPullRequestResponse = {
   id: number;
   title?: string;
   description?: string;
@@ -72,6 +91,8 @@ type BitbucketPullRequestResponse = {
   } | null;
   source?: BitbucketPullRequestSide | null;
   destination?: BitbucketPullRequestSide | null;
+  participants?: BitbucketPullRequestParticipantResponse[];
+  reviewers?: BitbucketPullRequestParticipantResponse[];
 };
 
 type BitbucketDiffstatResponse = {
@@ -352,6 +373,20 @@ function mapBitbucketPullRequestState(value: string | undefined): PullRequestSta
   return "closed";
 }
 
+function toBitbucketPullRequestParticipant(
+  participant: BitbucketPullRequestParticipantResponse,
+): PullRequestParticipant {
+  const user = participant.user ?? null;
+  return {
+    login: bitbucketAuthorLogin(user),
+    displayName: user?.display_name ?? null,
+    avatarUrl: user?.links?.avatar?.href ?? null,
+    role: participant.role === "PARTICIPANT" ? "PARTICIPANT" : "REVIEWER",
+    approved: participant.approved ?? false,
+    state: participant.state ?? null,
+  };
+}
+
 function splitBitbucketFullName(fullName: string | undefined | null) {
   if (!fullName) {
     return null;
@@ -409,6 +444,14 @@ export function toBitbucketPullRequestSummary(
     headOwner: sourceRepoIdentity.owner,
     headRepo: sourceRepoIdentity.repo,
     updatedAt,
+    participants: Array.isArray(pullRequest.participants)
+      ? pullRequest.participants.map(toBitbucketPullRequestParticipant)
+      : [],
+    reviewers: Array.isArray(pullRequest.reviewers)
+      ? pullRequest.reviewers.map(toBitbucketPullRequestParticipant)
+      : [],
+    authorUuid: author?.uuid ?? null,
+    authorAccountId: author?.account_id ?? null,
   };
 }
 
@@ -637,17 +680,21 @@ export function bitbucketPullRequestPath(hostedRepo: HostedRepoRef, pullRequestN
   )}/pullrequests/${String(pullRequestNumber)}`;
 }
 
-async function fetchBitbucketPaginatedValues<T>(
+export async function fetchBitbucketPaginatedValues<T>(
   firstPath: string,
   connection: ProviderConnectionSecret,
+  options?: {
+    maxPages?: number;
+  },
 ) {
   const values: T[] = [];
   let nextPathOrUrl: string | null = firstPath;
   let pageCount = 0;
+  const maxPages = options?.maxPages ?? 30;
 
   while (nextPathOrUrl) {
     pageCount += 1;
-    if (pageCount > 30) {
+    if (pageCount > maxPages) {
       break;
     }
 

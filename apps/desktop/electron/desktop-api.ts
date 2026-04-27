@@ -17,6 +17,7 @@ import {
   setPullRequestThreadResolved,
   submitPullRequestReviewComments,
 } from "./hostedRepos";
+import { getInboxPullRequests, refreshInboxPullRequests } from "./inbox/orchestrator";
 import {
   commitStaged,
   discardAll,
@@ -61,6 +62,8 @@ export const desktopApi: DesktopApi = {
   disconnectProvider,
   resolveHostedRepo,
   listPullRequests,
+  getInboxPullRequests: (input) => getInboxPullRequests(input.repoPath),
+  refreshInboxPullRequests: (input) => refreshInboxPullRequests(input.repoPath),
   resolveActivePullRequestForBranch,
   getPullRequestConversation,
   getPullRequestFiles,

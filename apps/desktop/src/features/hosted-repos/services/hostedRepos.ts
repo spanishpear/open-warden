@@ -4,6 +4,7 @@ import type {
   AddPullRequestCommentInput,
   ConnectProviderInput,
   HostedRepoRef,
+  InboxPullRequestsResult,
   PreparedPullRequestWorkspace,
   PreparePullRequestWorkspaceInput,
   ProviderConnection,
@@ -44,6 +45,14 @@ export async function resolveHostedRepo(repoPath: string) {
 export async function listPullRequests(input: ListPullRequestsInput) {
   // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
   return desktop.listPullRequests(input) as Promise<PullRequestPage>;
+}
+
+export async function getInboxPullRequests(repoPath: string): Promise<InboxPullRequestsResult> {
+  return desktop.getInboxPullRequests({ repoPath }) as Promise<InboxPullRequestsResult>;
+}
+
+export async function refreshInboxPullRequests(repoPath: string): Promise<InboxPullRequestsResult> {
+  return desktop.refreshInboxPullRequests({ repoPath }) as Promise<InboxPullRequestsResult>;
 }
 
 export async function resolveActivePullRequestForBranch(
