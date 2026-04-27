@@ -126,6 +126,8 @@ function browserUnsupportedFeature(method: DesktopApiMethod): string {
       return "Pull request files";
     case "getPullRequestPatch":
       return "Pull request patch";
+    case "getPullRequestDiffCached":
+      return "Cached pull request diff";
     case "addPullRequestComment":
       return "Pull request comments";
     case "replyToPullRequestThread":

@@ -1,5 +1,5 @@
 import { AsyncQueuer } from "@tanstack/react-pacer";
-import type { parseDiffFromFile } from "@pierre/diffs";
+import type { parseDiffFromFile, parsePatchFiles } from "@pierre/diffs";
 
 import type { DiffFile } from "@/features/source-control/types";
 
@@ -12,6 +12,16 @@ type ParseResponseMessage =
       type: "parsed";
       requestId: number;
       data: ParsedDiff;
+    }
+  | {
+      type: "parsed-patch";
+      requestId: number;
+      data: ReturnType<typeof parsePatchFiles>;
+    }
+  | {
+      type: "error-patch";
+      requestId: number;
+      message: string;
     }
   | {
       type: "error";
@@ -41,6 +51,13 @@ type ActiveParseTask = {
 let nextRequestId = 1;
 let worker: Worker | null = null;
 let activeParseTask: ActiveParseTask | null = null;
+const patchRequests = new Map<
+  number,
+  {
+    resolve: (value: ReturnType<typeof parsePatchFiles>) => void;
+    reject: (reason?: unknown) => void;
+  }
+>();
 
 function priorityWeight(priority: ParsePriority): number {
   return priority === "high" ? 1 : 0;
@@ -167,6 +184,21 @@ function runParseTask(task: ParseTask): Promise<void> {
 function onWorkerMessage(event: MessageEvent<ParseResponseMessage>) {
   const message = event.data;
   const currentTask = activeParseTask;
+  // Handle patch responses separately
+  if (message.type === "parsed-patch") {
+    const resolver = patchRequests.get(message.requestId);
+    if (!resolver) return;
+    resolver.resolve(message.data);
+    patchRequests.delete(message.requestId);
+    return;
+  }
+  if (message.type === "error-patch") {
+    const resolver = patchRequests.get(message.requestId);
+    if (!resolver) return;
+    resolver.reject(new Error(message.message));
+    patchRequests.delete(message.requestId);
+    return;
+  }
   if (!currentTask || message.requestId !== currentTask.task.requestId) return;
 
   if (message.type === "parsed") {
@@ -184,8 +216,9 @@ function onWorkerError(event: ErrorEvent) {
   const currentTask = activeParseTask;
   recreateWorker();
   if (!currentTask) return;
-
   const error = event.error instanceof Error ? event.error : new Error(event.message);
+  // eslint-disable-next-line no-console
+  console.warn("[DiffWorker] onWorkerError:", error);
   currentTask.task.reject(error);
   currentTask.rejectRun(error);
 }
@@ -238,5 +271,42 @@ export function parseDiffInWorker(
     }
 
     parseTaskQueuer.addItem(task);
+  });
+}
+
+export function parsePatchInWorker(
+  patchText: string,
+  signal?: AbortSignal,
+): Promise<ReturnType<typeof parsePatchFiles>> {
+  const requestId = nextRequestId++;
+
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(toAbortError());
+      return;
+    }
+
+    const onAbort = () => {
+      // best-effort: recreate worker to interrupt processing
+      recreateWorker();
+      reject(toAbortError());
+    };
+
+    signal?.addEventListener("abort", onAbort, { once: true });
+
+    patchRequests.set(requestId, {
+      resolve: (value) => {
+        signal?.removeEventListener("abort", onAbort);
+        resolve(value);
+      },
+      reject: (reason) => {
+        signal?.removeEventListener("abort", onAbort);
+        reject(reason);
+      },
+    });
+
+    /* eslint-disable unicorn/require-post-message-target-origin -- Worker.postMessage does not accept targetOrigin */
+    getWorker().postMessage({ type: "parse-patch", requestId, patchText });
+    /* eslint-enable unicorn/require-post-message-target-origin */
   });
 }

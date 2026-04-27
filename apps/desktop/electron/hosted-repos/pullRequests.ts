@@ -47,6 +47,7 @@ import {
 import { getProviderConnection } from "../providerConnections";
 import { resolveHostedRepo } from "./repository";
 import { missingConnectionMessage, providerDisplayName } from "./providers";
+import { cacheContent, getCachedContent, prDiffKey } from "../inbox/content-cache";
 
 async function resolvePullRequestContext(input: PullRequestLocatorInput) {
   const hostedRepo = await resolveHostedRepo(input.repoPath);
@@ -357,6 +358,68 @@ export async function getPullRequestPatch(input: PullRequestLocatorInput): Promi
 
   throw new Error(
     `${providerDisplayName(hostedRepo.providerId)} pull request patches are not supported yet.`,
+  );
+}
+
+export async function getPullRequestDiffCached(input: PullRequestLocatorInput): Promise<string> {
+  const { hostedRepo, connection } = await resolvePullRequestContext(input);
+
+  if (hostedRepo.providerId === "github") {
+    const pullRequest = await fetchGitHubPullRequest(
+      hostedRepo,
+      connection.token,
+      input.pullRequestNumber,
+    );
+    const key = prDiffKey(
+      hostedRepo.providerId,
+      hostedRepo.owner,
+      hostedRepo.repo,
+      input.pullRequestNumber,
+      pullRequest.base.sha,
+      pullRequest.head.sha,
+    );
+    const cached = getCachedContent(key);
+    if (cached !== null) {
+      return cached;
+    }
+    const patch = await fetchGitHubPullRequestPatch(
+      hostedRepo,
+      connection.token,
+      input.pullRequestNumber,
+    );
+    cacheContent(key, patch);
+    return patch;
+  }
+
+  if (hostedRepo.providerId === "bitbucket") {
+    const pullRequest = await fetchBitbucketPullRequest(
+      hostedRepo,
+      connection,
+      input.pullRequestNumber,
+    );
+    const key = prDiffKey(
+      hostedRepo.providerId,
+      hostedRepo.owner,
+      hostedRepo.repo,
+      input.pullRequestNumber,
+      pullRequest.destination?.commit?.hash ?? "",
+      pullRequest.source?.commit?.hash ?? "",
+    );
+    const cached = getCachedContent(key);
+    if (cached !== null) {
+      return cached;
+    }
+    const patch = await fetchBitbucketPullRequestPatch(
+      hostedRepo,
+      connection,
+      input.pullRequestNumber,
+    );
+    cacheContent(key, patch);
+    return patch;
+  }
+
+  throw new Error(
+    `${providerDisplayName(hostedRepo.providerId)} cached pull request diffs are not supported yet.`,
   );
 }
 

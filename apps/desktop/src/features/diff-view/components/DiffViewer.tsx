@@ -22,7 +22,11 @@ import {
 import { useParsedDiff } from "@/features/diff-view/hooks/useParsedDiff";
 import { MAX_DIFF_LINE_LENGTH } from "@/features/diff-view/services/diffRenderLimits";
 import { useDiffLineFocus, DIFF_LINE_FOCUS_CSS } from "@/features/source-control/diffLineFocus";
-import { type DiffLineAnnotation, type FileDiffOptions } from "@pierre/diffs";
+import {
+  type DiffLineAnnotation,
+  type FileDiffMetadata,
+  type FileDiffOptions,
+} from "@pierre/diffs";
 
 export type DiffViewerHandle = {
   getViewportElement: () => HTMLDivElement | null;
@@ -31,6 +35,7 @@ export type DiffViewerHandle = {
 type DiffViewerProps = {
   oldFile: DiffFile | null;
   newFile: DiffFile | null;
+  fileDiff?: FileDiffMetadata | null;
   activePath: string;
   options?: Partial<FileDiffOptions<DiffAnnotationItem>>;
   lineAnnotations?: DiffLineAnnotation<DiffAnnotationItem>[];
@@ -130,6 +135,7 @@ export const DiffViewer = forwardRef<DiffViewerHandle, DiffViewerProps>(function
   {
     oldFile,
     newFile,
+    fileDiff = null,
     activePath,
     options = {},
     lineAnnotations = [],
@@ -170,13 +176,14 @@ export const DiffViewer = forwardRef<DiffViewerHandle, DiffViewerProps>(function
     cacheSalt: diffThemeCacheSalt,
     allowLargeDiff: forceShowLargeDiff,
   });
+  const resolvedFileDiff = fileDiff ?? currentFileDiff;
 
   useDiffLineFocus({
     containerRef: viewportRef,
-    lineNumber: currentFileDiff ? focusedLineNumber : null,
-    lineIndex: currentFileDiff ? focusedLineIndex : null,
+    lineNumber: resolvedFileDiff ? focusedLineNumber : null,
+    lineIndex: resolvedFileDiff ? focusedLineIndex : null,
     focusKey: focusedLineKey,
-    enabled: Boolean(currentFileDiff),
+    enabled: Boolean(resolvedFileDiff),
   });
 
   const mergedOptions = useMemo<FileDiffOptions<DiffAnnotationItem>>(
@@ -230,7 +237,7 @@ export const DiffViewer = forwardRef<DiffViewerHandle, DiffViewerProps>(function
       key={activeDiffIdentity}
       className="relative min-h-0 min-w-0 flex-1 overflow-hidden"
     >
-      {currentFileDiff ? (
+      {resolvedFileDiff ? (
         <Virtualizer
           config={{
             overscrollSize: 600,
@@ -240,7 +247,7 @@ export const DiffViewer = forwardRef<DiffViewerHandle, DiffViewerProps>(function
         >
           <PierreFileDiff
             className="block min-w-0 max-w-full"
-            fileDiff={currentFileDiff}
+            fileDiff={resolvedFileDiff}
             selectedLines={selectedLines}
             lineAnnotations={lineAnnotations}
             renderAnnotation={renderAnnotation}

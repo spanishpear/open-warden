@@ -431,6 +431,7 @@ export type DesktopApi = {
   getPullRequestConversation(input: PullRequestLocatorInput): Promise<PullRequestConversation>;
   getPullRequestFiles(input: PullRequestLocatorInput): Promise<PullRequestChangedFile[]>;
   getPullRequestPatch(input: PullRequestLocatorInput): Promise<string>;
+  getPullRequestDiffCached(input: PullRequestLocatorInput): Promise<string>;
   addPullRequestComment(input: AddPullRequestCommentInput): Promise<PullRequestIssueComment>;
   replyToPullRequestThread(input: ReplyToPullRequestThreadInput): Promise<PullRequestReviewThread>;
   submitPullRequestReviewComments(

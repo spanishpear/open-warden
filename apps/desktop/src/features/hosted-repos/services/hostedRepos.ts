@@ -76,6 +76,11 @@ export async function getPullRequestPatch(input: PullRequestLocatorInput) {
   return desktop.getPullRequestPatch(input) as Promise<string>;
 }
 
+export async function getPullRequestDiffCached(input: PullRequestLocatorInput) {
+  // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
+  return desktop.getPullRequestDiffCached(input) as Promise<string>;
+}
+
 export async function addPullRequestComment(input: AddPullRequestCommentInput) {
   // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
   return desktop.addPullRequestComment(input) as Promise<PullRequestIssueComment>;

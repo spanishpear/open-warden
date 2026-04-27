@@ -9,6 +9,7 @@ export {
   getPullRequestConversation,
   getPullRequestFiles,
   getPullRequestPatch,
+  getPullRequestDiffCached,
   listPullRequests,
   resolveActivePullRequestForBranch,
   replyToPullRequestThread,

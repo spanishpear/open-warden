@@ -24,11 +24,16 @@ import { DiffViewer, type DiffViewerHandle } from "@/features/diff-view/componen
 import { useDiffCommentAnnotations } from "@/features/diff-view/hooks/useDiffCommentAnnotations";
 import { useDiffDiagnostics } from "@/features/diff-view/hooks/useDiffDiagnostics";
 import { useDiffAnnotationRenderer } from "@/features/diff-view/hooks/useDiffAnnotationRenderer";
-import { type DiffLineAnnotation, type FileDiffOptions } from "@pierre/diffs";
+import {
+  type DiffLineAnnotation,
+  type FileDiffMetadata,
+  type FileDiffOptions,
+} from "@pierre/diffs";
 
 type Props = {
   oldFile: DiffFile | null;
   newFile: DiffFile | null;
+  fileDiff?: FileDiffMetadata | null;
   activePath: string;
   commentContext: CommentContext;
   canComment: boolean;
@@ -97,6 +102,7 @@ function buildReturnToDiffTarget(
 export function DiffWorkspace({
   oldFile,
   newFile,
+  fileDiff = null,
   activePath,
   commentContext,
   canComment,
@@ -254,6 +260,7 @@ export function DiffWorkspace({
         ref={viewerRef}
         oldFile={oldFile}
         newFile={newFile}
+        fileDiff={fileDiff}
         activePath={activePath}
         options={options}
         lineAnnotations={mergedAnnotations}

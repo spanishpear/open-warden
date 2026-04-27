@@ -18,6 +18,18 @@ export function useInboxNavigation(): UseInboxNavigationReturn {
   const dispatch = useAppDispatch();
   const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
 
+  function prefetchPRDiff(pr: PullRequestSummary) {
+    if (!activeRepo) return;
+
+    dispatch(
+      hostedReposApi.util.prefetch(
+        "getPullRequestDiffCached",
+        { repoPath: activeRepo, pullRequestNumber: pr.number },
+        { force: false },
+      ),
+    );
+  }
+
   function navigateToPreview(pr: PullRequestSummary) {
     const path = buildPullRequestPreviewPath({
       providerId: pr.providerId,
@@ -50,6 +62,8 @@ export function useInboxNavigation(): UseInboxNavigationReturn {
 
   function prefetchPRDetail(pr: PullRequestSummary) {
     if (!activeRepo) return;
+
+    prefetchPRDiff(pr);
 
     dispatch(
       hostedReposApi.util.prefetch(
