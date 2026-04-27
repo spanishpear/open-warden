@@ -27,6 +27,7 @@ import {
   getPullRequestConversation,
   getPullRequestFiles,
   getPullRequestPatch,
+  getPullRequestDiffCached,
   getInboxPullRequests,
   refreshInboxPullRequests,
   listProviderConnections,
@@ -180,6 +181,19 @@ export const hostedReposApi = createApi({
         { type: "PullRequestPatch", id: `${repoPath}:${String(pullRequestNumber)}` },
       ],
     }),
+    getPullRequestDiffCached: builder.query<string, PullRequestLocatorInput>({
+      async queryFn(input) {
+        try {
+          return { data: await getPullRequestDiffCached(input) };
+        } catch (error) {
+          return { error: toErrorResult(error) };
+        }
+      },
+      providesTags: (_result, _error, { repoPath, pullRequestNumber }) => [
+        { type: "PullRequestPatch", id: `${repoPath}:${String(pullRequestNumber)}` },
+      ],
+    }),
+
     preparePullRequestCompareRefs: builder.query<PullRequestCompareRefs, PullRequestLocatorInput>({
       async queryFn(input) {
         try {
@@ -259,6 +273,7 @@ export const {
   useDisconnectProviderMutation,
   useGetPullRequestConversationQuery,
   useGetPullRequestFilesQuery,
+  useGetPullRequestDiffCachedQuery,
   useGetInboxPullRequestsQuery,
   useRefreshInboxPullRequestsMutation,
   useListProviderConnectionsQuery,
