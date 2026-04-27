@@ -7,18 +7,26 @@ import { Button } from "@/components/ui/button";
 import {
   useGetInboxPullRequestsQuery,
   useRefreshInboxPullRequestsMutation,
+  useResolveHostedRepoQuery,
 } from "@/features/hosted-repos/api";
 import { errorMessageFrom } from "@/features/source-control/shared-utils/errorMessage";
 
 export function InboxDebugScreen() {
   const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
 
+  const activeRepoArg = activeRepo ? activeRepo : skipToken;
+
+  const { data: hostedRepo } = useResolveHostedRepoQuery(activeRepoArg);
+
+  const inboxRepoArg =
+    activeRepo && hostedRepo?.providerId === "bitbucket" ? activeRepo : skipToken;
+
   const {
     data: inboxData,
     error: inboxError,
     isLoading,
     isFetching,
-  } = useGetInboxPullRequestsQuery(activeRepo ?? skipToken);
+  } = useGetInboxPullRequestsQuery(inboxRepoArg);
 
   const [refreshInbox, { isLoading: isRefreshing }] = useRefreshInboxPullRequestsMutation();
 
@@ -26,6 +34,23 @@ export function InboxDebugScreen() {
     return (
       <div className="flex h-full items-center justify-center text-muted-foreground">
         No active repository selected.
+      </div>
+    );
+  }
+
+  if (hostedRepo && hostedRepo.providerId !== "bitbucket") {
+    return (
+      <div className="flex h-full items-center justify-center text-muted-foreground">
+        Inbox Debug currently supports Bitbucket repos only. Current provider:{" "}
+        <strong className="ml-1">{hostedRepo.providerId}</strong>.
+      </div>
+    );
+  }
+
+  if (!hostedRepo) {
+    return (
+      <div className="flex h-full items-center justify-center text-muted-foreground">
+        Could not resolve hosted repo for this path.
       </div>
     );
   }
@@ -61,7 +86,7 @@ export function InboxDebugScreen() {
 
           <Button
             size="sm"
-            disabled={isRefreshing || isLoading || isFetching}
+            disabled={isRefreshing || isLoading || isFetching || hostedRepo.providerId !== "bitbucket"}
             onClick={() => {
               void refreshInbox(activeRepo);
             }}

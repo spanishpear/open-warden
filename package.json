@@ -46,5 +46,10 @@
       "onFail": "error"
     }
   },
-  "packageManager": "pnpm@10.28.0"
+  "packageManager": "pnpm@10.28.0",
+  "pnpm": {
+    "peerDependencyRules": {
+      "ignoreMissing": ["electron-builder-squirrel-windows"]
+    }
+  }
 }

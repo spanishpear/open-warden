@@ -75,13 +75,13 @@ export async function getInboxPullRequests(repoPath: string): Promise<InboxPullR
     return emptyResult();
   }
 
+  if (hostedRepo.providerId !== "bitbucket") {
+    throw new Error(`${providerDisplayName(hostedRepo.providerId)} inbox pull requests are not supported yet.`);
+  }
+
   const connection = await getProviderConnection(hostedRepo.providerId);
   if (!connection) {
     throw new Error(missingConnectionMessage(hostedRepo.providerId));
-  }
-
-  if (hostedRepo.providerId !== "bitbucket") {
-    throw new Error(`${providerDisplayName(hostedRepo.providerId)} inbox pull requests are not supported yet.`);
   }
 
   const userIdentity = await getOrResolveUserIdentity(hostedRepo.providerId, connection);
