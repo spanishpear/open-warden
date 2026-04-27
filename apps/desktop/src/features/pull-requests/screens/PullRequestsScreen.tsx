@@ -464,7 +464,17 @@ export function PullRequestsScreen() {
         <div className="mx-auto flex h-full min-h-0 w-full max-w-[1240px] flex-col gap-4">
           <header className="border-border/70 flex flex-wrap items-start justify-between gap-3 border-b pb-3">
             <div>
-              <h1 className="text-xl font-semibold tracking-[-0.02em]">Pull Requests</h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-xl font-semibold tracking-[-0.02em]">Pull Requests</h1>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 px-2 text-xs"
+                  onClick={() => navigate("/inbox-debug")}
+                >
+                  Debug Inbox
+                </Button>
+              </div>
               <div className="text-muted-foreground mt-1 text-xs">{headerSubtitle()}</div>
             </div>
 
