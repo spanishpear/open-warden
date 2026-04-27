@@ -1,3 +1,9 @@
 packages:
-  - "apps/*"
-  - "crates/*"
+  - apps/*
+  - crates/*
+
+onlyBuiltDependencies:
+  - electron
+  - electron-winstaller
+  - esbuild
+  - msw

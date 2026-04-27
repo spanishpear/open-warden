@@ -13,14 +13,7 @@ export function createRendererConfig(): UserConfig {
   return {
     // Packaged Electron loads the renderer via file://, so built assets must stay relative.
     base: "./",
-    plugins: [
-      react({
-        babel: {
-          plugins: ["babel-plugin-react-compiler"],
-        },
-      }),
-      tailwindcss(),
-    ],
+    plugins: [react(), tailwindcss()],
     clearScreen: false,
     worker: {
       format: "es",
