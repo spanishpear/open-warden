@@ -16,7 +16,7 @@ export function InboxDebugScreen() {
 
   const activeRepoArg = activeRepo ? activeRepo : skipToken;
 
-  const { data: hostedRepo } = useResolveHostedRepoQuery(activeRepoArg);
+  const { data: hostedRepo, isLoading: resolvingRepo } = useResolveHostedRepoQuery(activeRepoArg);
 
   const inboxRepoArg =
     activeRepo && hostedRepo?.providerId === "bitbucket" ? activeRepo : skipToken;
@@ -38,11 +38,10 @@ export function InboxDebugScreen() {
     );
   }
 
-  if (hostedRepo && hostedRepo.providerId !== "bitbucket") {
+  if (resolvingRepo) {
     return (
       <div className="flex h-full items-center justify-center text-muted-foreground">
-        Inbox Debug currently supports Bitbucket repos only. Current provider:{" "}
-        <strong className="ml-1">{hostedRepo.providerId}</strong>.
+        Resolving repository...
       </div>
     );
   }
@@ -51,6 +50,15 @@ export function InboxDebugScreen() {
     return (
       <div className="flex h-full items-center justify-center text-muted-foreground">
         Could not resolve hosted repo for this path.
+      </div>
+    );
+  }
+
+  if (hostedRepo.providerId !== "bitbucket") {
+    return (
+      <div className="flex h-full items-center justify-center text-muted-foreground">
+        Inbox Debug currently supports Bitbucket repos only. Current provider:{" "}
+        <strong className="ml-1">{hostedRepo.providerId}</strong>.
       </div>
     );
   }
@@ -75,7 +83,7 @@ export function InboxDebugScreen() {
             <div className="text-muted-foreground mt-1 text-xs">
               {inboxData ? (
                 <>
-                  Fetched at: {new Date(inboxData.fetchedAt).toLocaleString()} | Stale:{" "}
+                  Fetched at: {new Date(inboxData.fetchedAt).toLocaleString()} | Stale: {" "}
                   {inboxData.isStale ? "Yes" : "No"} | User: {inboxData.userLogin ?? "Unknown"}
                 </>
               ) : (
@@ -86,7 +94,7 @@ export function InboxDebugScreen() {
 
           <Button
             size="sm"
-            disabled={isRefreshing || isLoading || isFetching || hostedRepo.providerId !== "bitbucket"}
+            disabled={isRefreshing || isLoading || isFetching}
             onClick={() => {
               void refreshInbox(activeRepo);
             }}
@@ -102,7 +110,7 @@ export function InboxDebugScreen() {
           </div>
         )}
 
-        {isLoading && !inboxData && (
+        {(isLoading || isFetching) && !inboxData && (
           <div className="text-muted-foreground text-sm">Loading inbox data...</div>
         )}
 
