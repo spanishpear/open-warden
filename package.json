@@ -20,9 +20,12 @@
     "fmt:check": "oxfmt --check --ignore-path .oxfmtignore",
     "format": "pnpm fmt",
     "format:check": "pnpm fmt:check",
+    "knip": "knip",
+    "knip:fix": "knip --fix",
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm fmt:check"
   },
   "devDependencies": {
+    "knip": "^6.7.0",
     "oxfmt": "^0.46.0",
     "oxlint": "^1.61.0",
     "turbo": "^2.9.6"

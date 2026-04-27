@@ -1,0 +1,31 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    ".": {
+      "entry": ["scripts/**/*.{js,mjs,cjs,ts}"],
+      "project": ["scripts/**/*.{js,mjs,cjs,ts}"]
+    },
+    "apps/desktop": {
+      "entry": [
+        "electron/main.ts",
+        "electron/preload.ts",
+        "electron/desktop-api.ts",
+        "vite.shared.config.ts",
+        "vite.shared.config.test.ts",
+        "scripts/**/*.{js,mjs,cjs,ts}",
+        "tests/e2e/**/*.{spec,test}.{ts,tsx}"
+      ],
+      "project": [
+        "src/**/*.{ts,tsx}",
+        "electron/**/*.{ts,tsx}",
+        "scripts/**/*.{js,mjs,cjs,ts}"
+      ],
+      "ignore": ["src/**/*.d.ts"],
+      "ignoreDependencies": [
+        "tw-animate-css",
+        "tailwindcss",
+        "@vitest/coverage-v8"
+      ]
+    }
+  }
+}
