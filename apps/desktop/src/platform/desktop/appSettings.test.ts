@@ -26,6 +26,49 @@ describe("appSettings helpers", () => {
       lsp: {
         servers: {},
       },
+      inboxSectionVisibility: {
+        NEEDS_REVIEW: true,
+        WAITING_FOR_REVIEW: true,
+        RETURNED_TO_YOU: true,
+        APPROVED: true,
+        DRAFTS: true,
+        MERGING_AND_MERGED: true,
+      },
     });
+  });
+
+  it("resolves inboxSectionVisibility with partial overrides", () => {
+    const result = createAppSettings({
+      inboxSectionVisibility: {
+        APPROVED: false,
+        DRAFTS: false,
+      },
+    });
+    expect(result.inboxSectionVisibility).toEqual({
+      NEEDS_REVIEW: true,
+      WAITING_FOR_REVIEW: true,
+      RETURNED_TO_YOU: true,
+      APPROVED: false,
+      DRAFTS: false,
+      MERGING_AND_MERGED: true,
+    });
+  });
+
+  it("ignores unknown section keys in inboxSectionVisibility", () => {
+    const result = createAppSettings({
+      inboxSectionVisibility: {
+        UNKNOWN_SECTION: false,
+        NEEDS_REVIEW: false,
+      },
+    });
+    expect(result.inboxSectionVisibility).toEqual({
+      NEEDS_REVIEW: false,
+      WAITING_FOR_REVIEW: true,
+      RETURNED_TO_YOU: true,
+      APPROVED: true,
+      DRAFTS: true,
+      MERGING_AND_MERGED: true,
+    });
+    expect(result.inboxSectionVisibility).not.toHaveProperty("UNKNOWN_SECTION");
   });
 });

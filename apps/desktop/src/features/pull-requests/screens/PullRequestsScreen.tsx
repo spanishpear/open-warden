@@ -469,7 +469,7 @@ export function PullRequestsScreen() {
                   variant="outline"
                   size="sm"
                   className="h-6 px-2 text-xs"
-                  onClick={() => navigate("/inbox-debug")}
+                  onClick={() => navigate("/inbox")}
                 >
                   Debug Inbox
                 </Button>

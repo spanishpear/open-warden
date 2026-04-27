@@ -342,6 +342,7 @@ export type AppSettings = {
     fileTreeRenderMode: FileTreeRenderMode;
   };
   lsp: LspSettings;
+  inboxSectionVisibility?: Record<string, boolean>;
 };
 
 export type SyncLspDocumentInput = {

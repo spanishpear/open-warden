@@ -1,7 +1,7 @@
 import { skipToken } from "@reduxjs/toolkit/query";
 import { useState } from "react";
 
-import { useAppSelector } from "@/app/hooks";
+import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { ResizableSidebarLayout } from "@/components/layout/ResizableSidebarLayout";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +14,7 @@ import { InboxQuickFilters, type InboxFilter } from "@/features/inbox/components
 import { InboxSectionSidebar } from "@/features/inbox/components/InboxSectionSidebar";
 import { useInboxNavigation } from "@/features/inbox/hooks/useInboxNavigation";
 import { errorMessageFrom } from "@/features/source-control/shared-utils/errorMessage";
+import { updateInboxSectionVisibility } from "@/features/settings/actions";
 
 const ORDERED_SECTIONS = [
   "NEEDS_REVIEW",
@@ -26,6 +27,10 @@ const ORDERED_SECTIONS = [
 
 export function InboxScreen() {
   const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
+  const dispatch = useAppDispatch();
+  const inboxSectionVisibility = useAppSelector(
+    (state) => state.settings.appSettings.inboxSectionVisibility,
+  );
   const activeRepoArg = activeRepo ? activeRepo : skipToken;
   const { data: hostedRepo, isLoading: resolvingRepo } = useResolveHostedRepoQuery(activeRepoArg);
   const inboxRepoArg =
@@ -35,7 +40,14 @@ export function InboxScreen() {
     error: inboxError,
     isLoading,
     isFetching,
-  } = useGetInboxPullRequestsQuery(inboxRepoArg);
+  } = useGetInboxPullRequestsQuery(inboxRepoArg, {
+    selectFromResult: ({ data, error, isLoading, isFetching }) => ({
+      data,
+      error,
+      isLoading,
+      isFetching,
+    }),
+  });
   const [refreshInbox, { isLoading: isRefreshing }] = useRefreshInboxPullRequestsMutation();
 
   const { navigateToPreview, prefetchPRDetail } = useInboxNavigation();
@@ -138,6 +150,10 @@ export function InboxScreen() {
             void refreshInbox(activeRepo);
           }}
           isRefreshing={isRefreshing || isFetching}
+          sectionVisibility={inboxSectionVisibility}
+          onToggleVisibility={(key, visible) => {
+            void dispatch(updateInboxSectionVisibility(key, visible));
+          }}
         />
       }
       content={

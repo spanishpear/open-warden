@@ -35,7 +35,7 @@ export function InboxQuickFilters({
         <Input
           value={searchText}
           onChange={(e) => onSearchChange((e.target as HTMLInputElement).value)}
-          placeholder="Filter PRs…"
+          placeholder="Filter PRs..."
           className="pl-8 h-8 text-sm"
           data-testid="inbox-search-input"
         />

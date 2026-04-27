@@ -7,6 +7,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "better-sqlite3": path.resolve(__dirname, "./__mocks__/better-sqlite3.ts"),
     },
   },
   test: {

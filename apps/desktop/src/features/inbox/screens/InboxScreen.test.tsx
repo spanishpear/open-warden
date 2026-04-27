@@ -24,11 +24,19 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/app/hooks", () => ({
   useAppSelector: (
-    selector: (state: { sourceControl: { activeRepo: string | null } }) => unknown,
+    selector: (state: {
+      sourceControl: { activeRepo: string | null };
+      settings: { appSettings: { inboxSectionVisibility?: Record<string, boolean> } };
+    }) => unknown,
   ) =>
     selector({
       sourceControl: {
         activeRepo: mocks.activeRepo,
+      },
+      settings: {
+        appSettings: {
+          inboxSectionVisibility: undefined,
+        },
       },
     }),
   useAppDispatch: () => vi.fn(),

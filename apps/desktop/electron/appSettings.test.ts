@@ -59,6 +59,14 @@ describe("electron app settings persistence", () => {
           },
         },
       },
+      inboxSectionVisibility: {
+        NEEDS_REVIEW: true,
+        WAITING_FOR_REVIEW: true,
+        RETURNED_TO_YOU: true,
+        APPROVED: true,
+        DRAFTS: true,
+        MERGING_AND_MERGED: true,
+      },
     });
 
     await expect(loadAppSettings()).resolves.toEqual({
@@ -74,6 +82,14 @@ describe("electron app settings persistence", () => {
             extensions: ["ts", "tsx"],
           },
         },
+      },
+      inboxSectionVisibility: {
+        NEEDS_REVIEW: true,
+        WAITING_FOR_REVIEW: true,
+        RETURNED_TO_YOU: true,
+        APPROVED: true,
+        DRAFTS: true,
+        MERGING_AND_MERGED: true,
       },
     });
   });
@@ -91,6 +107,14 @@ describe("electron app settings persistence", () => {
       },
       lsp: {
         servers: {},
+      },
+      inboxSectionVisibility: {
+        NEEDS_REVIEW: true,
+        WAITING_FOR_REVIEW: true,
+        RETURNED_TO_YOU: true,
+        APPROVED: true,
+        DRAFTS: true,
+        MERGING_AND_MERGED: true,
       },
     });
   });

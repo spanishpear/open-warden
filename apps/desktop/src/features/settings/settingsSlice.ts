@@ -24,6 +24,16 @@ const settingsSlice = createSlice({
     setFileTreeRenderMode(state, action: PayloadAction<FileTreeRenderMode>) {
       state.appSettings.sourceControl.fileTreeRenderMode = action.payload;
     },
+    setInboxSectionVisibility(
+      state,
+      action: PayloadAction<{ sectionKey: string; visible: boolean }>,
+    ) {
+      const { sectionKey, visible } = action.payload;
+      state.appSettings.inboxSectionVisibility = {
+        ...state.appSettings.inboxSectionVisibility,
+        [sectionKey]: visible,
+      };
+    },
     setSettingsError(state, action: PayloadAction<string>) {
       state.error = action.payload;
     },
@@ -35,7 +45,12 @@ const settingsSlice = createSlice({
   },
 });
 
-export const { clearSettingsError, hydrateAppSettings, setFileTreeRenderMode, setSettingsError } =
-  settingsSlice.actions;
+export const {
+  clearSettingsError,
+  hydrateAppSettings,
+  setFileTreeRenderMode,
+  setInboxSectionVisibility,
+  setSettingsError,
+} = settingsSlice.actions;
 
 export const settingsReducer = settingsSlice.reducer;

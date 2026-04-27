@@ -7,6 +7,7 @@ import {
   clearSettingsError,
   hydrateAppSettings,
   setFileTreeRenderMode,
+  setInboxSectionVisibility,
   setSettingsError,
 } from "./settingsSlice";
 
@@ -37,6 +38,31 @@ export const updateFileTreeRenderMode =
     const nextSettings = buildUpdatedSettings(getState(), mode);
 
     dispatch(setFileTreeRenderMode(mode));
+    dispatch(clearSettingsError());
+
+    try {
+      const savedSettings = await desktop.saveAppSettings(nextSettings);
+      dispatch(hydrateAppSettings(savedSettings));
+    } catch (error) {
+      dispatch(hydrateAppSettings(previousSettings));
+      dispatch(setSettingsError(error instanceof Error ? error.message : String(error)));
+      throw error;
+    }
+  };
+
+export const updateInboxSectionVisibility =
+  (sectionKey: string, visible: boolean): AppThunk<Promise<void>> =>
+  async (dispatch, getState) => {
+    const previousSettings = getState().settings.appSettings;
+    const nextSettings = createAppSettings({
+      ...previousSettings,
+      inboxSectionVisibility: {
+        ...previousSettings.inboxSectionVisibility,
+        [sectionKey]: visible,
+      },
+    });
+
+    dispatch(setInboxSectionVisibility({ sectionKey, visible }));
     dispatch(clearSettingsError());
 
     try {
