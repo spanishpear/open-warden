@@ -2,8 +2,8 @@ import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 import type { GitProviderId } from "@/platform/desktop";
 
-export type PullRequestReviewTab = "files" | "conversation" | "checks";
-export type PullRequestFilesViewMode = "review" | "files";
+type PullRequestReviewTab = "files" | "conversation" | "checks";
+type PullRequestFilesViewMode = "review" | "files";
 
 export type PullRequestReviewSession = {
   providerId: GitProviderId;
@@ -19,7 +19,7 @@ export type PullRequestReviewSession = {
   worktreePath: string;
 };
 
-export type PullRequestFileJumpTarget = {
+type PullRequestFileJumpTarget = {
   path: string;
   lineNumber: number | null;
   lineIndex: string | null;
@@ -27,7 +27,7 @@ export type PullRequestFileJumpTarget = {
   threadId: string | null;
 };
 
-export type PullRequestPreviewFileJumpTarget = {
+type PullRequestPreviewFileJumpTarget = {
   path: string;
   lineNumber: number | null;
   lineIndex: string | null;
@@ -112,13 +112,13 @@ const pullRequestsSlice = createSlice({
 export const {
   clearCurrentPullRequestReview,
   clearPullRequestFileJumpTarget,
-  clearPullRequestPreviewFileJumpTarget,
+  
   setActiveConversationThreadId,
   setPullRequestFileJumpTarget,
   setCurrentPullRequestReview,
   setPullRequestPreviewActiveFilePath,
   setPullRequestPreviewFileJumpTarget,
-  setPullRequestReviewTab,
+  
   setPullRequestFilesViewMode,
 } = pullRequestsSlice.actions;
 

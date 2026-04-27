@@ -22,7 +22,7 @@ export function toDisplayDate(value: string) {
   });
 }
 
-export function quoteMarkdown(body: string) {
+function quoteMarkdown(body: string) {
   return `${body
     .split("\n")
     .map((line) => `> ${line}`)
@@ -59,7 +59,7 @@ function formatRemoteReviewThread(thread: PullRequestReviewThread) {
   return [threadHeader, commentBlocks].filter(Boolean).join("\n");
 }
 
-export function buildRemoteCommentsPayload(conversation: PullRequestConversation) {
+function buildRemoteCommentsPayload(conversation: PullRequestConversation) {
   const sections: string[] = [];
 
   if (conversation.detail.body.trim()) {

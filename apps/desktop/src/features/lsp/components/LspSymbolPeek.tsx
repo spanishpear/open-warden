@@ -224,7 +224,7 @@ type LspSymbolPeekProps = {
   symbolPeek: SymbolPeekState;
 };
 
-export function LspSymbolPeek({ document, containerRef, symbolPeek }: LspSymbolPeekProps) {
+function LspSymbolPeek({ document, containerRef, symbolPeek }: LspSymbolPeekProps) {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();

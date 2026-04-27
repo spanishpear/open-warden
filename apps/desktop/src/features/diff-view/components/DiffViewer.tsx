@@ -28,7 +28,7 @@ export type DiffViewerHandle = {
   getViewportElement: () => HTMLDivElement | null;
 };
 
-export type DiffViewerProps = {
+type DiffViewerProps = {
   oldFile: DiffFile | null;
   newFile: DiffFile | null;
   activePath: string;

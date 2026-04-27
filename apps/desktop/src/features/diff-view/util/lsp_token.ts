@@ -96,7 +96,7 @@ export function buildDiagnosticsByLine(diagnostics: LspDiagnostic[]): Map<number
   return diagnosticsByLine;
 }
 
-export function findDiagnosticSeverityForToken(
+function findDiagnosticSeverityForToken(
   token: HTMLElement,
   diagnosticsByLine: Map<number, LspDiagnostic[]>,
 ): LspDiagnostic["severity"] | null {

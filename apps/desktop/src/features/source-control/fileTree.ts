@@ -1,4 +1,4 @@
-export interface SourceControlTreeDirectoryNode<TFile> {
+interface SourceControlTreeDirectoryNode<TFile> {
   kind: "directory";
   name: string;
   path: string;
@@ -6,7 +6,7 @@ export interface SourceControlTreeDirectoryNode<TFile> {
   children: SourceControlTreeNode<TFile>[];
 }
 
-export interface SourceControlTreeFileNode<TFile> {
+interface SourceControlTreeFileNode<TFile> {
   kind: "file";
   name: string;
   path: string;

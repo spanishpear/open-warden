@@ -8,7 +8,7 @@ export function compactComments(comments: Array<CommentItem | undefined>): Comme
   return comments.filter((comment): comment is CommentItem => !!comment);
 }
 
-export function createCommentCountByFile(
+function createCommentCountByFile(
   comments: Array<CommentItem | undefined>,
 ): Map<string, number> {
   const counts = new Map<string, number>();
@@ -20,7 +20,7 @@ export function createCommentCountByFile(
   return counts;
 }
 
-export function createCommentCountByPathForRepo(
+function createCommentCountByPathForRepo(
   comments: Array<CommentItem | undefined>,
   repoPath: string,
   context?: CommentContext,
@@ -72,7 +72,7 @@ export function countCommentsForPathInRepoContext(
   return count;
 }
 
-export function countCommentsForFile(
+function countCommentsForFile(
   comments: Array<CommentItem | undefined>,
   repoPath: string,
   filePath: string,
@@ -87,7 +87,7 @@ export function countCommentsForFile(
   return count;
 }
 
-export function getCommentCountForFile(
+function getCommentCountForFile(
   counts: Map<string, number>,
   repoPath: string,
   filePath: string,

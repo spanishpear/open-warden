@@ -66,7 +66,7 @@ export type GitHubIssueCommentResponse = {
   } | null;
 };
 
-export type GitHubPullRequestFileResponse = {
+type GitHubPullRequestFileResponse = {
   filename: string;
   previous_filename?: string | null;
   status: string;
@@ -220,7 +220,7 @@ function parseGitHubErrorMessage(text: string, status: number) {
   }
 }
 
-export async function githubTextRequest(pathname: string, token: string, accept: string) {
+async function githubTextRequest(pathname: string, token: string, accept: string) {
   const response = await fetch(`https://api.github.com${pathname}`, {
     headers: {
       Accept: accept,
@@ -454,7 +454,7 @@ export async function resolveGitHubOpenPullRequestForBranch(
   }
 }
 
-export function toPullRequestPerson(
+function toPullRequestPerson(
   user: {
     login: string;
     avatar_url?: string | null;
@@ -504,7 +504,7 @@ function toPullRequestChangedFileStatus(status: string): PullRequestChangedFile[
   return "modified";
 }
 
-export function toPullRequestChangedFile(
+function toPullRequestChangedFile(
   file: GitHubPullRequestFileResponse,
 ): PullRequestChangedFile {
   return {

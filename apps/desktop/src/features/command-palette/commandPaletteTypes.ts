@@ -1,6 +1,6 @@
 import type { Bucket, FileStatus } from "@/features/source-control/types";
 
-export type CommandSection = "actions" | "files" | "history";
+type CommandSection = "actions" | "files" | "history";
 
 type CommandItemBase = {
   id: string;
@@ -31,4 +31,4 @@ export type CommandCommitItem = CommandItemBase & {
   onSelect: () => void | Promise<void>;
 };
 
-export type CommandItem = CommandActionItem | CommandFileItem | CommandCommitItem;
+type CommandItem = CommandActionItem | CommandFileItem | CommandCommitItem;

@@ -321,7 +321,7 @@ export const rangeSelectFile =
     dispatch(setSelectionAnchor(base));
   };
 
-export const clearFileSelection = (): AppThunk => async (dispatch) => {
+const clearFileSelection = (): AppThunk => async (dispatch) => {
   dispatch(setSelectedFiles([]));
   dispatch(setSelectionAnchor(null));
 };

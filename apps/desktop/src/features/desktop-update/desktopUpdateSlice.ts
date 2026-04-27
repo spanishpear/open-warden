@@ -2,7 +2,7 @@ import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 import type { DesktopUpdateState } from "@/platform/desktop";
 
-export type DesktopUpdateStoreState = DesktopUpdateState & {
+type DesktopUpdateStoreState = DesktopUpdateState & {
   hydrated: boolean;
 };
 

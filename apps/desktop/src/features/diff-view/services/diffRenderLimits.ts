@@ -2,11 +2,11 @@ import type { DiffFile } from "@/features/source-control/types";
 
 const MAX_DIFF_BUFFER_SIZE = 70_000_000;
 
-export const MAX_REASONABLE_DIFF_SIZE = Math.floor(MAX_DIFF_BUFFER_SIZE / 16);
+const MAX_REASONABLE_DIFF_SIZE = Math.floor(MAX_DIFF_BUFFER_SIZE / 16);
 
 export const MAX_DIFF_LINE_LENGTH = 5000;
 
-export type DiffRenderGate = "large" | "renderable" | "unrenderable";
+type DiffRenderGate = "large" | "renderable" | "unrenderable";
 
 function getDiffContentSize(file: DiffFile | null): number {
   return file?.contents.length ?? 0;

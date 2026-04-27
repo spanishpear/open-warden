@@ -20,7 +20,7 @@ type BitbucketWorkspaceRef = {
   name?: string;
 };
 
-export type BitbucketRepoRef = {
+type BitbucketRepoRef = {
   full_name?: string;
   name?: string;
   workspace?: BitbucketWorkspaceRef;
@@ -45,7 +45,7 @@ type BitbucketPullRequestSide = {
   repository?: BitbucketRepoRef | null;
 };
 
-export type BitbucketPullRequestResponse = {
+type BitbucketPullRequestResponse = {
   id: number;
   title?: string;
   description?: string;
@@ -74,7 +74,7 @@ export type BitbucketPullRequestResponse = {
   destination?: BitbucketPullRequestSide | null;
 };
 
-export type BitbucketDiffstatResponse = {
+type BitbucketDiffstatResponse = {
   status?: string;
   old?: {
     path?: string;

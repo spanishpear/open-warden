@@ -74,7 +74,7 @@ function readAnchorRectFromClick(tokenElement: HTMLElement, event: MouseEvent): 
   };
 }
 
-export function toLspHoverPosition({
+function toLspHoverPosition({
   lineNumber,
   lineCharStart,
 }: Pick<DiffTokenEventBaseProps, "lineNumber" | "lineCharStart">) {

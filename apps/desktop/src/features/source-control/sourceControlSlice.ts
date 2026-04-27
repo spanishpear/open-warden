@@ -292,8 +292,8 @@ const sourceControlSlice = createSlice({
 });
 
 export const {
-  addRepo,
-  clearDiffFocusTarget,
+  
+  
   clearDiffSelection,
   closeFileViewer,
   clearHistorySelection,
@@ -307,7 +307,7 @@ export const {
   setCommitMessage,
   setCollapseStaged,
   setCollapseUnstaged,
-  setChangesSidebarMode,
+  
   setDiffStyle,
   setHistoryCommitId,
   setHistoryFilter,

@@ -49,40 +49,40 @@ export const desktop: DesktopBridge = {
 export type {
   AppSettings,
   AddPullRequestCommentInput,
-  ApiError,
+  
   Bucket,
-  ConfirmOptions,
+  
   ConnectProviderInput,
-  DesktopApi,
-  DesktopBridge,
-  DesktopUpdateActionResult,
-  DesktopUpdateApi,
-  DesktopUpdateErrorContext,
+  
+  
+  
+  
+  
   DesktopUpdateState,
-  DesktopUpdateStatus,
+  
   DiffFile,
-  DiscardFileInput,
+  
   FileItem,
   FileStatus,
   FileVersions,
   GitProviderId,
   RepoFileItem,
-  GetRepoFileInput,
+  
   GitSnapshot,
   HostedRepoRef,
   HistoryCommit,
   LspDiagnostic,
-  LspDiagnosticSeverity,
+  
   LspDiagnosticsEvent,
-  DesktopLspApi,
-  DesktopSettingsApi,
-  SyncLspDocumentInput,
-  CloseLspDocumentInput,
+  
+  
+  
+  
   FileTreeRenderMode,
-  GetLspHoverInput,
-  GetLspReferencesInput,
+  
+  
   LspLocation,
-  LspHoverResult,
+  
   PreparedPullRequestWorkspace,
   PreparePullRequestWorkspaceInput,
   ProviderConnection,
@@ -97,13 +97,13 @@ export type {
   PullRequestReviewComment,
   PullRequestReviewDraftCommentInput,
   PullRequestReviewThread,
-  ProviderAuthType,
-  ProviderConnectionMethod,
+  
+  
   ListPullRequestsInput,
   ResolveActivePullRequestForBranchInput,
   PullRequestPage,
   PullRequestSummary,
-  PullRequestState,
+  
   ReplyToPullRequestThreadInput,
   SetPullRequestThreadResolvedInput,
   SubmitPullRequestReviewCommentsInput,

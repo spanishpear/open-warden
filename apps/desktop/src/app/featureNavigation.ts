@@ -3,7 +3,7 @@ import type { LucideIcon } from "lucide-react";
 
 export type FeatureKey = "changes" | "history" | "review" | "pull-requests";
 
-export type FeatureNavItem = {
+type FeatureNavItem = {
   key: FeatureKey;
   path: `/${FeatureKey}`;
   label: string;

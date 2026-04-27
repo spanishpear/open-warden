@@ -1,6 +1,6 @@
 import type { ApiError, ErrorCode } from "./contracts";
 
-export function createApiError(
+function createApiError(
   message: string,
   options?: { code?: ErrorCode; details?: string | null },
 ): ApiError {
@@ -11,11 +11,11 @@ export function createApiError(
   };
 }
 
-export function toErrorMessage(error: ApiError): string {
+function toErrorMessage(error: ApiError): string {
   return error.details ? `${error.message}: ${error.details}` : error.message;
 }
 
-export function toError(error: ApiError): Error {
+function toError(error: ApiError): Error {
   return new Error(toErrorMessage(error));
 }
 

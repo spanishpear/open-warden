@@ -160,7 +160,7 @@ type PrefetchParsedDiffArgs = {
   priority?: ParsePriority;
 };
 
-export async function prefetchParsedDiff({
+async function prefetchParsedDiff({
   activePath,
   oldFile,
   newFile,

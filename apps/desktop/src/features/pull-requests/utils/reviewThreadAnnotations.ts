@@ -51,7 +51,7 @@ function toAnnotationSide(diffSide: PullRequestReviewThread["diffSide"]) {
   return diffSide === "LEFT" ? "deletions" : "additions";
 }
 
-export function buildPullRequestThreadAnnotations({
+function buildPullRequestThreadAnnotations({
   repoPath,
   pullRequestNumber,
   path,

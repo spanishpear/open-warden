@@ -6,7 +6,7 @@ import { openRepo, refreshActiveRepo } from "@/features/source-control/actions";
 import { resetRepoViewState } from "@/features/source-control/sourceControlSlice";
 import type { PullRequestOpenMode } from "@/platform/desktop";
 
-export type OpenPullRequestReviewResult = {
+type OpenPullRequestReviewResult = {
   errorMessage: string | null;
 };
 

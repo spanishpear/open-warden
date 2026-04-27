@@ -293,13 +293,13 @@ export type WorkspaceSession = {
 
 export type FileTreeRenderMode = "tree" | "list";
 
-export type LspServerSettings = {
+type LspServerSettings = {
   command: string;
   args: string[];
   extensions?: string[];
 };
 
-export type LspSettings = {
+type LspSettings = {
   servers: Record<string, LspServerSettings>;
 };
 
@@ -333,7 +333,7 @@ export type GetLspReferencesInput = GetLspHoverInput & {
   includeDeclaration?: boolean;
 };
 
-export type GetRepoFileInput = {
+type GetRepoFileInput = {
   repoPath: string;
   relPath: string;
   revision?: string | null;
@@ -443,7 +443,7 @@ export type DesktopApi = {
   getLspReferences(input: GetLspReferencesInput): Promise<LspLocation[]>;
 };
 
-export type DesktopUpdateStatus =
+type DesktopUpdateStatus =
   | "disabled"
   | "idle"
   | "checking"
@@ -475,7 +475,7 @@ export type DesktopUpdateActionResult = {
   state: DesktopUpdateState;
 };
 
-export type DesktopUpdateApi = {
+type DesktopUpdateApi = {
   getUpdateState(): Promise<DesktopUpdateState>;
   checkForUpdates(): Promise<DesktopUpdateActionResult>;
   downloadUpdate(): Promise<DesktopUpdateActionResult>;
@@ -483,11 +483,11 @@ export type DesktopUpdateApi = {
   onUpdateState(listener: (state: DesktopUpdateState) => void): () => void;
 };
 
-export type DesktopLspApi = {
+type DesktopLspApi = {
   onLspDiagnostics(listener: (event: LspDiagnosticsEvent) => void): () => void;
 };
 
-export type DesktopSettingsApi = {
+type DesktopSettingsApi = {
   onAppSettingsChanged(listener: (settings: AppSettings) => void): () => void;
 };
 

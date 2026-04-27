@@ -20,11 +20,24 @@
         "electron/**/*.{ts,tsx}",
         "scripts/**/*.{js,mjs,cjs,ts}"
       ],
-      "ignore": ["src/**/*.d.ts"],
+      "ignore": [
+        "src/**/*.d.ts",
+        "src/components/ui/**"
+      ],
       "ignoreDependencies": [
         "tw-animate-css",
         "tailwindcss",
-        "@vitest/coverage-v8"
+        "@vitest/coverage-v8",
+        "@hookform/resolvers",
+        "react-hook-form",
+        "input-otp",
+        "react-day-picker",
+        "vaul",
+        "recharts",
+        "embla-carousel-react",
+        "shadcn",
+        "@tanstack/react-virtual",
+        "zod"
       ]
     }
   }

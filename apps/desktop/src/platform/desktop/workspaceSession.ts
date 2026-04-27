@@ -1,6 +1,6 @@
 import type { WorkspaceSession } from "./contracts";
 
-export const MAX_RECENT_REPOS = 12;
+const MAX_RECENT_REPOS = 12;
 
 function normalizeRepoPath(repoPath: unknown): string | null {
   if (typeof repoPath !== "string") return null;

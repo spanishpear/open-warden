@@ -20,4 +20,4 @@ export function buildPullRequestPreviewPath({
   return `${buildPullRequestsInboxPath()}/${providerId}/${owner}/${repo}/${String(pullRequestNumber)}`;
 }
 
-export const buildPullRequestReviewPath = buildPullRequestPreviewPath;
+const buildPullRequestReviewPath = buildPullRequestPreviewPath;

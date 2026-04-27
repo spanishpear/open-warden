@@ -83,12 +83,12 @@ export type FileViewerTarget = {
 
 export type SymbolPeekKind = "definitions" | "references";
 
-export type SymbolPeekSourceDocument = {
+type SymbolPeekSourceDocument = {
   repoPath: string;
   relPath: string;
 };
 
-export type SymbolPeekAnchor = {
+type SymbolPeekAnchor = {
   lineNumber: number;
   lineIndex: string | null;
 };
@@ -147,7 +147,7 @@ export type PullRequestReviewAnchor = {
   pendingDrafts: CommentItem[];
 };
 
-export type ComposerAnnotation = {
+type ComposerAnnotation = {
   type: "composer";
   side: "deletions" | "additions";
   endSide?: "deletions" | "additions";
@@ -155,19 +155,19 @@ export type ComposerAnnotation = {
   endLine: number;
 };
 
-export type DiagnosticAnnotation = {
+type DiagnosticAnnotation = {
   type: "diagnostic";
   diagnostic: LspDiagnostic;
 };
 
-export type PullRequestThreadAnnotation = {
+type PullRequestThreadAnnotation = {
   type: "pull-request-thread";
   thread: PullRequestReviewThread;
   repoPath: string;
   pullRequestNumber: number;
 };
 
-export type PullRequestAnchorAnnotation = {
+type PullRequestAnchorAnnotation = {
   type: "pull-request-anchor";
   anchor: PullRequestReviewAnchor;
   repoPath: string;

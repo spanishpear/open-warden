@@ -64,7 +64,7 @@ function findDiffHost(
   return null;
 }
 
-export function findRenderedDiffLine(
+function findRenderedDiffLine(
   container: HTMLElement,
   lineNumber: number,
   lineIndex?: string | null,

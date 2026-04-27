@@ -18,7 +18,7 @@ import type {
 } from "@/features/source-control/types";
 import { formatRange } from "@/features/source-control/utils";
 
-export type CopyCommentsResult = {
+type CopyCommentsResult = {
   ok: boolean;
   copiedCount: number;
   clearedCount: number;
@@ -85,7 +85,7 @@ export const removeComment =
     dispatch(removeCommentAction(id));
   };
 
-export const removeCommentsByIds =
+const removeCommentsByIds =
   (ids: string[]): AppThunk =>
   (dispatch) => {
     dispatch(removeCommentsByIdsAction(ids));
@@ -189,6 +189,6 @@ export async function confirmDiscard(message: string): Promise<boolean> {
   }
 }
 
-export function canDiscard(bucket: Bucket): boolean {
+function canDiscard(bucket: Bucket): boolean {
   return bucket === "unstaged" || bucket === "untracked" || bucket === "staged";
 }
