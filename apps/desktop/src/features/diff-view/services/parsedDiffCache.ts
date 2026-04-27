@@ -1,6 +1,9 @@
 import type { ParsePriority } from "@/features/diff-view/services/parseDiffInWorker";
 import { getDiffRenderGate } from "@/features/diff-view/services/diffRenderLimits";
-import { parseDiffInWorker } from "@/features/diff-view/services/parseDiffInWorker";
+import {
+  parseDiffInWorker,
+  parsePatchInWorker,
+} from "@/features/diff-view/services/parseDiffInWorker";
 import type { DiffFile } from "@/features/source-control/types";
 
 export type ParsedDiff = Awaited<ReturnType<typeof parseDiffInWorker>>;
@@ -11,6 +14,11 @@ type ParsedDiffRequest = {
   key: string;
   oldFile: ParseWorkerFile;
   newFile: ParseWorkerFile;
+};
+
+type ParsedPatchRequest = {
+  key: string;
+  patchText: string;
 };
 
 const MAX_PARSED_DIFF_CACHE_SIZE = 64;
@@ -98,6 +106,24 @@ export function getCachedParsedDiff(key: string): ParsedDiff | null | undefined 
   return diff;
 }
 
+export function getParsedPatchRequest(
+  activePath: string | null,
+  patchText: string | null,
+  cacheSalt = "",
+  options: { allowLargeDiff?: boolean } = {},
+): ParsedPatchRequest | null {
+  const diffRenderGate = getDiffRenderGate(activePath, null, null);
+  if (!diffRenderGate || diffRenderGate === "unrenderable") return null;
+  if (diffRenderGate === "large" && !options.allowLargeDiff) return null;
+
+  if (patchText == null) return null;
+
+  const patchHash = hashStringFNV1a(patchText + cacheSalt);
+  const key = `p-${patchHash}:${patchText.length}`;
+
+  return { key, patchText };
+}
+
 export function peekCachedParsedDiff(key: string): ParsedDiff | null | undefined {
   if (!parsedDiffCache.has(key)) return undefined;
   return parsedDiffCache.get(key) ?? null;
@@ -132,6 +158,47 @@ export async function loadParsedDiff(
     .then((parsedDiff) => {
       touchParsedDiff(request.key, parsedDiff);
       return parsedDiff;
+    })
+    .catch((error) => {
+      if (isAbortError(error)) {
+        return null;
+      }
+      return null;
+    })
+    .finally(() => {
+      const currentInFlight = inFlightParses.get(request.key);
+      if (currentInFlight?.promise === parsePromise) {
+        inFlightParses.delete(request.key);
+      }
+    });
+
+  inFlightParses.set(request.key, { promise: parsePromise, priority, controller });
+  return parsePromise;
+}
+
+export async function loadParsedPatch(
+  request: ParsedPatchRequest,
+  priority: ParsePriority = "high",
+): Promise<ParsedDiff | null> {
+  const cached = getCachedParsedDiff(request.key);
+  if (cached !== undefined) return cached;
+
+  const inFlight = inFlightParses.get(request.key);
+  if (inFlight && (priority === "low" || inFlight.priority === "high")) {
+    return inFlight.promise;
+  }
+
+  inFlight?.controller.abort();
+
+  const controller = new AbortController();
+
+  const parsePromise = parsePatchInWorker(request.patchText, controller.signal)
+    .then((parsedPatches) => {
+      // For patch parsing we will store the first parsed file as the cached value
+      // to align with getCachedParsedDiff semantics which stores single file diffs.
+      const parsed = parsedPatches.length > 0 ? parsedPatches[0].files[0] : null;
+      touchParsedDiff(request.key, parsed);
+      return parsed;
     })
     .catch((error) => {
       if (isAbortError(error)) {
