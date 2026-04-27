@@ -3,7 +3,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { useEffect, useRef } from "react";
 import { MemoryRouter } from "react-router";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 
 import { gitApi } from "@/features/source-control/api";
 import { LspSymbolPeekContainer } from "@/features/lsp/components/LspSymbolPeek";

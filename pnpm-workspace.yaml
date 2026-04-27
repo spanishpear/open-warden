@@ -2,8 +2,25 @@ packages:
   - apps/*
   - crates/*
 
+catalog:
+  vite: npm:@voidzero-dev/vite-plus-core@latest
+  vite-plus: 'catalog:'
+  vitest: npm:@voidzero-dev/vite-plus-test@latest
+
 onlyBuiltDependencies:
   - electron
   - electron-winstaller
   - esbuild
   - msw
+
+overrides:
+  vite: 'catalog:'
+  vitest: 'catalog:'
+
+peerDependencyRules:
+  allowAny:
+    - vite
+    - vitest
+  allowedVersions:
+    vite: '*'
+    vitest: '*'

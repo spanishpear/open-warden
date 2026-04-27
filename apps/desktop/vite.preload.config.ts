@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import { defineConfig } from "vite";
+import { defineConfig } from "vite-plus";
 
 const external = ["electron", ...Object.keys(process.binding("natives"))];
 

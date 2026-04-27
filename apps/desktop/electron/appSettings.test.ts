@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { rmSync } from "node:fs";
 
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vite-plus/test";
 
 let userDataPath = "";
 

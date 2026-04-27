@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig } from "vite-plus";
 
 import { createRendererConfig } from "./vite.shared.config";
 

@@ -7,3 +7,4 @@ pnpm lint
 pnpm fmt:check
 
 echo "Pre-commit checks passed."
+vp staged

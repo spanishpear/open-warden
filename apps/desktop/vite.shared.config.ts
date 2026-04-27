@@ -2,7 +2,7 @@ import path from "node:path";
 
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
-import type { UserConfig } from "vite";
+import type { UserConfig } from "vite-plus";
 
 function resolveDevServerPort() {
   const parsed = Number.parseInt(process.env.VITE_DEV_SERVER_PORT ?? "1420", 10);

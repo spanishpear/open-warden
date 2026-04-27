@@ -2,33 +2,46 @@
   "name": "open-warden",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "engines": {
+      "node": ">=22"
+    },
+    "os": ["darwin", "linux"],
+    "runtime": {
+      "name": "node",
+      "onFail": "error"
+    },
+    "packageManager": {
+      "name": "pnpm",
+      "onFail": "error"
+    }
+  },
   "scripts": {
-    "dev": "turbo run dev --filter=desktop",
+    "dev": "vp run dev --filter=desktop",
     "dev:electron": "pnpm --filter desktop dev:electron",
     "electron:dev": "pnpm --filter desktop electron:dev",
-    "build": "turbo run build",
+    "build": "vp run build",
     "build:electron": "pnpm --filter desktop build:electron",
     "electron:build": "pnpm --filter desktop electron:build",
     "make:electron": "pnpm --filter desktop make:electron",
     "electron:make": "pnpm --filter desktop electron:make",
-    "lint": "oxlint --report-unused-disable-directives",
+    "lint": "vp lint --report-unused-disable-directives",
     "typecheck": "pnpm --filter desktop typecheck",
-    "test": "turbo run test",
+    "test": "vp run test",
     "test:e2e": "pnpm --filter desktop test:e2e",
     "test:e2e:install": "pnpm --filter desktop test:e2e:install",
-    "fmt": "oxfmt --ignore-path .oxfmtignore",
-    "fmt:check": "oxfmt --check --ignore-path .oxfmtignore",
+    "fmt": "vp fmt --ignore-path .oxfmtignore",
+    "fmt:check": "vp fmt --check --ignore-path .oxfmtignore",
     "format": "pnpm fmt",
     "format:check": "pnpm fmt:check",
     "knip": "knip",
     "knip:fix": "knip --fix",
-    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm fmt:check"
+    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm fmt:check",
+    "prepare": "vp config"
   },
   "devDependencies": {
     "knip": "^6.7.0",
-    "oxfmt": "^0.46.0",
-    "oxlint": "^1.61.0",
-    "turbo": "^2.9.6"
+    "vite-plus": "catalog:"
   },
   "packageManager": "pnpm@10.28.0"
 }

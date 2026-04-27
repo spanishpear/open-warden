@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import net from "node:net";
 import path from "node:path";
 
-import { afterEach, expect, test } from "vitest";
+import { afterEach, expect, test } from "vite-plus/test";
 
 const activeChildren = new Set<ReturnType<typeof spawn>>();
 

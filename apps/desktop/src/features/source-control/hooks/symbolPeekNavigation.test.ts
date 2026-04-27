@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import type { RootState } from "@/app/store";
 import { getNextSymbolPeekIndex } from "./symbolPeekNavigation";

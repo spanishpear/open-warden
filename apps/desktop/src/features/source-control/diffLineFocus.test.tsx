@@ -1,5 +1,5 @@
 import { render } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { useEffect, useRef } from "react";
 
 import { useDiffLineFocus } from "@/features/source-control/diffLineFocus";
