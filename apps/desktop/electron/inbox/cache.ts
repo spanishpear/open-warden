@@ -53,13 +53,15 @@ interface UserIdentityRecord {
   fetched_at: number;
 }
 
-let db: Database.Database | null = null;
+type DatabaseInstance = InstanceType<typeof Database>;
+
+let db: DatabaseInstance | null = null;
 
 function resolveCacheDbPath(): string {
   return path.join(app.getPath("userData"), CACHE_DB_FILE_NAME);
 }
 
-function initializeSchema(sqlite: Database.Database): void {
+function initializeSchema(sqlite: DatabaseInstance): void {
   sqlite.exec(`
     CREATE TABLE IF NOT EXISTS inbox_snapshots (
       repo_path TEXT NOT NULL,
@@ -128,7 +130,7 @@ function toUserIdentityRow(record: UserIdentityRecord | undefined): UserIdentity
   };
 }
 
-export function getDb(): Database.Database {
+export function getDb(): DatabaseInstance {
   if (!db) {
     const sqlite = new Database(resolveCacheDbPath());
     sqlite.pragma("journal_mode = WAL");
@@ -146,12 +148,12 @@ export function closeDb(): void {
 
 export function getInboxSnapshot(repoPath: string, scope: string): InboxSnapshotRow | null {
   const record = getDb()
-    .prepare(
+    .prepare<InboxSnapshotRecord | undefined>(
       `SELECT repo_path, scope, data_json, fetched_at, is_partial
        FROM inbox_snapshots
        WHERE repo_path = ? AND scope = ?`,
     )
-    .get(repoPath, scope) as InboxSnapshotRecord | undefined;
+    .get(repoPath, scope);
 
   return toInboxSnapshotRow(record);
 }
@@ -177,12 +179,12 @@ export function setInboxSnapshot(snapshot: InboxSnapshotRow): void {
 
 export function getCacheMetadata(key: string): CacheMetadataRow | null {
   const record = getDb()
-    .prepare(
+    .prepare<CacheMetadataRecord | undefined>(
       `SELECT key, value, updated_at
        FROM cache_metadata
        WHERE key = ?`,
     )
-    .get(key) as CacheMetadataRecord | undefined;
+    .get(key);
 
   return toCacheMetadataRow(record);
 }
@@ -205,12 +207,12 @@ export function setCacheMetadata(metadata: CacheMetadataRow): void {
 
 export function getUserIdentity(providerId: string): UserIdentityRow | null {
   const record = getDb()
-    .prepare(
+    .prepare<UserIdentityRecord | undefined>(
       `SELECT provider_id, uuid, account_id, login, display_name, fetched_at
        FROM user_identity
        WHERE provider_id = ?`,
     )
-    .get(providerId) as UserIdentityRecord | undefined;
+    .get(providerId);
 
   return toUserIdentityRow(record);
 }

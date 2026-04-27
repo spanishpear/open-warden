@@ -3,8 +3,13 @@ import { describe, expect, it } from "vitest";
 import { InboxSection, type InboxParticipant, type InboxPullRequest } from "./types";
 import { classifyPullRequest, classifyPullRequests } from "./sections";
 
+const USER_ACCOUNT_ID = "user-account-id";
 const USER_UUID = "{user-uuid}";
 const OTHER_UUID = "{other-uuid}";
+const USER_IDENTITY = {
+  accountId: USER_ACCOUNT_ID,
+  uuid: USER_UUID,
+};
 
 function reviewer(overrides: Partial<InboxParticipant> = {}): InboxParticipant {
   return {
@@ -54,7 +59,17 @@ describe("electron inbox section classification", () => {
       authorUuid: USER_UUID,
     });
 
-    expect(classifyPullRequest(pr, USER_UUID)).toBe(InboxSection.DRAFTS);
+    expect(classifyPullRequest(pr, USER_IDENTITY)).toBe(InboxSection.DRAFTS);
+  });
+
+  it("classifies my pull request as authored by me when authorAccountId matches", () => {
+    const pr = createPullRequest({
+      isDraft: true,
+      authorUuid: OTHER_UUID,
+      authorAccountId: USER_ACCOUNT_ID,
+    });
+
+    expect(classifyPullRequest(pr, USER_IDENTITY)).toBe(InboxSection.DRAFTS);
   });
 
   it("classifies recently merged pull requests into MERGING_AND_MERGED", () => {
@@ -64,7 +79,20 @@ describe("electron inbox section classification", () => {
       authorUuid: OTHER_UUID,
     });
 
-    expect(classifyPullRequest(pr, USER_UUID)).toBe(InboxSection.MERGING_AND_MERGED);
+    expect(classifyPullRequest(pr, USER_IDENTITY)).toBe(InboxSection.MERGING_AND_MERGED);
+  });
+
+  it("classifies my recently merged pull request into MERGING_AND_MERGED before author waiting logic", () => {
+    const pr = createPullRequest({
+      state: "merged",
+      updatedAt: daysAgo(1),
+      authorUuid: USER_UUID,
+      authorAccountId: USER_ACCOUNT_ID,
+      reviewers: [reviewer({ uuid: "{reviewer-1}", approved: false })],
+      participants: [reviewer({ uuid: "{reviewer-1}", approved: false })],
+    });
+
+    expect(classifyPullRequest(pr, USER_IDENTITY)).toBe(InboxSection.MERGING_AND_MERGED);
   });
 
   it("does not classify old merged pull requests into the recent merged section", () => {
@@ -74,7 +102,7 @@ describe("electron inbox section classification", () => {
       authorUuid: OTHER_UUID,
     });
 
-    expect(classifyPullRequest(pr, USER_UUID)).toBeNull();
+    expect(classifyPullRequest(pr, USER_IDENTITY)).toBeNull();
   });
 
   it("classifies my pull request with reviewer changes requested into RETURNED_TO_YOU", () => {
@@ -84,7 +112,7 @@ describe("electron inbox section classification", () => {
       reviewers: [reviewer()],
     });
 
-    expect(classifyPullRequest(pr, USER_UUID)).toBe(InboxSection.RETURNED_TO_YOU);
+    expect(classifyPullRequest(pr, USER_IDENTITY)).toBe(InboxSection.RETURNED_TO_YOU);
   });
 
   it("classifies my non-draft pull request with pending reviewers into WAITING_FOR_REVIEW", () => {
@@ -94,7 +122,7 @@ describe("electron inbox section classification", () => {
       participants: [reviewer({ uuid: "{reviewer-1}" }), reviewer({ uuid: "{reviewer-2}" })],
     });
 
-    expect(classifyPullRequest(pr, USER_UUID)).toBe(InboxSection.WAITING_FOR_REVIEW);
+    expect(classifyPullRequest(pr, USER_IDENTITY)).toBe(InboxSection.WAITING_FOR_REVIEW);
   });
 
   it("does not classify my pull request as waiting when any reviewer has approved", () => {
@@ -104,7 +132,7 @@ describe("electron inbox section classification", () => {
       participants: [reviewer({ uuid: "{reviewer-1}", approved: true, state: "approved" })],
     });
 
-    expect(classifyPullRequest(pr, USER_UUID)).toBeNull();
+    expect(classifyPullRequest(pr, USER_IDENTITY)).toBeNull();
   });
 
   it("classifies someone else's pull request into NEEDS_REVIEW when I am a requested reviewer without approval yet", () => {
@@ -114,7 +142,19 @@ describe("electron inbox section classification", () => {
       participants: [],
     });
 
-    expect(classifyPullRequest(pr, USER_UUID)).toBe(InboxSection.NEEDS_REVIEW);
+    expect(classifyPullRequest(pr, USER_IDENTITY)).toBe(InboxSection.NEEDS_REVIEW);
+  });
+
+  it("classifies someone else's pull request into NEEDS_REVIEW when reviewer accountId matches", () => {
+    const pr = createPullRequest({
+      authorUuid: OTHER_UUID,
+      reviewers: [
+        reviewer({ uuid: "{different-reviewer}", accountId: USER_ACCOUNT_ID, approved: false }),
+      ],
+      participants: [],
+    });
+
+    expect(classifyPullRequest(pr, USER_IDENTITY)).toBe(InboxSection.NEEDS_REVIEW);
   });
 
   it("classifies someone else's pull request into APPROVED when my reviewer entry is approved", () => {
@@ -124,7 +164,7 @@ describe("electron inbox section classification", () => {
       participants: [reviewer({ uuid: USER_UUID, approved: true, state: "approved" })],
     });
 
-    expect(classifyPullRequest(pr, USER_UUID)).toBe(InboxSection.APPROVED);
+    expect(classifyPullRequest(pr, USER_IDENTITY)).toBe(InboxSection.APPROVED);
   });
 
   it("lets author sections win when I am both the author and a reviewer", () => {
@@ -135,7 +175,7 @@ describe("electron inbox section classification", () => {
       participants: [reviewer({ uuid: USER_UUID })],
     });
 
-    expect(classifyPullRequest(pr, USER_UUID)).toBe(InboxSection.DRAFTS);
+    expect(classifyPullRequest(pr, USER_IDENTITY)).toBe(InboxSection.DRAFTS);
   });
 
   it("excludes pull requests where I am neither author nor reviewer", () => {
@@ -145,7 +185,7 @@ describe("electron inbox section classification", () => {
       participants: [reviewer({ uuid: "{different-reviewer}" })],
     });
 
-    expect(classifyPullRequest(pr, USER_UUID)).toBeNull();
+    expect(classifyPullRequest(pr, USER_IDENTITY)).toBeNull();
   });
 
   it("groups pull requests by section and excludes unrelated ones", () => {
@@ -187,15 +227,12 @@ describe("electron inbox section classification", () => {
       participants: [],
     });
 
-    expect(classifyPullRequests([
-      drafts,
-      waiting,
-      returned,
-      needsReview,
-      approved,
-      merged,
-      excluded,
-    ], USER_UUID)).toEqual({
+    expect(
+      classifyPullRequests(
+        [drafts, waiting, returned, needsReview, approved, merged, excluded],
+        USER_IDENTITY,
+      ),
+    ).toEqual({
       [InboxSection.NEEDS_REVIEW]: [needsReview],
       [InboxSection.WAITING_FOR_REVIEW]: [waiting],
       [InboxSection.RETURNED_TO_YOU]: [returned],
@@ -206,7 +243,7 @@ describe("electron inbox section classification", () => {
   });
 
   it("returns empty arrays for every section when given no pull requests", () => {
-    expect(classifyPullRequests([], USER_UUID)).toEqual({
+    expect(classifyPullRequests([], USER_IDENTITY)).toEqual({
       [InboxSection.NEEDS_REVIEW]: [],
       [InboxSection.WAITING_FOR_REVIEW]: [],
       [InboxSection.RETURNED_TO_YOU]: [],

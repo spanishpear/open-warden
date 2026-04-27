@@ -49,7 +49,9 @@
   "packageManager": "pnpm@10.28.0",
   "pnpm": {
     "peerDependencyRules": {
-      "ignoreMissing": ["electron-builder-squirrel-windows"]
+      "ignoreMissing": [
+        "electron-builder-squirrel-windows"
+      ]
     }
   }
 }

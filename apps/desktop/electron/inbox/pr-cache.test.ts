@@ -6,6 +6,7 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 
 import { InboxSection } from "./types";
+import type { InboxPullRequest } from "./types";
 
 let userDataPath = "";
 
@@ -15,7 +16,7 @@ vi.mock("electron", () => ({
   },
 }));
 
-function createPullRequest(index: number) {
+function createPullRequest(index: number): InboxPullRequest {
   return {
     id: `bitbucket:${String(index)}`,
     providerId: "bitbucket" as const,
@@ -84,7 +85,11 @@ describe("electron inbox PR cache", () => {
     const { cacheInboxSnapshot, getCachedInboxSnapshot } = await import("./pr-cache");
 
     const openPr = createPullRequest(101);
-    const mergedPr = { ...createPullRequest(202), state: "merged" as const, section: InboxSection.MERGING_AND_MERGED };
+    const mergedPr = {
+      ...createPullRequest(202),
+      state: "merged" as const,
+      section: InboxSection.MERGING_AND_MERGED,
+    };
 
     cacheInboxSnapshot("/tmp/repo", "open", [openPr], false);
     cacheInboxSnapshot("/tmp/repo", "merged", [mergedPr], true);
@@ -143,7 +148,8 @@ describe("electron inbox PR cache", () => {
   });
 
   it("clears all scopes for a single repo path", async () => {
-    const { cacheInboxSnapshot, clearInboxCache, getCachedInboxSnapshot } = await import("./pr-cache");
+    const { cacheInboxSnapshot, clearInboxCache, getCachedInboxSnapshot } =
+      await import("./pr-cache");
 
     cacheInboxSnapshot("/tmp/repo-a", "open", [createPullRequest(1)], false);
     cacheInboxSnapshot("/tmp/repo-a", "merged", [createPullRequest(2)], false);
@@ -159,7 +165,8 @@ describe("electron inbox PR cache", () => {
   });
 
   it("clears all inbox snapshot data globally", async () => {
-    const { cacheInboxSnapshot, clearInboxCache, getCachedInboxSnapshot } = await import("./pr-cache");
+    const { cacheInboxSnapshot, clearInboxCache, getCachedInboxSnapshot } =
+      await import("./pr-cache");
 
     cacheInboxSnapshot("/tmp/repo-a", "open", [createPullRequest(1)], false);
     cacheInboxSnapshot("/tmp/repo-b", "merged", [createPullRequest(2)], false);

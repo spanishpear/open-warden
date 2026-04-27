@@ -85,7 +85,51 @@ function deserializeSnapshot(dataJson: string): InboxPullRequest[] | null {
     return null;
   }
 
-  return parsed as InboxPullRequest[];
+  // Map serialized snapshot back to strongly-typed InboxPullRequest objects
+  const mapped = parsed.map((item) => {
+    const pr = item as SerializedInboxPullRequest;
+    return {
+      id: pr.id,
+      providerId: pr.providerId,
+      number: pr.number,
+      title: pr.title,
+      state: pr.state,
+      isDraft: pr.isDraft,
+      authorLogin: pr.authorLogin,
+      authorDisplayName: pr.authorDisplayName,
+      authorUuid: pr.authorUuid,
+      authorAccountId: pr.authorAccountId,
+      url: pr.url,
+      baseRef: pr.baseRef,
+      headRef: pr.headRef,
+      headOwner: pr.headOwner,
+      headRepo: pr.headRepo,
+      updatedAt: pr.updatedAt,
+      participants: pr.participants.map((p) => ({
+        login: p.login,
+        displayName: p.displayName,
+        avatarUrl: p.avatarUrl,
+        uuid: p.uuid,
+        accountId: p.accountId,
+        role: p.role,
+        approved: p.approved,
+        state: p.state,
+      })),
+      reviewers: pr.reviewers.map((r) => ({
+        login: r.login,
+        displayName: r.displayName,
+        avatarUrl: r.avatarUrl,
+        uuid: r.uuid,
+        accountId: r.accountId,
+        role: r.role,
+        approved: r.approved,
+        state: r.state,
+      })),
+      section: pr.section,
+    } as InboxPullRequest;
+  });
+
+  return mapped;
 }
 
 export function cacheInboxSnapshot(
@@ -103,7 +147,10 @@ export function cacheInboxSnapshot(
   });
 }
 
-export function getCachedInboxSnapshot(repoPath: string, scope: CacheScope): CachedInboxSnapshot | null {
+export function getCachedInboxSnapshot(
+  repoPath: string,
+  scope: CacheScope,
+): CachedInboxSnapshot | null {
   const snapshot = getInboxSnapshot(repoPath, scope);
 
   if (!snapshot) {

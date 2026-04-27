@@ -77,9 +77,8 @@ describe("electron inbox content cache", () => {
   });
 
   it("clears the full cache root when no prefix is provided", async () => {
-    const { CONTENT_CACHE_ROOT, cacheContent, clearContentCache, getCachedContent } = await import(
-      "./content-cache"
-    );
+    const { CONTENT_CACHE_ROOT, cacheContent, clearContentCache, getCachedContent } =
+      await import("./content-cache");
 
     cacheContent("pr/bitbucket/acme/repo/1/base/head/patch.txt", "patch");
     cacheContent("git/repo-hash/abc123/src%2Ffile.ts", "file");

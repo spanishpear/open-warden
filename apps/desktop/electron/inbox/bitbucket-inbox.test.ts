@@ -8,6 +8,11 @@ import {
   fetchBitbucketRecentlyMergedPullRequests,
 } from "./bitbucket-inbox";
 
+const USER_IDENTITY = {
+  accountId: "user-account-id",
+  uuid: "{user-uuid}",
+};
+
 const hostedRepo: HostedRepoRef = {
   providerId: "bitbucket",
   owner: "workspace-slug",
@@ -135,7 +140,7 @@ describe("bitbucket inbox queries", () => {
       }),
     );
 
-    const result = await fetchBitbucketInboxPullRequests(hostedRepo, connection, "{user-uuid}");
+    const result = await fetchBitbucketInboxPullRequests(hostedRepo, connection, USER_IDENTITY);
 
     expect(result).toEqual({
       prs: [
@@ -191,13 +196,11 @@ describe("bitbucket inbox queries", () => {
     const [url, init] = fetchMock.mock.calls[0] ?? [];
     const searchParams = new URL(String(url)).searchParams;
 
-    expect(`${String(url)}`).toContain(
-      "/repositories/workspace-slug/repo-slug/pullrequests?",
-    );
-    expect(searchParams.get("pagelen")).toBe("100");
+    expect(`${String(url)}`).toContain("/repositories/workspace-slug/repo-slug/pullrequests?");
+    expect(searchParams.get("pagelen")).toBe("20");
     expect(searchParams.get("sort")).toBe("-updated_on");
     expect(searchParams.get("q")).toBe(
-      'state="OPEN" AND (author.uuid="{user-uuid}" OR reviewers.uuid="{user-uuid}")',
+      'state="OPEN" AND (author.account_id="user-account-id" OR reviewers.account_id="user-account-id")',
     );
     expect(searchParams.get("fields")).toBe(
       "+values.participants,+values.participants.user,+values.participants.user.uuid,+values.participants.user.account_id,+values.participants.role,+values.participants.approved,+values.participants.state,+values.reviewers,+values.reviewers.user,+values.reviewers.user.uuid,+values.reviewers.user.account_id,+values.reviewers.role,+values.reviewers.approved,+values.author.uuid,+values.author.account_id,-values.summary,-values.rendered,-values.description",
@@ -221,7 +224,7 @@ describe("bitbucket inbox queries", () => {
     const result = await fetchBitbucketRecentlyMergedPullRequests(
       hostedRepo,
       connection,
-      "{user-uuid}",
+      USER_IDENTITY,
     );
 
     expect(result.totalFetched).toBe(1);
@@ -230,9 +233,90 @@ describe("bitbucket inbox queries", () => {
     const [url] = fetchMock.mock.calls[0] ?? [];
     const searchParams = new URL(String(url)).searchParams;
     expect(searchParams.get("q")).toBe(
-      'state="MERGED" AND (author.uuid="{user-uuid}" OR reviewers.uuid="{user-uuid}") AND updated_on>"2026-04-20T12:00:00.000Z"',
+      'state="MERGED" AND (author.account_id="user-account-id" OR reviewers.account_id="user-account-id") AND updated_on>"2026-04-20T12:00:00.000Z"',
     );
     expect(searchParams.get("fields")).toContain("+values.participants.user.uuid");
+  });
+
+  it("maps reviewers from reviewer participants, ignores empty reviewer identities, and deduplicates duplicate PR ids", async () => {
+    const duplicatedPullRequest = createPullRequest(104, "2026-04-27T10:30:00.000Z");
+    duplicatedPullRequest.participants = [
+      {
+        user: {
+          nickname: "reviewer-login",
+          display_name: "Reviewer Name",
+          uuid: USER_IDENTITY.uuid,
+          account_id: USER_IDENTITY.accountId,
+          links: {
+            avatar: {
+              href: "https://avatar.example.com/reviewer.png",
+            },
+          },
+        },
+        role: "REVIEWER",
+        approved: false,
+        state: "changes_requested",
+      },
+    ];
+    duplicatedPullRequest.reviewers = [
+      {
+        user: {
+          nickname: "reviewer-login",
+          display_name: "Reviewer Name",
+          uuid: USER_IDENTITY.uuid,
+          account_id: USER_IDENTITY.accountId,
+          links: {
+            avatar: {
+              href: "https://avatar.example.com/reviewer.png",
+            },
+          },
+        },
+        role: "REVIEWER",
+        approved: false,
+        state: "approved",
+      },
+    ];
+
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({
+        values: [duplicatedPullRequest, duplicatedPullRequest],
+      }),
+    );
+
+    const result = await fetchBitbucketInboxPullRequests(hostedRepo, connection, USER_IDENTITY);
+
+    expect(result.prs).toHaveLength(1);
+    expect(result.prs[0]?.reviewers).toEqual([
+      {
+        login: "reviewer-login",
+        displayName: "Reviewer Name",
+        avatarUrl: "https://avatar.example.com/reviewer.png",
+        uuid: USER_IDENTITY.uuid,
+        accountId: USER_IDENTITY.accountId,
+        role: "REVIEWER",
+        approved: false,
+        state: "approved",
+      },
+    ]);
+  });
+
+  it("falls back to uuid filters when accountId is unavailable", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({
+        values: [createPullRequest(103, "2026-04-27T10:30:00.000Z")],
+      }),
+    );
+
+    await fetchBitbucketInboxPullRequests(hostedRepo, connection, {
+      accountId: null,
+      uuid: "{user-uuid}",
+    });
+
+    const [url] = fetchMock.mock.calls[0] ?? [];
+    const searchParams = new URL(String(url)).searchParams;
+    expect(searchParams.get("q")).toBe(
+      'state="OPEN" AND (author.uuid="{user-uuid}" OR reviewers.uuid="{user-uuid}")',
+    );
   });
 
   it("follows paginated Bitbucket next links and combines all returned PRs", async () => {
@@ -249,7 +333,7 @@ describe("bitbucket inbox queries", () => {
         }),
       );
 
-    const result = await fetchBitbucketInboxPullRequests(hostedRepo, connection, "{user-uuid}");
+    const result = await fetchBitbucketInboxPullRequests(hostedRepo, connection, USER_IDENTITY);
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(result.totalFetched).toBe(2);
@@ -261,37 +345,37 @@ describe("bitbucket inbox queries", () => {
   });
 
   it("caps inbox fetches at 500 pull requests and marks the result as partial", async () => {
-    for (let pageIndex = 0; pageIndex < 6; pageIndex += 1) {
+    for (let pageIndex = 0; pageIndex < 26; pageIndex += 1) {
       fetchMock.mockResolvedValueOnce(
         jsonResponse({
-          values: Array.from({ length: 100 }, (_, offset) =>
+          values: Array.from({ length: 20 }, (_, offset) =>
             createPullRequest(
-              pageIndex * 100 + offset + 1,
+              pageIndex * 20 + offset + 1,
               `2026-04-27T${String(11 - pageIndex).padStart(2, "0")}:00:00.000Z`,
             ),
           ),
           next:
-            pageIndex < 5
+            pageIndex < 25
               ? `https://api.bitbucket.org/2.0/repositories/workspace-slug/repo-slug/pullrequests?page=${String(pageIndex + 2)}`
               : undefined,
         }),
       );
     }
 
-    const result = await fetchBitbucketInboxPullRequests(hostedRepo, connection, "{user-uuid}");
+    const result = await fetchBitbucketInboxPullRequests(hostedRepo, connection, USER_IDENTITY);
 
-    expect(fetchMock).toHaveBeenCalledTimes(5);
+    expect(fetchMock).toHaveBeenCalledTimes(25);
     expect(result.totalFetched).toBe(500);
     expect(result.prs).toHaveLength(500);
     expect(result.isPartial).toBe(true);
-    expect(result.prs.at(-1)?.number).toBe(500);
+    expect(new Set(result.prs.map((pr) => pr.id)).size).toBe(500);
   });
 
   it("returns an empty open inbox result when the Bitbucket API request fails", async () => {
     fetchMock.mockResolvedValueOnce(new Response("server error", { status: 500 }));
 
     await expect(
-      fetchBitbucketInboxPullRequests(hostedRepo, connection, "{user-uuid}"),
+      fetchBitbucketInboxPullRequests(hostedRepo, connection, USER_IDENTITY),
     ).resolves.toEqual({
       prs: [],
       isPartial: false,
@@ -310,7 +394,7 @@ describe("bitbucket inbox queries", () => {
       .mockResolvedValueOnce(new Response("rate limited", { status: 429 }));
 
     await expect(
-      fetchBitbucketRecentlyMergedPullRequests(hostedRepo, connection, "{user-uuid}"),
+      fetchBitbucketRecentlyMergedPullRequests(hostedRepo, connection, USER_IDENTITY),
     ).resolves.toEqual({
       prs: [],
       isPartial: false,

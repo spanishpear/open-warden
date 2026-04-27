@@ -111,6 +111,13 @@ export type PullRequestParticipant = {
   state: "approved" | "changes_requested" | null;
 };
 
+export type BuildStatus = {
+  state: "successful" | "failed" | "inprogress" | "stopped";
+  name: string;
+  url: string;
+  key: string;
+};
+
 export type PullRequestSummary = {
   id: string;
   providerId: GitProviderId;
@@ -130,6 +137,8 @@ export type PullRequestSummary = {
   reviewers?: PullRequestParticipant[];
   authorUuid?: string | null;
   authorAccountId?: string | null;
+  commentCount?: number;
+  buildStatuses?: BuildStatus[];
 };
 
 export type ListPullRequestsInput = {

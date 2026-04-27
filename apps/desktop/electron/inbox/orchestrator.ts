@@ -1,9 +1,16 @@
-import type { HostedRepoRef, InboxPullRequestsResult, PullRequestSummary } from "../../src/platform/desktop/contracts";
+import type {
+  HostedRepoRef,
+  InboxPullRequestsResult,
+  PullRequestSummary,
+} from "../../src/platform/desktop/contracts";
 import { resolveHostedRepo } from "../hosted-repos/repository";
 import { missingConnectionMessage, providerDisplayName } from "../hosted-repos/providers";
 import { getProviderConnection, type ProviderConnectionSecret } from "../providerConnections";
 
-import { fetchBitbucketInboxPullRequests, fetchBitbucketRecentlyMergedPullRequests } from "./bitbucket-inbox";
+import {
+  fetchBitbucketInboxPullRequests,
+  fetchBitbucketRecentlyMergedPullRequests,
+} from "./bitbucket-inbox";
 import { getOrResolveUserIdentity } from "./identity";
 import {
   cacheInboxSnapshot,
@@ -14,6 +21,18 @@ import {
 } from "./pr-cache";
 import { classifyPullRequests } from "./sections";
 import { InboxSection, type InboxPullRequest } from "./types";
+
+function dedupePullRequests(pullRequests: InboxPullRequest[]): InboxPullRequest[] {
+  const seen = new Set<string>();
+  return pullRequests.filter((pullRequest) => {
+    if (seen.has(pullRequest.id)) {
+      return false;
+    }
+
+    seen.add(pullRequest.id);
+    return true;
+  });
+}
 
 function emptySections(): Record<string, PullRequestSummary[]> {
   return {
@@ -48,13 +67,22 @@ function toResultSections(
   };
 }
 
+type BitbucketUserIdentity = {
+  accountId: string | null;
+  uuid: string | null;
+};
+
 async function fetchAndCacheMerged(
   repoPath: string,
   hostedRepo: HostedRepoRef,
   connection: ProviderConnectionSecret,
-  userUuid: string,
+  userIdentity: BitbucketUserIdentity,
 ): Promise<void> {
-  const mergedResult = await fetchBitbucketRecentlyMergedPullRequests(hostedRepo, connection, userUuid);
+  const mergedResult = await fetchBitbucketRecentlyMergedPullRequests(
+    hostedRepo,
+    connection,
+    userIdentity,
+  );
   cacheInboxSnapshot(repoPath, "merged", mergedResult.prs, mergedResult.isPartial);
 }
 
@@ -62,11 +90,11 @@ async function refreshBitbucketInbox(
   repoPath: string,
   hostedRepo: HostedRepoRef,
   connection: ProviderConnectionSecret,
-  userUuid: string,
+  userIdentity: BitbucketUserIdentity,
 ): Promise<void> {
-  const openResult = await fetchBitbucketInboxPullRequests(hostedRepo, connection, userUuid);
+  const openResult = await fetchBitbucketInboxPullRequests(hostedRepo, connection, userIdentity);
   cacheInboxSnapshot(repoPath, "open", openResult.prs, openResult.isPartial);
-  await fetchAndCacheMerged(repoPath, hostedRepo, connection, userUuid);
+  await fetchAndCacheMerged(repoPath, hostedRepo, connection, userIdentity);
 }
 
 export async function getInboxPullRequests(repoPath: string): Promise<InboxPullRequestsResult> {
@@ -76,7 +104,9 @@ export async function getInboxPullRequests(repoPath: string): Promise<InboxPullR
   }
 
   if (hostedRepo.providerId !== "bitbucket") {
-    throw new Error(`${providerDisplayName(hostedRepo.providerId)} inbox pull requests are not supported yet.`);
+    throw new Error(
+      `${providerDisplayName(hostedRepo.providerId)} inbox pull requests are not supported yet.`,
+    );
   }
 
   const connection = await getProviderConnection(hostedRepo.providerId);
@@ -85,24 +115,34 @@ export async function getInboxPullRequests(repoPath: string): Promise<InboxPullR
   }
 
   const userIdentity = await getOrResolveUserIdentity(hostedRepo.providerId, connection);
-  if (!userIdentity?.uuid || !userIdentity.login) {
+  if ((!userIdentity?.accountId && !userIdentity?.uuid) || !userIdentity.login) {
     return emptyResult();
   }
+
+  const bitbucketUserIdentity: BitbucketUserIdentity = {
+    accountId: userIdentity.accountId,
+    uuid: userIdentity.uuid,
+  };
 
   const cachedOpenSnapshot = getCachedInboxSnapshot(repoPath, "open");
   if (cachedOpenSnapshot) {
     const stale = isCacheStale(cachedOpenSnapshot.fetchedAt, OPEN_CACHE_TTL_MS);
     if (stale) {
       setTimeout(() => {
-        void refreshBitbucketInbox(repoPath, hostedRepo, connection, userIdentity.uuid).catch(() => undefined);
+        void refreshBitbucketInbox(repoPath, hostedRepo, connection, bitbucketUserIdentity).catch(
+          () => undefined,
+        );
       }, 0);
     }
 
     return {
       sections: toResultSections(
         classifyPullRequests(
-          [...cachedOpenSnapshot.prs, ...(getCachedInboxSnapshot(repoPath, "merged")?.prs ?? [])],
-          userIdentity.uuid,
+          dedupePullRequests([
+            ...cachedOpenSnapshot.prs,
+            ...(getCachedInboxSnapshot(repoPath, "merged")?.prs ?? []),
+          ]),
+          bitbucketUserIdentity,
         ),
       ),
       userLogin: userIdentity.login,
@@ -111,13 +151,19 @@ export async function getInboxPullRequests(repoPath: string): Promise<InboxPullR
     };
   }
 
-  const openResult = await fetchBitbucketInboxPullRequests(hostedRepo, connection, userIdentity.uuid);
+  const openResult = await fetchBitbucketInboxPullRequests(
+    hostedRepo,
+    connection,
+    bitbucketUserIdentity,
+  );
   cacheInboxSnapshot(repoPath, "open", openResult.prs, openResult.isPartial);
 
-  void fetchAndCacheMerged(repoPath, hostedRepo, connection, userIdentity.uuid).catch(() => undefined);
+  void fetchAndCacheMerged(repoPath, hostedRepo, connection, bitbucketUserIdentity).catch(
+    () => undefined,
+  );
 
   return {
-    sections: toResultSections(classifyPullRequests(openResult.prs, userIdentity.uuid)),
+    sections: toResultSections(classifyPullRequests(openResult.prs, bitbucketUserIdentity)),
     userLogin: userIdentity.login,
     fetchedAt: Date.now(),
     isStale: false,

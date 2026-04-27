@@ -1,6 +1,11 @@
-import { InboxSection, type InboxPullRequest } from "./types";
+import { InboxSection, type InboxParticipant, type InboxPullRequest } from "./types";
 
 const RECENT_MERGED_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+
+type PullRequestUserIdentity = {
+  accountId: string | null;
+  uuid: string | null;
+};
 
 function isRecentMergedPullRequest(pullRequest: InboxPullRequest): boolean {
   if (pullRequest.state !== "merged") {
@@ -15,19 +20,51 @@ function isRecentMergedPullRequest(pullRequest: InboxPullRequest): boolean {
   return Date.now() - updatedAt <= RECENT_MERGED_WINDOW_MS;
 }
 
-function isAuthor(pullRequest: InboxPullRequest, userUuid: string): boolean {
-  return pullRequest.authorUuid === userUuid;
+function matchesUserIdentity(
+  candidateIdentity: PullRequestUserIdentity,
+  userIdentity: PullRequestUserIdentity,
+): boolean {
+  if (userIdentity.accountId && candidateIdentity.accountId === userIdentity.accountId) {
+    return true;
+  }
+
+  if (userIdentity.uuid && candidateIdentity.uuid === userIdentity.uuid) {
+    return true;
+  }
+
+  return false;
 }
 
-function reviewerEntryForUser(pullRequest: InboxPullRequest, userUuid: string) {
-  return pullRequest.reviewers.find((reviewer) => reviewer.uuid === userUuid) ?? null;
+function isAuthor(pullRequest: InboxPullRequest, userIdentity: PullRequestUserIdentity): boolean {
+  return matchesUserIdentity(
+    {
+      accountId: pullRequest.authorAccountId,
+      uuid: pullRequest.authorUuid,
+    },
+    userIdentity,
+  );
+}
+
+function reviewerEntryForUser(
+  pullRequest: InboxPullRequest,
+  userIdentity: PullRequestUserIdentity,
+) {
+  return (
+    (pullRequest.reviewers as InboxParticipant[]).find((reviewer) =>
+      matchesUserIdentity(reviewer, userIdentity),
+    ) ?? null
+  );
 }
 
 export function classifyPullRequest(
   pullRequest: InboxPullRequest,
-  userUuid: string,
+  userIdentity: PullRequestUserIdentity,
 ): InboxSection | null {
-  if (isAuthor(pullRequest, userUuid)) {
+  if (isRecentMergedPullRequest(pullRequest)) {
+    return InboxSection.MERGING_AND_MERGED;
+  }
+
+  if (isAuthor(pullRequest, userIdentity)) {
     if (pullRequest.isDraft) {
       return InboxSection.DRAFTS;
     }
@@ -36,18 +73,17 @@ export function classifyPullRequest(
       return InboxSection.RETURNED_TO_YOU;
     }
 
-    if (pullRequest.reviewers.length > 0 && !pullRequest.reviewers.some((reviewer) => reviewer.approved)) {
+    if (
+      pullRequest.reviewers.length > 0 &&
+      !pullRequest.reviewers.some((reviewer) => reviewer.approved)
+    ) {
       return InboxSection.WAITING_FOR_REVIEW;
     }
 
     return null;
   }
 
-  if (isRecentMergedPullRequest(pullRequest)) {
-    return InboxSection.MERGING_AND_MERGED;
-  }
-
-  const reviewerEntry = reviewerEntryForUser(pullRequest, userUuid);
+  const reviewerEntry = reviewerEntryForUser(pullRequest, userIdentity);
   if (!reviewerEntry) {
     return null;
   }
@@ -61,7 +97,7 @@ export function classifyPullRequest(
 
 export function classifyPullRequests(
   pullRequests: InboxPullRequest[],
-  userUuid: string,
+  userIdentity: PullRequestUserIdentity,
 ): Record<InboxSection, InboxPullRequest[]> {
   const sections: Record<InboxSection, InboxPullRequest[]> = {
     [InboxSection.NEEDS_REVIEW]: [],
@@ -73,7 +109,7 @@ export function classifyPullRequests(
   };
 
   for (const pullRequest of pullRequests) {
-    const section = classifyPullRequest(pullRequest, userUuid);
+    const section = classifyPullRequest(pullRequest, userIdentity);
     if (!section) {
       continue;
     }

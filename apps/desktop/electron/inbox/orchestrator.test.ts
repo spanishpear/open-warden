@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test"
 import type { HostedRepoRef, PullRequestSummary } from "../../src/platform/desktop/contracts";
 
 import { InboxSection, type InboxPullRequest } from "./types";
+import type { ProviderConnectionSecret } from "../providerConnections";
 
 vi.mock("../hosted-repos/repository", () => ({
   resolveHostedRepo: vi.fn(),
@@ -35,6 +36,10 @@ vi.mock("./sections", () => ({
 
 const REPO_PATH = "/tmp/repo";
 const USER_UUID = "{user-uuid}";
+const USER_IDENTITY = {
+  accountId: "account-1",
+  uuid: USER_UUID,
+};
 const HOSTED_REPO: HostedRepoRef = {
   providerId: "bitbucket",
   owner: "workspace",
@@ -43,7 +48,7 @@ const HOSTED_REPO: HostedRepoRef = {
   remoteUrl: "git@bitbucket.org:workspace/repo.git",
   webUrl: "https://bitbucket.org/workspace/repo",
 };
-const CONNECTION = {
+const CONNECTION: ProviderConnectionSecret = {
   id: "bitbucket",
   providerId: "bitbucket",
   method: "pat",
@@ -56,9 +61,12 @@ const CONNECTION = {
   token: "secret-token",
   authType: "basic",
   identifier: "alice@example.com",
-} as const;
+};
 
-function createPullRequest(id: string, overrides: Partial<InboxPullRequest> = {}): InboxPullRequest {
+function createPullRequest(
+  id: string,
+  overrides: Partial<InboxPullRequest> = {},
+): InboxPullRequest {
   return {
     id,
     providerId: "bitbucket",
@@ -135,19 +143,24 @@ describe("electron inbox orchestrator", () => {
     const { getProviderConnection } = await import("../providerConnections");
     const { getOrResolveUserIdentity } = await import("./identity");
     const { getCachedInboxSnapshot, cacheInboxSnapshot } = await import("./pr-cache");
-    const { fetchBitbucketInboxPullRequests, fetchBitbucketRecentlyMergedPullRequests } = await import("./bitbucket-inbox");
+    const { fetchBitbucketInboxPullRequests, fetchBitbucketRecentlyMergedPullRequests } =
+      await import("./bitbucket-inbox");
     const { classifyPullRequests } = await import("./sections");
     const { getInboxPullRequests } = await import("./orchestrator");
 
     const openPr = createPullRequest("101", { authorUuid: "{other-author}" });
-    const mergedFetch = deferred<{ prs: InboxPullRequest[]; isPartial: boolean; totalFetched: number }>();
+    const mergedFetch = deferred<{
+      prs: InboxPullRequest[];
+      isPartial: boolean;
+      totalFetched: number;
+    }>();
 
     vi.mocked(resolveHostedRepo).mockResolvedValue(HOSTED_REPO);
     vi.mocked(getProviderConnection).mockResolvedValue(CONNECTION);
     vi.mocked(getOrResolveUserIdentity).mockResolvedValue({
       providerId: "bitbucket",
-      uuid: USER_UUID,
-      accountId: "account-1",
+      uuid: USER_IDENTITY.uuid,
+      accountId: USER_IDENTITY.accountId,
       login: "alice",
       displayName: "Alice",
     });
@@ -175,9 +188,17 @@ describe("electron inbox orchestrator", () => {
       fetchedAt: Date.now(),
       isStale: false,
     });
-    expect(fetchBitbucketInboxPullRequests).toHaveBeenCalledWith(HOSTED_REPO, CONNECTION, USER_UUID);
-    expect(fetchBitbucketRecentlyMergedPullRequests).toHaveBeenCalledWith(HOSTED_REPO, CONNECTION, USER_UUID);
-    expect(classifyPullRequests).toHaveBeenCalledWith([openPr], USER_UUID);
+    expect(fetchBitbucketInboxPullRequests).toHaveBeenCalledWith(
+      HOSTED_REPO,
+      CONNECTION,
+      USER_IDENTITY,
+    );
+    expect(fetchBitbucketRecentlyMergedPullRequests).toHaveBeenCalledWith(
+      HOSTED_REPO,
+      CONNECTION,
+      USER_IDENTITY,
+    );
+    expect(classifyPullRequests).toHaveBeenCalledWith([openPr], USER_IDENTITY);
     expect(cacheInboxSnapshot).toHaveBeenCalledWith(REPO_PATH, "open", [openPr], false);
 
     mergedFetch.reject(new Error("ignore unfinished background fetch"));
@@ -188,19 +209,24 @@ describe("electron inbox orchestrator", () => {
     const { getProviderConnection } = await import("../providerConnections");
     const { getOrResolveUserIdentity } = await import("./identity");
     const { getCachedInboxSnapshot } = await import("./pr-cache");
-    const { fetchBitbucketInboxPullRequests, fetchBitbucketRecentlyMergedPullRequests } = await import("./bitbucket-inbox");
+    const { fetchBitbucketInboxPullRequests, fetchBitbucketRecentlyMergedPullRequests } =
+      await import("./bitbucket-inbox");
     const { classifyPullRequests } = await import("./sections");
     const { getInboxPullRequests } = await import("./orchestrator");
 
     const openPr = createPullRequest("102", { authorUuid: "{other-author}" });
-    const mergedFetch = deferred<{ prs: InboxPullRequest[]; isPartial: boolean; totalFetched: number }>();
+    const mergedFetch = deferred<{
+      prs: InboxPullRequest[];
+      isPartial: boolean;
+      totalFetched: number;
+    }>();
 
     vi.mocked(resolveHostedRepo).mockResolvedValue(HOSTED_REPO);
     vi.mocked(getProviderConnection).mockResolvedValue(CONNECTION);
     vi.mocked(getOrResolveUserIdentity).mockResolvedValue({
       providerId: "bitbucket",
-      uuid: USER_UUID,
-      accountId: "account-1",
+      uuid: USER_IDENTITY.uuid,
+      accountId: USER_IDENTITY.accountId,
       login: "alice",
       displayName: "Alice",
     });
@@ -228,7 +254,8 @@ describe("electron inbox orchestrator", () => {
     const { getProviderConnection } = await import("../providerConnections");
     const { getOrResolveUserIdentity } = await import("./identity");
     const { getCachedInboxSnapshot, cacheInboxSnapshot } = await import("./pr-cache");
-    const { fetchBitbucketInboxPullRequests, fetchBitbucketRecentlyMergedPullRequests } = await import("./bitbucket-inbox");
+    const { fetchBitbucketInboxPullRequests, fetchBitbucketRecentlyMergedPullRequests } =
+      await import("./bitbucket-inbox");
     const { classifyPullRequests } = await import("./sections");
     const { getInboxPullRequests } = await import("./orchestrator");
 
@@ -239,14 +266,18 @@ describe("electron inbox orchestrator", () => {
       authorUuid: "{other-author}",
       updatedAt: "2026-04-27T11:00:00.000Z",
     });
-    const mergedFetch = deferred<{ prs: InboxPullRequest[]; isPartial: boolean; totalFetched: number }>();
+    const mergedFetch = deferred<{
+      prs: InboxPullRequest[];
+      isPartial: boolean;
+      totalFetched: number;
+    }>();
 
     vi.mocked(resolveHostedRepo).mockResolvedValue(HOSTED_REPO);
     vi.mocked(getProviderConnection).mockResolvedValue(CONNECTION);
     vi.mocked(getOrResolveUserIdentity).mockResolvedValue({
       providerId: "bitbucket",
-      uuid: USER_UUID,
-      accountId: "account-1",
+      uuid: USER_IDENTITY.uuid,
+      accountId: USER_IDENTITY.accountId,
       login: "alice",
       displayName: "Alice",
     });
@@ -277,7 +308,8 @@ describe("electron inbox orchestrator", () => {
     const { getProviderConnection } = await import("../providerConnections");
     const { getOrResolveUserIdentity } = await import("./identity");
     const { getCachedInboxSnapshot, isCacheStale } = await import("./pr-cache");
-    const { fetchBitbucketInboxPullRequests, fetchBitbucketRecentlyMergedPullRequests } = await import("./bitbucket-inbox");
+    const { fetchBitbucketInboxPullRequests, fetchBitbucketRecentlyMergedPullRequests } =
+      await import("./bitbucket-inbox");
     const { classifyPullRequests } = await import("./sections");
     const { getInboxPullRequests } = await import("./orchestrator");
 
@@ -293,8 +325,8 @@ describe("electron inbox orchestrator", () => {
     vi.mocked(getProviderConnection).mockResolvedValue(CONNECTION);
     vi.mocked(getOrResolveUserIdentity).mockResolvedValue({
       providerId: "bitbucket",
-      uuid: USER_UUID,
-      accountId: "account-1",
+      uuid: USER_IDENTITY.uuid,
+      accountId: USER_IDENTITY.accountId,
       login: "alice",
       displayName: "Alice",
     });
@@ -333,9 +365,55 @@ describe("electron inbox orchestrator", () => {
       fetchedAt: 1_714_218_390_000,
       isStale: false,
     });
-    expect(classifyPullRequests).toHaveBeenCalledWith([openPr, mergedPr], USER_UUID);
+    expect(classifyPullRequests).toHaveBeenCalledWith([openPr, mergedPr], USER_IDENTITY);
     expect(fetchBitbucketInboxPullRequests).not.toHaveBeenCalled();
     expect(fetchBitbucketRecentlyMergedPullRequests).not.toHaveBeenCalled();
+  });
+
+  it("deduplicates the same pull request when it exists in both open and merged cache snapshots", async () => {
+    const { resolveHostedRepo } = await import("../hosted-repos/repository");
+    const { getProviderConnection } = await import("../providerConnections");
+    const { getOrResolveUserIdentity } = await import("./identity");
+    const { getCachedInboxSnapshot, isCacheStale } = await import("./pr-cache");
+    const { classifyPullRequests } = await import("./sections");
+    const { getInboxPullRequests } = await import("./orchestrator");
+
+    const duplicatePr = createPullRequest("777", {
+      authorUuid: "{other-author}",
+      state: "merged",
+      updatedAt: "2026-04-27T11:30:00.000Z",
+    });
+
+    vi.mocked(resolveHostedRepo).mockResolvedValue(HOSTED_REPO);
+    vi.mocked(getProviderConnection).mockResolvedValue(CONNECTION);
+    vi.mocked(getOrResolveUserIdentity).mockResolvedValue({
+      providerId: "bitbucket",
+      uuid: USER_IDENTITY.uuid,
+      accountId: USER_IDENTITY.accountId,
+      login: "alice",
+      displayName: "Alice",
+    });
+    vi.mocked(getCachedInboxSnapshot).mockImplementation((_, scope) => {
+      if (scope === "open") {
+        return {
+          prs: [duplicatePr],
+          fetchedAt: 1_714_218_390_000,
+          isPartial: false,
+        };
+      }
+
+      return {
+        prs: [duplicatePr],
+        fetchedAt: 1_714_218_395_000,
+        isPartial: false,
+      };
+    });
+    vi.mocked(isCacheStale).mockReturnValue(false);
+    vi.mocked(classifyPullRequests).mockReturnValue(classifiedSections());
+
+    await getInboxPullRequests(REPO_PATH);
+
+    expect(classifyPullRequests).toHaveBeenCalledWith([duplicatePr], USER_IDENTITY);
   });
 
   it("returns stale cached sections immediately and schedules a background refresh", async () => {
@@ -353,8 +431,8 @@ describe("electron inbox orchestrator", () => {
     vi.mocked(getProviderConnection).mockResolvedValue(CONNECTION);
     vi.mocked(getOrResolveUserIdentity).mockResolvedValue({
       providerId: "bitbucket",
-      uuid: USER_UUID,
-      accountId: "account-1",
+      uuid: USER_IDENTITY.uuid,
+      accountId: USER_IDENTITY.accountId,
       login: "alice",
       displayName: "Alice",
     });
@@ -393,7 +471,8 @@ describe("electron inbox orchestrator", () => {
     const { getProviderConnection } = await import("../providerConnections");
     const { getOrResolveUserIdentity } = await import("./identity");
     const { getCachedInboxSnapshot, cacheInboxSnapshot, isCacheStale } = await import("./pr-cache");
-    const { fetchBitbucketInboxPullRequests, fetchBitbucketRecentlyMergedPullRequests } = await import("./bitbucket-inbox");
+    const { fetchBitbucketInboxPullRequests, fetchBitbucketRecentlyMergedPullRequests } =
+      await import("./bitbucket-inbox");
     const { classifyPullRequests } = await import("./sections");
     const { getInboxPullRequests } = await import("./orchestrator");
 
@@ -405,14 +484,18 @@ describe("electron inbox orchestrator", () => {
       authorUuid: "{other-author}",
       updatedAt: "2026-04-27T11:45:00.000Z",
     });
-    const openFetch = deferred<{ prs: InboxPullRequest[]; isPartial: boolean; totalFetched: number }>();
+    const openFetch = deferred<{
+      prs: InboxPullRequest[];
+      isPartial: boolean;
+      totalFetched: number;
+    }>();
 
     vi.mocked(resolveHostedRepo).mockResolvedValue(HOSTED_REPO);
     vi.mocked(getProviderConnection).mockResolvedValue(CONNECTION);
     vi.mocked(getOrResolveUserIdentity).mockResolvedValue({
       providerId: "bitbucket",
-      uuid: USER_UUID,
-      accountId: "account-1",
+      uuid: USER_IDENTITY.uuid,
+      accountId: USER_IDENTITY.accountId,
       login: "alice",
       displayName: "Alice",
     });
@@ -448,7 +531,11 @@ describe("electron inbox orchestrator", () => {
     await Promise.resolve();
     await Promise.resolve();
 
-    expect(fetchBitbucketRecentlyMergedPullRequests).toHaveBeenCalledWith(HOSTED_REPO, CONNECTION, USER_UUID);
+    expect(fetchBitbucketRecentlyMergedPullRequests).toHaveBeenCalledWith(
+      HOSTED_REPO,
+      CONNECTION,
+      USER_IDENTITY,
+    );
     expect(cacheInboxSnapshot).toHaveBeenCalledWith(REPO_PATH, "open", [freshOpenPr], false);
     expect(cacheInboxSnapshot).toHaveBeenCalledWith(REPO_PATH, "merged", [freshMergedPr], true);
   });
@@ -488,8 +575,8 @@ describe("electron inbox orchestrator", () => {
     vi.mocked(getProviderConnection).mockResolvedValue(CONNECTION);
     vi.mocked(getOrResolveUserIdentity).mockResolvedValue({
       providerId: "bitbucket",
-      uuid: USER_UUID,
-      accountId: "account-1",
+      uuid: null,
+      accountId: USER_IDENTITY.accountId,
       login: "alice",
       displayName: "Alice",
     });
@@ -504,7 +591,10 @@ describe("electron inbox orchestrator", () => {
     await getInboxPullRequests(REPO_PATH);
 
     expect(fetchBitbucketInboxPullRequests).toHaveBeenCalledTimes(1);
-    expect(fetchBitbucketInboxPullRequests).toHaveBeenCalledWith(HOSTED_REPO, CONNECTION, USER_UUID);
+    expect(fetchBitbucketInboxPullRequests).toHaveBeenCalledWith(HOSTED_REPO, CONNECTION, {
+      accountId: USER_IDENTITY.accountId,
+      uuid: null,
+    });
   });
 
   it("throws for hosted providers whose inbox implementation is not supported", async () => {

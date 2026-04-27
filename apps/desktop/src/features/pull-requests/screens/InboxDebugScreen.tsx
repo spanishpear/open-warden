@@ -1,8 +1,15 @@
 // TEMPORARY: Debug screen for inbox feature testing. Remove before release.
 import { skipToken } from "@reduxjs/toolkit/query";
+import { useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
 
 import { useAppSelector } from "@/app/hooks";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import {
   useGetInboxPullRequestsQuery,
@@ -11,8 +18,32 @@ import {
 } from "@/features/hosted-repos/api";
 import { errorMessageFrom } from "@/features/source-control/shared-utils/errorMessage";
 
+const SECTION_KEYS = [
+  "NEEDS_REVIEW",
+  "WAITING_FOR_REVIEW",
+  "RETURNED_TO_YOU",
+  "DRAFTS",
+  "APPROVED",
+  "MERGING_AND_MERGED",
+] as const;
+
+const DEFAULT_COLLAPSE_THRESHOLD = 25;
+const COLLAPSED_PREVIEW_COUNT = 3;
+
+function defaultOpenSections(inboxData: Record<string, { length: number }> | undefined): string[] {
+  if (!inboxData) {
+    return [];
+  }
+
+  return SECTION_KEYS.filter((sectionKey) => {
+    const count = inboxData[sectionKey]?.length ?? 0;
+    return count > 0 && count <= DEFAULT_COLLAPSE_THRESHOLD;
+  });
+}
+
 export function InboxDebugScreen() {
   const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
+  const [openSections, setOpenSections] = useState<string[]>([]);
 
   const activeRepoArg = activeRepo ? activeRepo : skipToken;
 
@@ -65,14 +96,9 @@ export function InboxDebugScreen() {
 
   const errorMsg = errorMessageFrom(inboxError, "");
 
-  const sections = [
-    "NEEDS_REVIEW",
-    "WAITING_FOR_REVIEW",
-    "RETURNED_TO_YOU",
-    "DRAFTS",
-    "APPROVED",
-    "MERGING_AND_MERGED",
-  ];
+  useEffect(() => {
+    setOpenSections(defaultOpenSections(inboxData?.sections));
+  }, [inboxData?.fetchedAt, inboxData?.sections]);
 
   return (
     <div className="h-full overflow-y-auto px-6 py-6">
@@ -83,7 +109,7 @@ export function InboxDebugScreen() {
             <div className="text-muted-foreground mt-1 text-xs">
               {inboxData ? (
                 <>
-                  Fetched at: {new Date(inboxData.fetchedAt).toLocaleString()} | Stale: {" "}
+                  Fetched at: {new Date(inboxData.fetchedAt).toLocaleString()} | Stale:{" "}
                   {inboxData.isStale ? "Yes" : "No"} | User: {inboxData.userLogin ?? "Unknown"}
                 </>
               ) : (
@@ -116,28 +142,66 @@ export function InboxDebugScreen() {
 
         {inboxData && (
           <div className="flex flex-col gap-6">
-            {sections.map((sectionKey) => {
-              const prs = inboxData.sections[sectionKey] || [];
-              return (
-                <section key={sectionKey} className="rounded-lg border border-border/70 bg-surface-0 p-4">
-                  <h2 className="mb-3 text-sm font-semibold">
-                    {sectionKey} <span className="text-muted-foreground ml-2">({prs.length})</span>
-                  </h2>
-                  {prs.length === 0 ? (
-                    <div className="text-muted-foreground text-xs">No pull requests in this section.</div>
-                  ) : (
-                    <ul className="flex flex-col gap-2">
-                      {prs.map((pr) => (
-                        <li key={pr.id} className="text-sm">
-                          <span className="text-muted-foreground mr-2">#{pr.number}</span>
-                          <span className="font-medium">{pr.title}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </section>
-              );
-            })}
+            <div className="text-muted-foreground text-xs">
+              Sections with more than {DEFAULT_COLLAPSE_THRESHOLD} PRs start collapsed to keep this
+              debug view usable.
+            </div>
+
+            <Accordion type="multiple" value={openSections} onValueChange={setOpenSections}>
+              {SECTION_KEYS.map((sectionKey) => {
+                const prs = inboxData.sections[sectionKey] || [];
+                const collapsedPreview = prs
+                  .slice(0, COLLAPSED_PREVIEW_COUNT)
+                  .map((pr) => `#${pr.number}`);
+                const hiddenCount = Math.max(prs.length - COLLAPSED_PREVIEW_COUNT, 0);
+
+                return (
+                  <AccordionItem
+                    key={sectionKey}
+                    value={sectionKey}
+                    className="rounded-lg border border-border/70 bg-surface-0 px-4"
+                  >
+                    <AccordionTrigger className="py-3 hover:no-underline">
+                      <div className="flex min-w-0 flex-1 flex-col gap-1 text-left">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <span className="truncate text-sm font-semibold">{sectionKey}</span>
+                          <span className="text-muted-foreground text-xs">({prs.length})</span>
+                        </div>
+
+                        {prs.length > DEFAULT_COLLAPSE_THRESHOLD ? (
+                          <div className="text-muted-foreground text-xs">
+                            Large section — collapsed by default. Preview:{" "}
+                            {collapsedPreview.join(", ")}
+                            {hiddenCount > 0 ? ` +${hiddenCount} more` : ""}
+                          </div>
+                        ) : prs.length === 0 ? (
+                          <div className="text-muted-foreground text-xs">
+                            No pull requests in this section.
+                          </div>
+                        ) : (
+                          <div className="text-muted-foreground text-xs">
+                            Click to inspect this section.
+                          </div>
+                        )}
+                      </div>
+                    </AccordionTrigger>
+
+                    <AccordionContent className="pb-4">
+                      {prs.length === 0 ? null : (
+                        <ul className="flex flex-col gap-2">
+                          {prs.map((pr) => (
+                            <li key={pr.id} className="text-sm">
+                              <span className="text-muted-foreground mr-2">#{pr.number}</span>
+                              <span className="font-medium">{pr.title}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })}
+            </Accordion>
           </div>
         )}
       </div>

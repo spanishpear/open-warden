@@ -25,7 +25,7 @@ function spawnElectron() {
   const childEnv = { ...process.env };
   delete childEnv.ELECTRON_RUN_AS_NODE;
 
-  const nextChild = spawn(electronBinary, ["."], {
+  const nextChild = spawn(electronBinary, ["--remote-debugging-port=9222", "."], {
     cwd: appDir,
     env: {
       ...childEnv,

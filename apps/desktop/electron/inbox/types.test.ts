@@ -23,9 +23,7 @@ describe("electron inbox types", () => {
       "MERGING_AND_MERGED",
     ]);
 
-    expectTypeOf(InboxSectionPriority).toEqualTypeOf<
-      Record<InboxSection, "HIGH" | "LOW">
-    >();
+    expectTypeOf(InboxSectionPriority).toMatchTypeOf<Record<InboxSection, "HIGH" | "LOW">>();
     expect(InboxSectionPriority).toEqual({
       [InboxSection.NEEDS_REVIEW]: "HIGH",
       [InboxSection.WAITING_FOR_REVIEW]: "HIGH",
@@ -54,7 +52,7 @@ describe("electron inbox types", () => {
 
     expectTypeOf<ExtendsPullRequestSummary>().toEqualTypeOf<true>();
     expectTypeOf<InboxPullRequest>().toMatchTypeOf<PullRequestSummary>();
-    expectTypeOf<InboxPullRequest>().toMatchObjectType<{
+    expectTypeOf<InboxPullRequest>().toMatchTypeOf<{
       authorUuid: string | null;
       authorAccountId: string | null;
       participants: InboxParticipant[];

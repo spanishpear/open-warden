@@ -176,11 +176,10 @@ export function PullRequestsScreen() {
     prefetchedInbox.current = false;
   }, [activeRepo]);
 
-
   useEffect(() => {
     if (activeRepo && hostedRepo && activeProviderConnection && !prefetchedInbox.current) {
       prefetchedInbox.current = true;
-      void dispatch(hostedReposApi.util.prefetch("getInboxPullRequests", activeRepo, { force: false }));
+      dispatch(hostedReposApi.util.prefetch("getInboxPullRequests", activeRepo, { force: false }));
     }
   }, [activeRepo, hostedRepo, activeProviderConnection, dispatch]);
 
@@ -239,7 +238,7 @@ export function PullRequestsScreen() {
         return;
       }
 
-      void dispatch(
+      dispatch(
         hostedReposApi.util.prefetch(
           "getPullRequestConversation",
           {
@@ -249,7 +248,7 @@ export function PullRequestsScreen() {
           { force: false },
         ),
       );
-      void dispatch(
+      dispatch(
         hostedReposApi.util.prefetch(
           "getPullRequestFiles",
           {

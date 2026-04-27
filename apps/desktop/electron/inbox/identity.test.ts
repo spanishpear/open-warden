@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
+import type { ProviderConnectionSecret } from "../providerConnections";
 
 let userDataPath = "";
 
@@ -17,10 +18,10 @@ vi.mock("../bitbucket-repo", () => ({
   bitbucketRequest: vi.fn(),
 }));
 
-const BITBUCKET_CONNECTION = {
+const BITBUCKET_CONNECTION: ProviderConnectionSecret = {
   id: "bitbucket",
   providerId: "bitbucket",
-  method: "oauth",
+  method: "pat",
   login: "cached-user",
   displayName: "Cached User",
   avatarUrl: null,
@@ -30,7 +31,7 @@ const BITBUCKET_CONNECTION = {
   token: "secret-token",
   authType: "basic",
   identifier: null,
-} as const;
+};
 
 describe("electron inbox identity resolution", () => {
   beforeEach(async () => {
