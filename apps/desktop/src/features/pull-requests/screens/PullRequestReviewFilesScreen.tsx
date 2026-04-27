@@ -1,9 +1,15 @@
 import { skipToken } from "@reduxjs/toolkit/query";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { ResizableSidebarLayout } from "@/components/layout/ResizableSidebarLayout";
 import { DiffWorkspace } from "@/features/diff-view/DiffWorkspace";
+import {
+  getParsedPatchRequest,
+  loadParsedPatch,
+  type ParsedPatch,
+} from "@/features/diff-view/services/parsedDiffCache";
+import type { FileDiffMetadata } from "@pierre/diffs";
 import {
   useGetPullRequestConversationQuery,
   useGetPullRequestDiffCachedQuery,
@@ -95,12 +101,54 @@ function PullRequestDiffPane({
   );
 
   const patchText = pullRequestDiffQuery.currentData ?? pullRequestDiffQuery.data;
+
+  const [parsedFiles, setParsedFiles] = useState<FileDiffMetadata[]>([]);
+  const [isParsingPatch, setIsParsingPatch] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!patchText || !previewPath) {
+      setParsedFiles([]);
+      setIsParsingPatch(false);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const request = getParsedPatchRequest(previewPath, patchText);
+    if (!request) {
+      setParsedFiles([]);
+      setIsParsingPatch(false);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    setIsParsingPatch(true);
+
+    void loadParsedPatch(request, "high")
+      .then((parsedPatch: ParsedPatch | null) => {
+        if (cancelled) return;
+        const nextParsedFiles = parsedPatch?.flatMap((p) => p.files) ?? [];
+        setParsedFiles(nextParsedFiles);
+      })
+      .finally(() => {
+        if (!cancelled) setIsParsingPatch(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [patchText, previewPath]);
+
+  const selectedFileDiff =
+    parsedFiles.find((f) => f.name === previewPath || f.prevName === previewPath) ?? null;
   const oldFile = null;
   const newFile = null;
-  const loadingPatch = !patchText && pullRequestDiffQuery.isLoading;
+  const loadingPatch = isParsingPatch || (!patchText && pullRequestDiffQuery.isLoading);
   const errorMessage = patchText ? "" : errorMessageFrom(pullRequestDiffQuery.error, "");
 
-  const hasContent = oldFile || newFile;
+  const hasContent = Boolean(selectedFileDiff);
 
   return (
     <section className="flex h-full min-h-0 flex-col">
@@ -120,6 +168,7 @@ function PullRequestDiffPane({
             <DiffWorkspace
               oldFile={oldFile}
               newFile={newFile}
+              fileDiff={selectedFileDiff}
               activePath={previewPath ?? ""}
               commentContext={{ kind: "review", baseRef: reviewBaseRef, headRef: reviewHeadRef }}
               canComment
