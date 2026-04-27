@@ -17,6 +17,7 @@ describe("feature navigation", () => {
   it("exposes all top-level feature tabs", () => {
     // @ts-expect-error -- oxlint typescript
     expect(FEATURE_NAV_ITEMS.map((item) => item.key)).toEqual([
+      "inbox",
       "changes",
       "pull-requests",
       "history",

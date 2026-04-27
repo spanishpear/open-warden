@@ -17,6 +17,7 @@ import { PullRequestReviewConversationScreen } from "@/features/pull-requests/sc
 import { PullRequestReviewFilesScreen } from "@/features/pull-requests/screens/PullRequestReviewFilesScreen";
 import { PullRequestsScreen } from "@/features/pull-requests/screens/PullRequestsScreen";
 import { InboxDebugScreen } from "@/features/pull-requests/screens/InboxDebugScreen";
+import { InboxScreen } from "@/features/inbox/screens/InboxScreen";
 import { SettingsScreen } from "@/features/settings/screens/SettingsScreen";
 import { ChangesFilesScreen } from "@/features/source-control/screens/ChangesFilesScreen";
 import { ChangesScreen } from "@/features/source-control/screens/ChangesScreen";
@@ -88,6 +89,10 @@ const router = createHashRouter([
           {
             path: "pull-requests",
             element: <PullRequestsScreen />,
+          },
+          {
+            path: "inbox",
+            element: <InboxScreen />,
           },
           {
             path: "inbox-debug",

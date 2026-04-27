@@ -48,11 +48,11 @@ export async function listPullRequests(input: ListPullRequestsInput) {
 }
 
 export async function getInboxPullRequests(repoPath: string): Promise<InboxPullRequestsResult> {
-  return desktop.getInboxPullRequests({ repoPath }) as Promise<InboxPullRequestsResult>;
+  return desktop.getInboxPullRequests({ repoPath });
 }
 
 export async function refreshInboxPullRequests(repoPath: string): Promise<InboxPullRequestsResult> {
-  return desktop.refreshInboxPullRequests({ repoPath }) as Promise<InboxPullRequestsResult>;
+  return desktop.refreshInboxPullRequests({ repoPath });
 }
 
 export async function resolveActivePullRequestForBranch(
