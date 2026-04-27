@@ -11,7 +11,6 @@ import {
   hostedReposApi,
   useGetPullRequestConversationQuery,
   useGetPullRequestFilesQuery,
-  usePreparePullRequestCompareRefsQuery,
   useResolveHostedRepoQuery,
 } from "@/features/hosted-repos/api";
 import {
@@ -105,7 +104,6 @@ function PullRequestSummarySection({ body }: { body: string }) {
 }
 
 type PullRequestOverviewReviewSectionsProps = {
-  queryArg: PullRequestQueryArg;
   activeRepo: string;
   pullRequestNumber: number;
   providerId?: GitProviderId;
@@ -115,7 +113,6 @@ type PullRequestOverviewReviewSectionsProps = {
 };
 
 function PullRequestOverviewReviewSections({
-  queryArg,
   activeRepo,
   pullRequestNumber,
   providerId,
@@ -123,13 +120,15 @@ function PullRequestOverviewReviewSections({
   conversation,
   onOpenAnchorInFiles,
 }: PullRequestOverviewReviewSectionsProps) {
-  const { compareRefs } = usePreparePullRequestCompareRefsQuery(queryArg, {
-    selectFromResult: ({ data }) => ({
-      compareRefs: data ?? null,
-    }),
-  });
-  const compareBaseRef = compareRefs?.compareBaseRef ?? "";
-  const compareHeadRef = compareRefs?.compareHeadRef ?? "";
+  const currentReview = useAppSelector((state) => state.pullRequests.currentReview);
+  const compareBaseRef =
+    currentReview?.repoPath === activeRepo && currentReview.pullRequestNumber === pullRequestNumber
+      ? currentReview.compareBaseRef
+      : "";
+  const compareHeadRef =
+    currentReview?.repoPath === activeRepo && currentReview.pullRequestNumber === pullRequestNumber
+      ? currentReview.compareHeadRef
+      : "";
   const commentMentions = usePullRequestMentionCandidates(conversation);
   const pendingActions = usePullRequestPendingReviewActions({
     repoPath: activeRepo,
@@ -247,7 +246,6 @@ function PullRequestOverviewReviewSections({
 }
 
 type PullRequestOverviewDetailsSidebarProps = {
-  queryArg: PullRequestQueryArg;
   activeRepo: string;
   pullRequestNumber: number;
   detail: PullRequestConversation["detail"];
@@ -259,7 +257,6 @@ type PullRequestOverviewDetailsSidebarProps = {
 };
 
 function PullRequestOverviewDetailsSidebar({
-  queryArg,
   activeRepo,
   pullRequestNumber,
   detail,
@@ -269,16 +266,20 @@ function PullRequestOverviewDetailsSidebar({
   issueCommentCount,
   reviewThreadCount,
 }: PullRequestOverviewDetailsSidebarProps) {
-  const { compareRefs } = usePreparePullRequestCompareRefsQuery(queryArg, {
-    selectFromResult: ({ data }) => ({
-      compareRefs: data ?? null,
-    }),
-  });
+  const currentReview = useAppSelector((state) => state.pullRequests.currentReview);
+  const compareBaseRef =
+    currentReview?.repoPath === activeRepo && currentReview.pullRequestNumber === pullRequestNumber
+      ? currentReview.compareBaseRef
+      : "";
+  const compareHeadRef =
+    currentReview?.repoPath === activeRepo && currentReview.pullRequestNumber === pullRequestNumber
+      ? currentReview.compareHeadRef
+      : "";
   const pendingActions = usePullRequestPendingReviewActions({
     repoPath: activeRepo,
     pullRequestNumber,
-    compareBaseRef: compareRefs?.compareBaseRef ?? "",
-    compareHeadRef: compareRefs?.compareHeadRef ?? "",
+    compareBaseRef,
+    compareHeadRef,
   });
 
   return (
@@ -525,7 +526,6 @@ export const PullRequestOverview = () => {
               <PullRequestSummarySection body={detail.body} />
               <PullRequestDiscussionSection conversation={conversation} />
               <PullRequestOverviewReviewSections
-                queryArg={queryArg}
                 activeRepo={activeRepo ?? ""}
                 pullRequestNumber={parsedPullRequestNumber}
                 // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
@@ -537,7 +537,6 @@ export const PullRequestOverview = () => {
             </div>
 
             <PullRequestOverviewDetailsSidebar
-              queryArg={queryArg}
               activeRepo={activeRepo ?? ""}
               pullRequestNumber={parsedPullRequestNumber}
               detail={detail}
