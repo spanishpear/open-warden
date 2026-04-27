@@ -8,7 +8,7 @@ export default defineConfig({
   build: {
     emptyOutDir: false,
     outDir: ".vite/build",
-    rollupOptions: {
+    rolldownOptions: {
       external,
       output: {
         entryFileNames: "preload.cjs",
