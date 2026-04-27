@@ -72,6 +72,13 @@ export function useInboxNavigation(): UseInboxNavigationReturn {
         { force: false },
       ),
     );
+    dispatch(
+      hostedReposApi.util.prefetch(
+        "getPullRequestFiles",
+        { repoPath: activeRepo, pullRequestNumber: pr.number },
+        { force: false },
+      ),
+    );
   }
 
   return {

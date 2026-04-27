@@ -380,14 +380,20 @@ export async function getPullRequestDiffCached(input: PullRequestLocatorInput): 
     );
     const cached = getCachedContent(key);
     if (cached !== null) {
+      console.log("[diff-cache] HIT github pr#" + String(input.pullRequestNumber), key);
       return cached;
     }
+    console.log(
+      "[diff-cache] MISS github pr#" + String(input.pullRequestNumber) + " — fetching from API",
+      key,
+    );
     const patch = await fetchGitHubPullRequestPatch(
       hostedRepo,
       connection.token,
       input.pullRequestNumber,
     );
     cacheContent(key, patch);
+    console.log("[diff-cache] STORED github pr#" + String(input.pullRequestNumber), key);
     return patch;
   }
 
@@ -407,14 +413,20 @@ export async function getPullRequestDiffCached(input: PullRequestLocatorInput): 
     );
     const cached = getCachedContent(key);
     if (cached !== null) {
+      console.log("[diff-cache] HIT bitbucket pr#" + String(input.pullRequestNumber), key);
       return cached;
     }
+    console.log(
+      "[diff-cache] MISS bitbucket pr#" + String(input.pullRequestNumber) + " — fetching from API",
+      key,
+    );
     const patch = await fetchBitbucketPullRequestPatch(
       hostedRepo,
       connection,
       input.pullRequestNumber,
     );
     cacheContent(key, patch);
+    console.log("[diff-cache] STORED bitbucket pr#" + String(input.pullRequestNumber), key);
     return patch;
   }
 
