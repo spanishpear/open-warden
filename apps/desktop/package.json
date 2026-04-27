@@ -18,7 +18,7 @@
     "electron:build": "pnpm run build:electron",
     "make:electron": "pnpm run build && electron-builder --config electron-builder.config.mjs --publish never",
     "electron:make": "pnpm run make:electron",
-    "test": "vp test run",
+    "test": "vp test run --config vitest.config.ts",
     "test:watch": "vp test",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",

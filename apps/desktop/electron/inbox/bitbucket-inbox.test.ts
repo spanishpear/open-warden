@@ -199,9 +199,10 @@ describe("bitbucket inbox queries", () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
     const [url, init] = fetchMock.mock.calls[0] ?? [];
-    const searchParams = new URL(String(url)).searchParams;
+    const urlStr = url instanceof Request ? url.url : String(url);
+    const searchParams = new URL(urlStr).searchParams;
 
-    expect(`${String(url)}`).toContain("/repositories/workspace-slug/repo-slug/pullrequests?");
+    expect(urlStr).toContain("/repositories/workspace-slug/repo-slug/pullrequests?");
     expect(searchParams.get("pagelen")).toBe("20");
     expect(searchParams.get("sort")).toBe("-updated_on");
     expect(searchParams.get("q")).toBe(
@@ -238,7 +239,7 @@ describe("bitbucket inbox queries", () => {
     expect(result.isPartial).toBe(false);
 
     const [url] = fetchMock.mock.calls[0] ?? [];
-    const searchParams = new URL(String(url)).searchParams;
+    const searchParams = new URL(url instanceof Request ? url.url : String(url)).searchParams;
     expect(searchParams.get("q")).toBe(
       'state="MERGED" AND (author.account_id="user-account-id" OR reviewers.account_id="user-account-id") AND updated_on>"2026-04-20T12:00:00.000Z"',
     );
@@ -324,7 +325,7 @@ describe("bitbucket inbox queries", () => {
     });
 
     const [url] = fetchMock.mock.calls[0] ?? [];
-    const searchParams = new URL(String(url)).searchParams;
+    const searchParams = new URL(url instanceof Request ? url.url : String(url)).searchParams;
     expect(searchParams.get("q")).toBe(
       'state="OPEN" AND (author.uuid="{user-uuid}" OR reviewers.uuid="{user-uuid}")',
     );
@@ -420,7 +421,7 @@ describe("bitbucket inbox queries", () => {
   it("maps comment_count to commentCount on returned PR summary", async () => {
     const pr = createPullRequest(501, "2026-04-27T11:00:00.000Z");
     // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
-    const prWithComments = { ...pr, comment_count: 7 } as Record<string, unknown>;
+    const prWithComments = { ...pr, comment_count: 7 } as unknown as Record<string, unknown>;
 
     fetchMock
       .mockResolvedValueOnce(jsonResponse({ values: [prWithComments] }))
@@ -471,7 +472,9 @@ describe("bitbucket inbox queries", () => {
       { state: "stopped", name: "e2e-tests", url: "https://ci.example.com/4", key: "ci-4" },
     ]);
 
-    const statusUrl = String(fetchMock.mock.calls[1]?.[0] ?? "");
+    const rawStatusUrl = fetchMock.mock.calls[1]?.[0];
+    const statusUrl =
+      rawStatusUrl instanceof Request ? rawStatusUrl.url : String(rawStatusUrl ?? "");
     expect(statusUrl).toContain(
       "/repositories/workspace-slug/repo-slug/commit/abc123hash503/statuses",
     );

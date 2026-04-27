@@ -15,7 +15,7 @@ import nodePath from "node:path";
 import type { Database as SqlJsDatabase, SqlJsStatic, SqlValue } from "sql.js";
 
 // sql-asm.js is the pure-JS (no WASM file) build — works in any Node env.
-// oxlint-disable-next-line typescript-eslint(no-require-imports)
+// oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
 const initSqlJs = require("sql.js/dist/sql-asm.js") as () => Promise<SqlJsStatic>;
 
 // sql.js initialisation is async but better-sqlite3 is sync.
@@ -47,6 +47,7 @@ function getSql(): SqlJsStatic {
 function prepareParams(sql: string, params: unknown): { sql: string; values: SqlValue[] } {
   // Named object params: { name: value, ... } — better-sqlite3 uses @name in SQL
   if (params !== null && typeof params === "object" && !Array.isArray(params)) {
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
     const record = params as Record<string, SqlValue>;
     const values: SqlValue[] = [];
     const mapped = sql.replace(/@(\w+)/g, (_match, key: string) => {
@@ -58,11 +59,13 @@ function prepareParams(sql: string, params: unknown): { sql: string; values: Sql
 
   // Positional array params
   if (Array.isArray(params)) {
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
     return { sql, values: params as SqlValue[] };
   }
 
   // Single primitive param — wrap in array
   if (params !== undefined && params !== null) {
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
     return { sql, values: [params as SqlValue] };
   }
 

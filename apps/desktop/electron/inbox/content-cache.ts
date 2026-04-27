@@ -31,10 +31,11 @@ export function getCachedContent(key: string): string | null {
   return readFileSync(cachePath, "utf8");
 }
 
-export function cacheJson<T>(key: string, data: T): void {
+export function cacheJson(key: string, data: unknown): void {
   cacheContent(key, JSON.stringify(data));
 }
 
+// oxlint-disable-next-line typescript-eslint(no-unnecessary-type-parameters)
 export function getCachedJson<T>(key: string): T | null {
   const cached = getCachedContent(key);
 
@@ -42,7 +43,8 @@ export function getCachedJson<T>(key: string): T | null {
     return null;
   }
 
-  return JSON.parse(cached) as T;
+  // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
+  return JSON.parse(cached) as unknown as T;
 }
 
 export function clearContentCache(prefix?: string): void {

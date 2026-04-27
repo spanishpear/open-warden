@@ -87,7 +87,8 @@ function deserializeSnapshot(dataJson: string): InboxPullRequest[] | null {
 
   // Map serialized snapshot back to strongly-typed InboxPullRequest objects
   const mapped = parsed.map((item) => {
-    const pr = item as SerializedInboxPullRequest;
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
+    const pr = item as unknown as SerializedInboxPullRequest;
     return {
       id: pr.id,
       providerId: pr.providerId,
