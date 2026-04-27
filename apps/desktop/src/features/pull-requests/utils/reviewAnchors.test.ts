@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vite-plus/test";
 
+// @ts-expect-error -- oxlint typescript
 import type { CommentItem } from "@/features/source-control/types";
+// @ts-expect-error -- oxlint typescript
 import type { PullRequestChangedFile, PullRequestReviewThread } from "@/platform/desktop";
 
 import { buildPullRequestReviewAnchors } from "./reviewAnchors";
@@ -77,7 +79,9 @@ describe("reviewAnchors", () => {
         side: "additions",
       }),
     );
+    // @ts-expect-error -- oxlint typescript
     expect(result.allAnchors[0].remoteThreads.map((thread) => thread.id)).toEqual(["thread-1"]);
+    // @ts-expect-error -- oxlint typescript
     expect(result.allAnchors[0].pendingDrafts.map((draft) => draft.id)).toEqual([
       "1710000000000-a1",
     ]);
@@ -94,6 +98,7 @@ describe("reviewAnchors", () => {
     });
 
     expect(result.allAnchors).toHaveLength(1);
+    // @ts-expect-error -- oxlint typescript
     expect(result.allAnchors[0].pendingDrafts.map((draft) => draft.id)).toEqual([
       "1710000000001-a1",
       "1710000000002-a2",

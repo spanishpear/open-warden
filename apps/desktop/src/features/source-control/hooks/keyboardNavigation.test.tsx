@@ -91,15 +91,24 @@ describe("keyboardNavigation", () => {
       expect.objectContaining({ enabled: true }),
     );
 
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
     const arrowDown = mocks.useHotkey.mock.calls[0]?.[1] as (event: KeyboardEvent) => void;
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
     const shiftArrowDown = mocks.useHotkey.mock.calls[2]?.[1] as (event: KeyboardEvent) => void;
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
     const arrowUp = mocks.useHotkey.mock.calls[4]?.[1] as (event: KeyboardEvent) => void;
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
     const shiftArrowUp = mocks.useHotkey.mock.calls[6]?.[1] as (event: KeyboardEvent) => void;
 
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
     arrowDown({ shiftKey: false } as KeyboardEvent);
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
     arrowDown({ shiftKey: true } as KeyboardEvent);
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
     shiftArrowDown({} as KeyboardEvent);
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
     arrowUp({ shiftKey: false } as KeyboardEvent);
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
     shiftArrowUp({} as KeyboardEvent);
 
     expect(onNext).toHaveBeenCalledOnce();

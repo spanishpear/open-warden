@@ -189,6 +189,7 @@ function mergeExtras(primary, secondary) {
     const existing = merged[key];
     if (existing !== undefined && existing !== value) {
       throw new Error(
+        // oxlint-disable-next-line typescript-eslint(restrict-template-expressions)
         `Cannot merge macOS update manifests: conflicting '${key}' values ('${existing}' vs '${value}').`,
       );
     }

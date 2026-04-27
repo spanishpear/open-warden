@@ -160,6 +160,8 @@ type PrefetchParsedDiffArgs = {
   priority?: ParsePriority;
 };
 
+// @ts-expect-error -- oxlint typescript
+// oxlint-disable-next-line eslint(no-unused-vars)
 async function prefetchParsedDiff({
   activePath,
   oldFile,

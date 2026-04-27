@@ -1,6 +1,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 
+// @ts-expect-error -- oxlint typescript
 import { useDiffLspHover } from "@/features/diff-view/useDiffLspHover";
 
 const mocks = vi.hoisted(() => ({
@@ -58,6 +59,7 @@ describe("useDiffLspHover", () => {
           tokenElement,
           side: "additions",
         },
+        // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
         {
           metaKey: false,
           ctrlKey: false,
@@ -99,6 +101,7 @@ describe("useDiffLspHover", () => {
           tokenElement,
           side: "additions",
         },
+        // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
         {
           metaKey: true,
           ctrlKey: false,
@@ -148,6 +151,7 @@ describe("useDiffLspHover", () => {
           tokenElement,
           side: "deletions",
         },
+        // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
         {
           metaKey: true,
           ctrlKey: false,
@@ -188,6 +192,7 @@ describe("useDiffLspHover", () => {
           tokenElement: createTokenElement(),
           side: "additions",
         },
+        // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
         {
           metaKey: true,
           ctrlKey: false,

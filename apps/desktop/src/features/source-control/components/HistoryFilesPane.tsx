@@ -40,6 +40,7 @@ export function HistoryFilesPane() {
   );
 
   const selectedCommit = historyCommits.find((commit) => commit?.commitId === historyCommitId);
+  // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
   const files = historyFiles as FileItem[];
 
   return (
@@ -115,6 +116,7 @@ function HistoryFileRow({ row, activeRepo }: HistoryFileRowProps) {
       showDirectoryPath={row.showDirectoryPath}
       onSelect={() => {
         dispatch(setHistoryNavTarget("files"));
+        // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
         void dispatch(selectHistoryFile(row.file.path));
       }}
       secondaryLabel={

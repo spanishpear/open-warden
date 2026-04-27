@@ -104,6 +104,7 @@ function editorOptions(os: DesktopOS): EditorOption[] {
 }
 
 function isOpenApp(value: string): value is OpenApp {
+  // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
   return OPEN_APPS.includes(value as OpenApp);
 }
 

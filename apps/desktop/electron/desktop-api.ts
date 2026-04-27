@@ -99,6 +99,7 @@ export const desktopApi: DesktopApi = {
 export function configureDesktopApi(options: { onDiagnostics(event: LspDiagnosticsEvent): void }) {
   void lspSessionManager.dispose();
   lspSessionManager = new LspSessionManager({
+    // oxlint-disable-next-line typescript-eslint(unbound-method)
     onDiagnostics: options.onDiagnostics,
     loadAppSettings,
   });

@@ -124,6 +124,7 @@ log("Renderer and Electron bundles are ready");
 spawnElectron();
 
 const watcher = watch(buildDir, (_eventType, fileName) => {
+  // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-conversion)
   if (!fileName || !watchedFiles.has(fileName.toString())) {
     return;
   }

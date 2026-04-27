@@ -1,6 +1,7 @@
 import { renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 
+// @ts-expect-error -- oxlint typescript
 import { useLspTokenNavigation } from "@/features/lsp/useLspTokenNavigation";
 
 const mocks = vi.hoisted(() => ({
@@ -66,6 +67,7 @@ describe("useLspTokenNavigation", () => {
         lineCharStart: 4,
         tokenElement: createTokenElement(),
       },
+      // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
       {
         metaKey: true,
         ctrlKey: false,
@@ -138,6 +140,7 @@ describe("useLspTokenNavigation", () => {
         lineCharStart: 4,
         tokenElement: createTokenElement("2,2"),
       },
+      // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
       {
         metaKey: true,
         ctrlKey: false,
@@ -193,6 +196,7 @@ describe("useLspTokenNavigation", () => {
         lineCharStart: 4,
         tokenElement: createTokenElement(),
       },
+      // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
       {
         metaKey: false,
         ctrlKey: false,
@@ -265,6 +269,7 @@ describe("useLspTokenNavigation", () => {
         lineCharStart: 4,
         tokenElement: createTokenElement("2,9"),
       },
+      // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
       {
         metaKey: false,
         ctrlKey: false,
@@ -314,6 +319,7 @@ describe("useLspTokenNavigation", () => {
       useLspTokenNavigation(
         { repoPath: "/repo", relPath: "src/current.ts" },
         {
+          // @ts-expect-error -- oxlint typescript
           getReturnToDiffTarget: (source) => ({
             kind: "changes",
             repoPath: "/repo",
@@ -332,6 +338,7 @@ describe("useLspTokenNavigation", () => {
         lineCharStart: 1,
         tokenElement: createTokenElement("8,0"),
       },
+      // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
       {
         metaKey: true,
         ctrlKey: false,

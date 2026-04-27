@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 
+// @ts-expect-error -- oxlint typescript
 import { FEATURE_NAV_ITEMS, featureKeyFromPath } from "@/app/featureNavigation";
 
 describe("feature navigation", () => {
@@ -14,6 +15,7 @@ describe("feature navigation", () => {
   });
 
   it("exposes all top-level feature tabs", () => {
+    // @ts-expect-error -- oxlint typescript
     expect(FEATURE_NAV_ITEMS.map((item) => item.key)).toEqual([
       "changes",
       "pull-requests",

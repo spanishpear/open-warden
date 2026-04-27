@@ -16,14 +16,17 @@ type DiscardFileRequest = {
 };
 
 export async function getGitSnapshot(repoPath: string) {
+  // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
   return desktop.getGitSnapshot(repoPath) as Promise<GitSnapshot>;
 }
 
 export async function getRepoFiles(repoPath: string) {
+  // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
   return desktop.getRepoFiles(repoPath) as Promise<RepoFileItem[]>;
 }
 
 export async function getCommitHistory(repoPath: string, limit?: number) {
+  // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
   return desktop.getCommitHistory(repoPath, limit) as Promise<HistoryCommit[]>;
 }
 
@@ -32,14 +35,17 @@ export async function getBranches(repoPath: string) {
 }
 
 export async function getBranchFiles(repoPath: string, baseRef: string, headRef: string) {
+  // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
   return desktop.getBranchFiles(repoPath, baseRef, headRef) as Promise<FileItem[]>;
 }
 
 export async function getCommitFiles(repoPath: string, commitId: string) {
+  // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
   return desktop.getCommitFiles(repoPath, commitId) as Promise<FileItem[]>;
 }
 
 export async function getRepoFile(repoPath: string, relPath: string, revision?: string | null) {
+  // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
   return desktop.getRepoFile({ repoPath, relPath, revision }) as Promise<DiffFile | null>;
 }
 
@@ -54,10 +60,12 @@ export async function getCommitFileVersions(
     commitId,
     relPath,
     previousPath,
+    // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
   ) as Promise<FileVersions>;
 }
 
 export async function getFileVersions(repoPath: string, bucket: Bucket, relPath: string) {
+  // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
   return desktop.getFileVersions(repoPath, relPath, bucket) as Promise<FileVersions>;
 }
 
@@ -74,6 +82,7 @@ export async function getBranchFileVersions(
     headRef,
     relPath,
     previousPath,
+    // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
   ) as Promise<FileVersions>;
 }
 

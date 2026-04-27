@@ -51,6 +51,8 @@ function toAnnotationSide(diffSide: PullRequestReviewThread["diffSide"]) {
   return diffSide === "LEFT" ? "deletions" : "additions";
 }
 
+// @ts-expect-error -- oxlint typescript
+// oxlint-disable-next-line eslint(no-unused-vars)
 function buildPullRequestThreadAnnotations({
   repoPath,
   pullRequestNumber,

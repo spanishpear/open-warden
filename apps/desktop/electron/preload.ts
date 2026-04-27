@@ -29,6 +29,7 @@ const desktopBridge: DesktopBridge = {
         return;
       }
 
+      // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
       listener(state as Parameters<typeof listener>[0]);
     };
 
@@ -43,6 +44,7 @@ const desktopBridge: DesktopBridge = {
         return;
       }
 
+      // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
       listener(event as Parameters<typeof listener>[0]);
     };
 
@@ -57,6 +59,7 @@ const desktopBridge: DesktopBridge = {
         return;
       }
 
+      // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
       listener(settings as Parameters<typeof listener>[0]);
     };
 

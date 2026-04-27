@@ -6,6 +6,7 @@ export function errorMessageFrom(error: unknown, fallback: string): string {
     "message" in error &&
     typeof (error as { message?: unknown }).message === "string"
   ) {
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
     return (error as { message: string }).message;
   }
   if (typeof error === "object") {
@@ -33,6 +34,7 @@ export function errorMessageFrom(error: unknown, fallback: string): string {
       "message" in maybeError.data &&
       typeof (maybeError.data as { message?: unknown }).message === "string"
     ) {
+      // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
       return (maybeError.data as { message: string }).message;
     }
   }

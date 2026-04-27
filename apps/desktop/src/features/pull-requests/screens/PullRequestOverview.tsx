@@ -385,6 +385,7 @@ export const PullRequestOverview = () => {
     setOpeningMode(null);
 
     if (!result.errorMessage) {
+      // oxlint-disable-next-line typescript-eslint(no-floating-promises)
       navigate("/changes/pull-request/files");
       return;
     }
@@ -426,6 +427,7 @@ export const PullRequestOverview = () => {
     }
 
     const nextPath = buildPreviewTabPath({
+      // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
       providerId: providerId as GitProviderId,
       owner,
       repo,
@@ -440,6 +442,7 @@ export const PullRequestOverview = () => {
       }
     }
 
+    // oxlint-disable-next-line typescript-eslint(no-floating-promises)
     navigate(nextPath);
   }
 
@@ -458,8 +461,10 @@ export const PullRequestOverview = () => {
       }),
     );
 
+    // oxlint-disable-next-line typescript-eslint(no-floating-promises)
     navigate(
       buildPreviewTabPath({
+        // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
         providerId: providerId as GitProviderId,
         owner,
         repo,
@@ -523,6 +528,7 @@ export const PullRequestOverview = () => {
                 queryArg={queryArg}
                 activeRepo={activeRepo ?? ""}
                 pullRequestNumber={parsedPullRequestNumber}
+                // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
                 providerId={detail.providerId as GitProviderId}
                 files={files}
                 conversation={conversation}

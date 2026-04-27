@@ -72,40 +72,49 @@ function ChangesFileList() {
   ];
 
   const onStageAll = () => {
+    // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
     void dispatch(stageAllAction());
   };
   const onUnstageAll = () => {
+    // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
     void dispatch(unstageAllAction());
   };
 
   const onDiscardChangesGroup = async (files: BucketedFile[]) => {
     if (files.length === 0) return;
     if (!(await confirmDiscard(`Discard all changes in CHANGES (${files.length} files)?`))) return;
+    // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
     void dispatch(discardChangesGroupAction(files));
   };
 
   const onStageFile = (path: string) => {
+    // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
     void dispatch(stageFileAction(path));
   };
 
   const onUnstageFile = (path: string) => {
+    // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
     void dispatch(unstageFileAction(path));
   };
 
   const onDiscardFile = async (bucket: Bucket, path: string) => {
     if (!(await confirmDiscard(`Discard changes for ${path}?`))) return;
+    // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
     void dispatch(discardFileAction(bucket, path));
   };
 
   const onSelectFile = (bucket: Bucket, relPath: string, event: MouseEvent<HTMLButtonElement>) => {
     if (event.shiftKey) {
+      // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
       void dispatch(rangeSelectFile({ bucket, path: relPath }, visibleRows));
       return;
     }
     if (event.metaKey || event.ctrlKey) {
+      // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
       void dispatch(toggleSelectFile(bucket, relPath));
       return;
     }
+    // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
     void dispatch(selectFile(bucket, relPath));
   };
 

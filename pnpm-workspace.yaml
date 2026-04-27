@@ -4,7 +4,7 @@ packages:
 
 catalog:
   vite: npm:@voidzero-dev/vite-plus-core@latest
-  vite-plus: 'catalog:'
+  vite-plus: "catalog:"
   vitest: npm:@voidzero-dev/vite-plus-test@latest
 
 onlyBuiltDependencies:
@@ -14,13 +14,13 @@ onlyBuiltDependencies:
   - msw
 
 overrides:
-  vite: 'catalog:'
-  vitest: 'catalog:'
+  vite: "catalog:"
+  vitest: "catalog:"
 
 peerDependencyRules:
   allowAny:
     - vite
     - vitest
   allowedVersions:
-    vite: '*'
-    vitest: '*'
+    vite: "*"
+    vitest: "*"

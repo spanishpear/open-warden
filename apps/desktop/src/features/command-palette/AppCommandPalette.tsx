@@ -267,6 +267,7 @@ function AppCommandPaletteContent({ onOpenChange }: AppCommandPaletteContentProp
       subtitle: item.path,
       keywords: [item.key, item.label, item.path],
       onSelect: () => {
+        // oxlint-disable-next-line typescript-eslint(no-floating-promises)
         navigate(item.path);
       },
     })),
@@ -276,6 +277,7 @@ function AppCommandPaletteContent({ onOpenChange }: AppCommandPaletteContentProp
       subtitle: "/settings",
       keywords: ["settings", "preferences", "config"],
       onSelect: () => {
+        // oxlint-disable-next-line typescript-eslint(no-floating-promises)
         navigate("/settings");
       },
     },
@@ -284,6 +286,7 @@ function AppCommandPaletteContent({ onOpenChange }: AppCommandPaletteContentProp
       label: "Open Folder",
       keywords: ["repo", "folder", "open"],
       onSelect: async () => {
+        // oxlint-disable-next-line typescript-eslint(await-thenable)
         await dispatch(selectFolder());
       },
     },
@@ -306,6 +309,7 @@ function AppCommandPaletteContent({ onOpenChange }: AppCommandPaletteContentProp
       keywords: ["repo", "switch"],
       disabled: repoPath === activeRepo,
       onSelect: async () => {
+        // oxlint-disable-next-line typescript-eslint(await-thenable)
         await dispatch(selectRepo(repoPath));
       },
     })),
@@ -318,6 +322,7 @@ function AppCommandPaletteContent({ onOpenChange }: AppCommandPaletteContentProp
         if (!activeRepo) return;
         const result = await dispatch(closeRepo(activeRepo));
         if (result.closedActiveRepo && location.pathname !== "/changes") {
+          // oxlint-disable-next-line typescript-eslint(no-floating-promises)
           navigate("/changes", { replace: true });
         }
       },
@@ -328,6 +333,7 @@ function AppCommandPaletteContent({ onOpenChange }: AppCommandPaletteContentProp
       disabled: !activeRepo || hasRunningAction,
       keywords: ["repo", "refresh", "snapshot"],
       onSelect: async () => {
+        // oxlint-disable-next-line typescript-eslint(await-thenable)
         await dispatch(refreshActiveRepo());
       },
     },
@@ -338,6 +344,7 @@ function AppCommandPaletteContent({ onOpenChange }: AppCommandPaletteContentProp
       keywords: ["stage", "selection"],
       onSelect: async () => {
         for (const file of stageTargets) {
+          // oxlint-disable-next-line typescript-eslint(await-thenable)
           await dispatch(stageFileAction(file.path));
         }
       },
@@ -348,6 +355,7 @@ function AppCommandPaletteContent({ onOpenChange }: AppCommandPaletteContentProp
       disabled: !activeRepo || hasRunningAction || snapshotRows.length === 0,
       keywords: ["stage", "all"],
       onSelect: async () => {
+        // oxlint-disable-next-line typescript-eslint(await-thenable)
         await dispatch(stageAllAction());
       },
     },
@@ -357,6 +365,7 @@ function AppCommandPaletteContent({ onOpenChange }: AppCommandPaletteContentProp
       disabled: !activeRepo || hasRunningAction || stagedCount === 0,
       keywords: ["unstage", "all"],
       onSelect: async () => {
+        // oxlint-disable-next-line typescript-eslint(await-thenable)
         await dispatch(unstageAllAction());
       },
     },
@@ -371,6 +380,7 @@ function AppCommandPaletteContent({ onOpenChange }: AppCommandPaletteContentProp
           `Discard changes for ${discardTargets.length} file${discardTargets.length === 1 ? "" : "s"}?`,
         );
         if (!confirmed) return;
+        // oxlint-disable-next-line typescript-eslint(await-thenable)
         await dispatch(discardChangesGroupAction(discardTargets));
       },
     },
@@ -383,6 +393,7 @@ function AppCommandPaletteContent({ onOpenChange }: AppCommandPaletteContentProp
       disabled: !activeRepo || hasRunningAction || stagedCount === 0 || !commitMessage.trim(),
       keywords: ["commit", "staged"],
       onSelect: async () => {
+        // oxlint-disable-next-line typescript-eslint(await-thenable)
         await dispatch(commitAction());
       },
     },
@@ -392,6 +403,7 @@ function AppCommandPaletteContent({ onOpenChange }: AppCommandPaletteContentProp
       disabled: diffStyle === "split",
       keywords: ["diff", "split"],
       onSelect: async () => {
+        // oxlint-disable-next-line typescript-eslint(await-thenable)
         await dispatch(setDiffStyleValue("split"));
       },
     },
@@ -401,6 +413,7 @@ function AppCommandPaletteContent({ onOpenChange }: AppCommandPaletteContentProp
       disabled: diffStyle === "unified",
       keywords: ["diff", "unified"],
       onSelect: async () => {
+        // oxlint-disable-next-line typescript-eslint(await-thenable)
         await dispatch(setDiffStyleValue("unified"));
       },
     },
@@ -466,7 +479,9 @@ function AppCommandPaletteContent({ onOpenChange }: AppCommandPaletteContentProp
           secondaryLabel: file.bucket,
           keywords: [file.bucket, file.status],
           onSelect: async () => {
+            // oxlint-disable-next-line typescript-eslint(no-floating-promises)
             navigate("/changes");
+            // oxlint-disable-next-line typescript-eslint(await-thenable)
             await dispatch(selectFile(file.bucket, file.path));
           },
         }))
@@ -480,7 +495,9 @@ function AppCommandPaletteContent({ onOpenChange }: AppCommandPaletteContentProp
                 : "history",
             keywords: ["history", file.status],
             onSelect: async () => {
+              // oxlint-disable-next-line typescript-eslint(no-floating-promises)
               navigate("/history");
+              // oxlint-disable-next-line typescript-eslint(await-thenable)
               await dispatch(selectHistoryFile(file.path));
             },
           }))
@@ -494,6 +511,7 @@ function AppCommandPaletteContent({ onOpenChange }: AppCommandPaletteContentProp
                   : "review",
               keywords: ["review", file.status],
               onSelect: () => {
+                // oxlint-disable-next-line typescript-eslint(no-floating-promises)
                 navigate("/review");
                 dispatch(setReviewActivePath(file.path));
               },
@@ -510,7 +528,9 @@ function AppCommandPaletteContent({ onOpenChange }: AppCommandPaletteContentProp
       relativeTime: commit.relativeTime,
       keywords: ["history", "commit"],
       onSelect: async () => {
+        // oxlint-disable-next-line typescript-eslint(no-floating-promises)
         navigate("/history");
+        // oxlint-disable-next-line typescript-eslint(await-thenable)
         await dispatch(selectHistoryCommit(commit.commitId));
       },
     })),

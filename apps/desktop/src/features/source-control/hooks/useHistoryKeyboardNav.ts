@@ -47,7 +47,9 @@ export function useHistoryKeyboardNav() {
       historyNavTarget,
       historyFilter,
       activePath,
+      // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
       allHistoryCommits: (historyCommits ?? []) as HistoryCommit[],
+      // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
       allHistoryFiles: (historyFiles ?? []) as FileItem[],
     };
   };
@@ -86,6 +88,7 @@ export function useHistoryKeyboardNav() {
       const targetPath = filePaths[targetIndex];
       if (!targetPath) return;
       scrollKeyboardNavItemIntoView("history-files", targetIndex);
+      // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
       void dispatch(selectHistoryFile(targetPath));
       return;
     }
@@ -117,6 +120,7 @@ export function useHistoryKeyboardNav() {
     const targetCommit = filteredHistoryCommits[targetIndex];
     if (!targetCommit) return;
     scrollKeyboardNavItemIntoView("history-commits", targetIndex);
+    // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
     void dispatch(selectHistoryCommit(targetCommit.commitId));
   };
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 
+// @ts-expect-error -- oxlint typescript
 import { parseMarkdown } from "@/features/markdown/parser";
 
 describe("parseMarkdown", () => {

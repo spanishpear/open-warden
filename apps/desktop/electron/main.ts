@@ -123,9 +123,11 @@ ipcMain.handle(
   DESKTOP_INVOKE_CHANNEL,
   async (_event, method: DesktopMethod, ...args: unknown[]) => {
     if (!(method in desktopApi)) {
+      // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-conversion)
       throw new Error(`Unknown desktop method: ${String(method)}`);
     }
 
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
     const handler = desktopApi[method] as (...params: unknown[]) => unknown;
     return handler(...args);
   },
@@ -139,6 +141,7 @@ ipcMain.handle(UPDATE_DOWNLOAD_CHANNEL, async () => updateManager.downloadUpdate
 ipcMain.removeHandler(UPDATE_INSTALL_CHANNEL);
 ipcMain.handle(UPDATE_INSTALL_CHANNEL, async () => updateManager.installUpdate());
 
+// oxlint-disable-next-line typescript-eslint(no-floating-promises)
 app.whenReady().then(() => {
   createMainWindow();
   updateManager.initialize();

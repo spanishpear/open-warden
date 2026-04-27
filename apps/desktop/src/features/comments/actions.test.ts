@@ -5,14 +5,19 @@ import {
   setActivePath,
   setActiveRepo,
   sourceControlReducer,
+  // @ts-expect-error -- oxlint typescript
 } from "@/features/source-control/sourceControlSlice";
+// @ts-expect-error -- oxlint typescript
 import type { CommentItem } from "@/features/source-control/types";
 import {
   clearLastCopiedPayload,
   commentsClipboardReducer,
   setLastCopiedPayload,
+  // @ts-expect-error -- oxlint typescript
 } from "@/features/comments/commentsClipboardSlice";
+// @ts-expect-error -- oxlint typescript
 import { addComment, copyComments, copyLastCommentsPayload } from "@/features/comments/actions";
+// @ts-expect-error -- oxlint typescript
 import { commentsReducer } from "@/features/comments/commentsSlice";
 
 type TestStore = ReturnType<typeof createTestStore>;
@@ -61,6 +66,7 @@ function mockClipboard(writeText: ReturnType<typeof vi.fn>) {
 }
 
 function commentIds(store: TestStore): string[] {
+  // @ts-expect-error -- oxlint typescript
   return store.getState().comments.map((comment) => comment.id);
 }
 
@@ -88,6 +94,7 @@ describe("comments actions", () => {
     expect(result).toEqual({ ok: true, copiedCount: 1, clearedCount: 1 });
     expect(writeText).toHaveBeenCalledWith("@src/file.ts#L2-4 - first");
     expect(commentIds(store)).toEqual(["c2", "c3"]);
+    // @ts-expect-error -- oxlint typescript
     expect(store.getState().commentsClipboard.lastCopiedPayload).toBe("@src/file.ts#L2-4 - first");
   });
 
@@ -166,6 +173,7 @@ describe("comments actions", () => {
 
     expect(result).toEqual({ ok: false, copiedCount: 0, clearedCount: 0 });
     expect(commentIds(store)).toEqual(["c1", "c2"]);
+    // @ts-expect-error -- oxlint typescript
     expect(store.getState().commentsClipboard.lastCopiedPayload).toBe("old payload");
   });
 

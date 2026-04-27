@@ -1,12 +1,12 @@
-import { defineConfig } from 'vite-plus';
+import { defineConfig } from "vite-plus";
 
 export default defineConfig({
   staged: {
-    "*": "vp check --fix"
+    "*": "vp check --fix",
   },
   fmt: {},
   lint: {
-    "ignorePatterns": [
+    ignorePatterns: [
       "coverage",
       "dist",
       "dist-electron",
@@ -16,28 +16,22 @@ export default defineConfig({
       "playwright-report",
       "test-results",
       "t3code",
-      "*.tsbuildinfo"
+      "*.tsbuildinfo",
     ],
-    "plugins": [
-      "eslint",
-      "oxc",
-      "react",
-      "unicorn",
-      "typescript"
-    ],
-    "categories": {
-      "correctness": "warn",
-      "suspicious": "warn",
-      "perf": "warn"
+    plugins: ["eslint", "oxc", "react", "unicorn", "typescript"],
+    categories: {
+      correctness: "warn",
+      suspicious: "warn",
+      perf: "warn",
     },
-    "rules": {
+    rules: {
       "react-in-jsx-scope": "off",
       "eslint/no-await-in-loop": "off",
-      "eslint/no-shadow": "off"
+      "eslint/no-shadow": "off",
     },
-    "options": {
-      "typeAware": true,
-      "typeCheck": true
-    }
+    options: {
+      typeAware: true,
+      typeCheck: true,
+    },
   },
 });

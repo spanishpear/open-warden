@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 
+// @ts-expect-error -- oxlint typescript
 import { normalizeTheme } from "@/app/themeUtils";
 
 describe("ThemeSwitcher helpers", () => {

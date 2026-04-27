@@ -162,6 +162,7 @@ export function useChangesKeyboardNav(mode: "changes" | "files") {
     scrollKeyboardNavItemIntoView("changes-files", targetIndex);
 
     if (extendSelection) {
+      // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
       void dispatch(
         rangeSelectFile(
           {
@@ -174,6 +175,7 @@ export function useChangesKeyboardNav(mode: "changes" | "files") {
       return;
     }
 
+    // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
     void dispatch(selectFile(targetFile.bucket, targetFile.path));
   };
 
@@ -183,6 +185,7 @@ export function useChangesKeyboardNav(mode: "changes" | "files") {
     if (mode !== "changes") return;
     if (runningAction) return;
     event.preventDefault();
+    // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
     void dispatch(stageOrUnstageSelectionAction());
   };
 

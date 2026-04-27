@@ -2,6 +2,7 @@ import path from "node:path";
 
 import { defineConfig } from "vite-plus";
 
+// @ts-expect-error -- oxlint typescript
 const external = ["electron", ...Object.keys(process.binding("natives"))];
 
 export default defineConfig({

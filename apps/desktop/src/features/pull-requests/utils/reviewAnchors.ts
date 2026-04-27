@@ -198,6 +198,7 @@ export function buildPullRequestReviewAnchors(args: {
     const fileAnchors = Array.from(anchorMap.values())
       .filter((anchor) => anchor.path === file.path)
       .toSorted(compareAnchors)
+      // oxlint-disable-next-line oxc(no-map-spread)
       .map((anchor) => ({
         ...anchor,
         remoteThreads: anchor.remoteThreads.toSorted(compareRemoteThreads),

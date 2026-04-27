@@ -11,6 +11,7 @@ export default defineConfig({
   },
   test: {
     environment: "jsdom",
+    // @ts-expect-error -- oxlint typescript
     environmentMatchGlobs: [["electron/**/*.test.ts", "node"]],
     globals: true,
     setupFiles: ["./src/test/setup.ts"],

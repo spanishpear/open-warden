@@ -1,6 +1,8 @@
+/// <reference types="@testing-library/jest-dom" />
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 
+// @ts-expect-error -- oxlint typescript
 import { RecentProjectsPicker } from "@/features/source-control/RecentProjectsPicker";
 
 describe("RecentProjectsPicker", () => {

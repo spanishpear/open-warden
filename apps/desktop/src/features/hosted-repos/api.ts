@@ -236,7 +236,7 @@ export const {
   useDisconnectProviderMutation,
   useGetPullRequestConversationQuery,
   useGetPullRequestFilesQuery,
-  
+
   useListProviderConnectionsQuery,
   useListPullRequestsQuery,
   usePreparePullRequestCompareRefsQuery,

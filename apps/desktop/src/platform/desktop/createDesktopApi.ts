@@ -12,11 +12,13 @@ export function createDesktopApiFromInvoker(invoke: DesktopApiInvoker): DesktopA
     desktopApi[method] = (...args: unknown[]) => invoke(method, ...args);
   }
 
+  // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
   return desktopApi as DesktopApi;
 }
 
 export function createDesktopApiForwarder(getDesktopApi: () => DesktopApi): DesktopApi {
   return createDesktopApiFromInvoker((method, ...args) => {
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
     const handler = getDesktopApi()[method] as (...parameters: unknown[]) => unknown;
     return handler(...args);
   });
@@ -29,9 +31,11 @@ export function createDesktopApiWithDefaults(options: {
   const desktopApi: Partial<Record<DesktopApiMethod, (...args: unknown[]) => unknown>> = {};
 
   for (const method of DESKTOP_API_METHODS) {
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
     const override = options.overrides?.[method] as ((...args: unknown[]) => unknown) | undefined;
     desktopApi[method] = override ?? options.fallback(method);
   }
 
+  // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
   return desktopApi as DesktopApi;
 }

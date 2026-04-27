@@ -20,4 +20,6 @@ export function buildPullRequestPreviewPath({
   return `${buildPullRequestsInboxPath()}/${providerId}/${owner}/${repo}/${String(pullRequestNumber)}`;
 }
 
+// @ts-expect-error -- oxlint typescript
+// oxlint-disable-next-line eslint(no-unused-vars)
 const buildPullRequestReviewPath = buildPullRequestPreviewPath;

@@ -101,6 +101,7 @@ async function runGit(
       throw new GitCommandError(args, `git command timed out after ${GIT_TIMEOUT_MS}ms`, null);
     }
 
+    // oxlint-disable-next-line typescript-eslint(no-base-to-string)
     const stderr = "stderr" in error ? String(error.stderr ?? "").trim() : error.message;
     const code = typeof rawCode === "number" ? rawCode : null;
     const commandError = new GitCommandError(args, stderr, code);
@@ -728,6 +729,7 @@ export async function discardFiles(repoPath: string, files: DiscardFileInput[]) 
   }
 
   if (failures.length === 0) return;
+  // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
   if (failures.length === 1) throw new Error(failures[0]!);
   throw new Error(`Failed to discard ${failures.length} files:\n${failures.join("\n")}`);
 }

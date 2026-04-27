@@ -40,6 +40,7 @@ export function AppShell() {
       return;
     }
 
+    // oxlint-disable-next-line typescript-eslint(no-floating-promises)
     navigate("/changes", { replace: true });
   }
 
@@ -91,6 +92,7 @@ export function AppShell() {
               });
             }}
             onChooseFolder={() => {
+              // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
               void dispatch(selectFolder());
             }}
           />
@@ -122,6 +124,7 @@ function RepoTabsContainer({ currentPath, onShowRecentProjects }: RepoTabsContai
       return;
     }
 
+    // oxlint-disable-next-line typescript-eslint(no-floating-promises)
     navigate("/changes", { replace: true });
   }
 
@@ -132,12 +135,14 @@ function RepoTabsContainer({ currentPath, onShowRecentProjects }: RepoTabsContai
       recentRepos={recentRepos}
       onSelectRepo={(repo) => {
         const switchingRepo = repo !== activeRepo;
+        // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
         void dispatch(selectRepo(repo));
         navigateToChangesAfterRepoSwitch(switchingRepo);
       }}
       onCloseRepo={(repo) => {
         void dispatch(closeRepo(repo)).then((result) => {
           if (result.closedActiveRepo && currentPath !== "/changes") {
+            // oxlint-disable-next-line typescript-eslint(no-floating-promises)
             navigate("/changes", { replace: true });
           }
         });
@@ -150,6 +155,7 @@ function RepoTabsContainer({ currentPath, onShowRecentProjects }: RepoTabsContai
       }}
       onShowAllRecentProjects={onShowRecentProjects}
       onOpenFolder={() => {
+        // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
         void dispatch(selectFolder());
       }}
     />

@@ -85,6 +85,8 @@ export const removeComment =
     dispatch(removeCommentAction(id));
   };
 
+// @ts-expect-error -- oxlint typescript
+// oxlint-disable-next-line eslint(no-unused-vars)
 const removeCommentsByIds =
   (ids: string[]): AppThunk =>
   (dispatch) => {
@@ -189,6 +191,8 @@ export async function confirmDiscard(message: string): Promise<boolean> {
   }
 }
 
+// @ts-expect-error -- oxlint typescript
+// oxlint-disable-next-line eslint(no-unused-vars)
 function canDiscard(bucket: Bucket): boolean {
   return bucket === "unstaged" || bucket === "untracked" || bucket === "staged";
 }

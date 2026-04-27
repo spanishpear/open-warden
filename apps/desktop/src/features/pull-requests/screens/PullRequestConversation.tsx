@@ -65,6 +65,7 @@ export const PullRequestConversation = () => {
 
   const { detail } = conversation;
 
+  // oxlint-disable-next-line typescript-eslint(consistent-return)
   return (
     <div className="flex h-full min-h-0 flex-col">
       <PullRequestConversationTab

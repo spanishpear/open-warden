@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 
+// @ts-expect-error -- oxlint typescript
 import { createAppSettings, DEFAULT_APP_SETTINGS } from "@/platform/desktop/appSettings";
 
 describe("appSettings helpers", () => {

@@ -7,6 +7,7 @@ afterEach(() => {
 });
 
 test("desktop API resolves Electron runtime lazily after import", async () => {
+  // @ts-expect-error -- oxlint typescript
   vi.stubEnv("DEV", "true");
   vi.stubEnv("VITE_DESKTOP_FALLBACK", "");
   vi.stubGlobal("window", {});
@@ -14,6 +15,7 @@ test("desktop API resolves Electron runtime lazily after import", async () => {
   const { desktop } = await import("./index");
 
   const selectFolder = vi.fn().mockResolvedValue("/tmp/repo");
+  // @ts-expect-error -- oxlint typescript
   window.desktopBridge = {
     selectFolder,
     loadWorkspaceSession: vi.fn().mockResolvedValue({
@@ -89,6 +91,7 @@ test("desktop API resolves Electron runtime lazily after import", async () => {
     line: 5,
     character: 9,
   });
+  // @ts-expect-error -- oxlint typescript
   expect(window.desktopBridge.getLspHover).toHaveBeenCalledWith({
     repoPath: "/tmp/repo",
     relPath: "src/app.ts",
@@ -101,6 +104,7 @@ test("desktop API resolves Electron runtime lazily after import", async () => {
     relPath: "src/app.ts",
     revision: "HEAD",
   });
+  // @ts-expect-error -- oxlint typescript
   expect(window.desktopBridge.getRepoFile).toHaveBeenCalledWith({
     repoPath: "/tmp/repo",
     relPath: "src/app.ts",
@@ -113,6 +117,7 @@ test("desktop API resolves Electron runtime lazily after import", async () => {
     line: 5,
     character: 9,
   });
+  // @ts-expect-error -- oxlint typescript
   expect(window.desktopBridge.getLspDefinition).toHaveBeenCalledWith({
     repoPath: "/tmp/repo",
     relPath: "src/app.ts",
@@ -127,6 +132,7 @@ test("desktop API resolves Electron runtime lazily after import", async () => {
     character: 9,
     includeDeclaration: false,
   });
+  // @ts-expect-error -- oxlint typescript
   expect(window.desktopBridge.getLspReferences).toHaveBeenCalledWith({
     repoPath: "/tmp/repo",
     relPath: "src/app.ts",
@@ -136,8 +142,10 @@ test("desktop API resolves Electron runtime lazily after import", async () => {
   });
 
   await desktop.getRepoFiles("/tmp/repo");
+  // @ts-expect-error -- oxlint typescript
   expect(window.desktopBridge.getRepoFiles).toHaveBeenCalledWith("/tmp/repo");
 
   await desktop.getAppSettingsPath();
+  // @ts-expect-error -- oxlint typescript
   expect(window.desktopBridge.getAppSettingsPath).toHaveBeenCalledTimes(1);
 });

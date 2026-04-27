@@ -237,6 +237,7 @@ function bitbucketAuthorizationValue(connection: BitbucketAuth) {
 
 function parseBitbucketErrorMessage(text: string, status: number) {
   try {
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
     const payload = JSON.parse(text) as {
       error?: {
         message?: string;
@@ -254,6 +255,7 @@ function parseBitbucketErrorMessage(text: string, status: number) {
   return text.trim() || `Bitbucket request failed with status ${status}`;
 }
 
+// oxlint-disable-next-line typescript-eslint(no-unnecessary-type-parameters)
 export async function bitbucketRequest<T>(
   pathnameOrUrl: string,
   connection: BitbucketAuth,
@@ -283,12 +285,14 @@ export async function bitbucketRequest<T>(
 
   if (init?.responseType === "text") {
     return {
+      // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
       data: (await response.text()) as T,
       headers: response.headers,
     };
   }
 
   return {
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
     data: (await response.json()) as T,
     headers: response.headers,
   };

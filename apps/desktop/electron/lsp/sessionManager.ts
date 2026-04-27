@@ -268,10 +268,12 @@ export function normalizeLspLocationResponse(
     const location = value as BasicLocation | LocationLink;
     const isLocationLink =
       "targetUri" in location || "targetSelectionRange" in location || "targetRange" in location;
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
     const uri = isLocationLink ? location.targetUri : (location as BasicLocation).uri;
     const range = isLocationLink
       ? (location.targetSelectionRange ?? location.targetRange)
-      : (location as BasicLocation).range;
+      : // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
+        (location as BasicLocation).range;
 
     if (!uri) {
       return [];
@@ -409,6 +411,7 @@ class LspSession {
     });
 
     this.initialized = this.spawned.then(async () => {
+      // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
       const initializeResult = (await this.sendRequest("initialize", {
         processId: process.pid,
         clientInfo: {
@@ -509,6 +512,7 @@ class LspSession {
       return null;
     }
 
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
     const response = (await this.sendRequest("textDocument/hover", {
       textDocument: {
         uri,
@@ -534,6 +538,7 @@ class LspSession {
       return [];
     }
 
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
     const response = (await this.sendRequest("textDocument/definition", {
       textDocument: {
         uri,
@@ -564,6 +569,7 @@ class LspSession {
       return [];
     }
 
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
     const response = (await this.sendRequest("textDocument/references", {
       textDocument: {
         uri,
@@ -594,6 +600,7 @@ class LspSession {
       return;
     }
 
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
     const notification = params as DiagnosticsNotification;
     if (!notification.uri) {
       return;
@@ -791,6 +798,7 @@ export class LspSessionManager {
   private readonly onDiagnostics: SessionManagerOptions["onDiagnostics"];
   private readonly loadAppSettings: NonNullable<SessionManagerOptions["loadAppSettings"]>;
 
+  // oxlint-disable-next-line typescript-eslint(unbound-method)
   constructor({ onDiagnostics, loadAppSettings }: SessionManagerOptions) {
     this.onDiagnostics = onDiagnostics;
     this.loadAppSettings = loadAppSettings ?? (async () => createAppSettings());

@@ -105,10 +105,14 @@ describe("electron git backend", () => {
     git(repo, ["commit", "-m", "update notes"]);
 
     const history = await getCommitHistory(repo);
+    // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
     const files = await getCommitFiles(repo, history[0]!.commitId);
+    // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
     const rootFiles = await getCommitFiles(repo, history[1]!.commitId);
+    // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
     const versions = await getCommitFileVersions(repo, history[0]!.commitId, "notes.md");
 
+    // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
     expect(history[0]!.summary).toEqual("update notes");
     expect(files).toEqual([
       {
@@ -205,6 +209,7 @@ describe("electron git backend", () => {
 
     const history = await getCommitHistory(repo);
 
+    // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
     await expect(getCommitFileVersions(repo, history[0]!.commitId, "binary.bin")).rejects.toThrow(
       /binary file is not supported/i,
     );

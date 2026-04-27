@@ -8,9 +8,9 @@ export function compactComments(comments: Array<CommentItem | undefined>): Comme
   return comments.filter((comment): comment is CommentItem => !!comment);
 }
 
-function createCommentCountByFile(
-  comments: Array<CommentItem | undefined>,
-): Map<string, number> {
+// @ts-expect-error -- oxlint typescript
+// oxlint-disable-next-line eslint(no-unused-vars)
+function createCommentCountByFile(comments: Array<CommentItem | undefined>): Map<string, number> {
   const counts = new Map<string, number>();
   for (const comment of comments) {
     if (!comment) continue;
@@ -20,6 +20,8 @@ function createCommentCountByFile(
   return counts;
 }
 
+// @ts-expect-error -- oxlint typescript
+// oxlint-disable-next-line eslint(no-unused-vars)
 function createCommentCountByPathForRepo(
   comments: Array<CommentItem | undefined>,
   repoPath: string,
@@ -72,6 +74,8 @@ export function countCommentsForPathInRepoContext(
   return count;
 }
 
+// @ts-expect-error -- oxlint typescript
+// oxlint-disable-next-line eslint(no-unused-vars)
 function countCommentsForFile(
   comments: Array<CommentItem | undefined>,
   repoPath: string,
@@ -87,6 +91,8 @@ function countCommentsForFile(
   return count;
 }
 
+// @ts-expect-error -- oxlint typescript
+// oxlint-disable-next-line eslint(no-unused-vars)
 function getCommentCountForFile(
   counts: Map<string, number>,
   repoPath: string,

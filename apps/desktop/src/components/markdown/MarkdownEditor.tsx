@@ -438,12 +438,14 @@ function MentionDropdown({
   useEffect(() => {
     const list = listRef.current;
     if (!list) return;
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
     const item = list.children[activeIndex] as HTMLElement | undefined;
     item?.scrollIntoView({ block: "nearest" });
   }, [activeIndex]);
 
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
+      // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
       if (listRef.current && !listRef.current.contains(event.target as Node)) {
         onDismiss();
       }
@@ -578,6 +580,7 @@ function HighlightedMarkdownEditor({
         setHighlightedHtml(html);
       }
     });
+    // oxlint-disable-next-line typescript-eslint(consistent-return)
     return () => {
       cancelled = true;
     };

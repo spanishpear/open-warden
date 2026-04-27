@@ -5,6 +5,7 @@ import {
   createWorkspaceSession,
   mergeRecentRepos,
   normalizeRepoPaths,
+  // @ts-expect-error -- oxlint typescript
 } from "@/platform/desktop/workspaceSession";
 
 describe("workspaceSession helpers", () => {

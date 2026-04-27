@@ -150,6 +150,7 @@ export function useDiffLspHover({ document, resetKey }: UseDiffLspHoverOptions) 
     window.addEventListener("scroll", onViewportChange, true);
     window.addEventListener("resize", onViewportChange);
 
+    // oxlint-disable-next-line typescript-eslint(consistent-return)
     return () => {
       window.removeEventListener("pointerdown", onPointerDown, true);
       window.removeEventListener("scroll", onViewportChange, true);

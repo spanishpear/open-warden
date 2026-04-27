@@ -235,6 +235,7 @@ function FilesDiffViewer({
         pullRequestNumber,
         compareBaseRef,
         compareHeadRef,
+        // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
         providerId: providerId as GitProviderId | undefined,
       })
     : [];

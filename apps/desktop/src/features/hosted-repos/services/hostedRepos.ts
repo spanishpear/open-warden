@@ -23,10 +23,12 @@ import type {
 } from "@/platform/desktop";
 
 export async function listProviderConnections() {
+  // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
   return desktop.listProviderConnections() as Promise<ProviderConnection[]>;
 }
 
 export async function connectProvider(input: ConnectProviderInput) {
+  // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
   return desktop.connectProvider(input) as Promise<ProviderConnection>;
 }
 
@@ -35,10 +37,12 @@ export async function disconnectProvider(providerId: ProviderConnection["provide
 }
 
 export async function resolveHostedRepo(repoPath: string) {
+  // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
   return desktop.resolveHostedRepo(repoPath) as Promise<HostedRepoRef | null>;
 }
 
 export async function listPullRequests(input: ListPullRequestsInput) {
+  // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
   return desktop.listPullRequests(input) as Promise<PullRequestPage>;
 }
 
@@ -49,39 +53,48 @@ export async function resolveActivePullRequestForBranch(
 }
 
 export async function getPullRequestConversation(input: PullRequestLocatorInput) {
+  // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
   return desktop.getPullRequestConversation(input) as Promise<PullRequestConversation>;
 }
 
 export async function getPullRequestFiles(input: PullRequestLocatorInput) {
+  // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
   return desktop.getPullRequestFiles(input) as Promise<PullRequestChangedFile[]>;
 }
 
 export async function getPullRequestPatch(input: PullRequestLocatorInput) {
+  // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
   return desktop.getPullRequestPatch(input) as Promise<string>;
 }
 
 export async function addPullRequestComment(input: AddPullRequestCommentInput) {
+  // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
   return desktop.addPullRequestComment(input) as Promise<PullRequestIssueComment>;
 }
 
 export async function replyToPullRequestThread(input: ReplyToPullRequestThreadInput) {
+  // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
   return desktop.replyToPullRequestThread(input) as Promise<PullRequestReviewThread>;
 }
 
 export async function submitPullRequestReviewComments(input: SubmitPullRequestReviewCommentsInput) {
   return desktop.submitPullRequestReviewComments(
     input,
+    // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
   ) as Promise<SubmitPullRequestReviewCommentsResult>;
 }
 
 export async function setPullRequestThreadResolved(input: SetPullRequestThreadResolvedInput) {
+  // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
   return desktop.setPullRequestThreadResolved(input) as Promise<PullRequestReviewThread>;
 }
 
 export async function preparePullRequestCompareRefs(input: PullRequestLocatorInput) {
+  // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
   return desktop.preparePullRequestCompareRefs(input) as Promise<PullRequestCompareRefs>;
 }
 
 export async function preparePullRequestWorkspace(input: PreparePullRequestWorkspaceInput) {
+  // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
   return desktop.preparePullRequestWorkspace(input) as Promise<PreparedPullRequestWorkspace>;
 }

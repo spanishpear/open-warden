@@ -159,6 +159,7 @@ export default function PullRequestFileList({
                 <DropdownMenuRadioGroup
                   value={commentFilter}
                   onValueChange={(value) => {
+                    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
                     setCommentFilter(value as FileCommentFilter);
                   }}
                 >

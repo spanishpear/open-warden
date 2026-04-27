@@ -260,6 +260,7 @@ function HeaderFeatureNav({ activeFeature }: HeaderFeatureNavProps) {
                 : "text-muted-foreground hover:bg-accent hover:text-foreground"
             }`}
             onClick={() => {
+              // oxlint-disable-next-line typescript-eslint(no-floating-promises)
               navigate(item.path);
             }}
           >
@@ -293,6 +294,7 @@ function HeaderActions({ activeFeature, currentPath, onOpenCommandPalette }: Hea
         type="button"
         className="border-input bg-surface-alt text-muted-foreground hover:text-foreground inline-flex h-8 w-8 items-center justify-center rounded-md border transition-[transform] duration-150 ease-[var(--ease-out)] active:scale-[0.95]"
         onClick={() => {
+          // oxlint-disable-next-line typescript-eslint(no-floating-promises)
           navigate("/settings");
         }}
         title="Open Settings"

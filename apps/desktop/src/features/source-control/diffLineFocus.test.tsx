@@ -2,6 +2,7 @@ import { render } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { useEffect, useRef } from "react";
 
+// @ts-expect-error -- oxlint typescript
 import { useDiffLineFocus } from "@/features/source-control/diffLineFocus";
 
 function FocusHarness({
@@ -70,6 +71,7 @@ describe("useDiffLineFocus", () => {
     const host = container.querySelector<HTMLElement>("[data-shadow-host]");
     const line = host?.shadowRoot?.querySelector<HTMLElement>('[data-line="2"]');
 
+    // oxlint-disable-next-line typescript-eslint(unbound-method)
     expect(line?.scrollIntoView).toHaveBeenCalledTimes(1);
     expect(line?.getAttribute("data-app-line-focus")).toBe("true");
 
@@ -77,6 +79,7 @@ describe("useDiffLineFocus", () => {
 
     vi.advanceTimersByTime(0);
 
+    // oxlint-disable-next-line typescript-eslint(unbound-method)
     expect(line?.scrollIntoView).toHaveBeenCalledTimes(2);
 
     vi.advanceTimersByTime(1800);

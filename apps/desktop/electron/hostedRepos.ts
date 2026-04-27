@@ -3,7 +3,7 @@ export {
   disconnectProvider,
   listProviderConnections,
 } from "./hosted-repos/providers";
-export {  resolveHostedRepo } from "./hosted-repos/repository";
+export { resolveHostedRepo } from "./hosted-repos/repository";
 export {
   addPullRequestComment,
   getPullRequestConversation,

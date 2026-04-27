@@ -125,6 +125,7 @@ export function GeneralFileViewer(props: GeneralFileViewerProps) {
               size="sm"
               variant="secondary"
               onClick={() => {
+                // oxlint-disable-next-line typescript-eslint(no-floating-promises)
                 navigate(returnToDiffPath(returnToDiffTarget));
                 dispatch(navigateBackToDiffFromFileViewer());
               }}

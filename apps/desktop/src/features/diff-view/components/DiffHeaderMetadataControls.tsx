@@ -127,6 +127,7 @@ export function DiffHeaderMetadataControls({
                     return;
                   }
 
+                  // oxlint-disable-next-line typescript-eslint(no-floating-promises)
                   navigate("/changes/files");
                   dispatch(
                     openFileViewer({

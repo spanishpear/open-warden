@@ -1,9 +1,13 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 
+// @ts-expect-error -- oxlint typescript
 import { commentsReducer } from "@/features/comments/commentsSlice";
+// @ts-expect-error -- oxlint typescript
 import { pullRequestsReducer } from "@/features/pull-requests/pullRequestsSlice";
+// @ts-expect-error -- oxlint typescript
 import { settingsReducer } from "@/features/settings/settingsSlice";
+// @ts-expect-error -- oxlint typescript
 import { desktop } from "@/platform/desktop";
 
 import {
@@ -76,6 +80,7 @@ function createTestStore() {
 describe("source control workspace actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // @ts-expect-error -- oxlint typescript
     vi.mocked(desktop.saveWorkspaceSession).mockImplementation(async (session) => session);
   });
 
@@ -246,8 +251,11 @@ describe("source control workspace actions", () => {
     expect(state.sourceControl.changesSidebarMode).toBe("pull-request");
     expect(state.sourceControl.fileViewerTarget).toBeNull();
     expect(state.sourceControl.reviewActivePath).toBe("src/pr-origin.ts");
+    // @ts-expect-error -- oxlint typescript
     expect(state.pullRequests.activeReviewTab).toBe("files");
+    // @ts-expect-error -- oxlint typescript
     expect(state.pullRequests.filesViewMode).toBe("review");
+    // @ts-expect-error -- oxlint typescript
     expect(state.pullRequests.fileJumpTarget).toEqual(
       expect.objectContaining({
         path: "src/pr-origin.ts",

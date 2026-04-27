@@ -65,6 +65,7 @@ function InputGroupAddon({
       data-align={align}
       className={cn(inputGroupAddonVariants({ align }), className)}
       onClick={(e) => {
+        // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
         if ((e.target as HTMLElement).closest("button")) {
           return;
         }

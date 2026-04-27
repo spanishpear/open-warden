@@ -56,7 +56,9 @@ type RegisteredDesktopApiMethod = (typeof DESKTOP_API_METHODS)[number];
 type MissingDesktopApiMethod = Exclude<DesktopApiMethod, RegisteredDesktopApiMethod>;
 type ExtraDesktopApiMethod = Exclude<RegisteredDesktopApiMethod, DesktopApiMethod>;
 
+// oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
 const missingDesktopApiMethodCheck: never = null as unknown as MissingDesktopApiMethod;
+// oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
 const extraDesktopApiMethodCheck: never = null as unknown as ExtraDesktopApiMethod;
 
 void missingDesktopApiMethodCheck;

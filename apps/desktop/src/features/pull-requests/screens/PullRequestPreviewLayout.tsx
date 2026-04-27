@@ -51,6 +51,7 @@ export function PullRequestPreviewLayout() {
     }
 
     const nextPath = buildPreviewTabPath({
+      // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
       providerId: providerId as GitProviderId,
       owner,
       repo,
@@ -58,6 +59,7 @@ export function PullRequestPreviewLayout() {
       tab,
     });
 
+    // oxlint-disable-next-line typescript-eslint(no-floating-promises)
     navigate(nextPath);
   };
 

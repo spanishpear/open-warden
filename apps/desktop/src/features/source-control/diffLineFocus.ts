@@ -179,6 +179,7 @@ export function useDiffLineFocus({
 
     focusFrameRef.current = requestAnimationFrame(focusLine);
 
+    // oxlint-disable-next-line typescript-eslint(consistent-return)
     return () => {
       cancelled = true;
       if (focusFrameRef.current !== null) {

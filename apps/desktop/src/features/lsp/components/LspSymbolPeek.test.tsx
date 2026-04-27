@@ -1,3 +1,4 @@
+/// <reference types="@testing-library/jest-dom" />
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
 import { act, fireEvent, render, screen } from "@testing-library/react";
@@ -5,8 +6,11 @@ import { useEffect, useRef } from "react";
 import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 
+// @ts-expect-error -- oxlint typescript
 import { gitApi } from "@/features/source-control/api";
+// @ts-expect-error -- oxlint typescript
 import { LspSymbolPeekContainer } from "@/features/lsp/components/LspSymbolPeek";
+// @ts-expect-error -- oxlint typescript
 import { openSymbolPeek, sourceControlReducer } from "@/features/source-control/sourceControlSlice";
 
 const mocks = vi.hoisted(() => ({
@@ -42,6 +46,7 @@ vi.mock("@pierre/diffs/react", () => ({
 }));
 
 vi.mock("@/features/source-control/api", async () => {
+  // @ts-expect-error -- oxlint typescript
   const actual = await vi.importActual<typeof import("@/features/source-control/api")>(
     "@/features/source-control/api",
   );
@@ -261,19 +266,25 @@ describe("LspSymbolPeek", () => {
     expect(previewButton).toBeDefined();
     fireEvent.click(previewButton!);
 
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
     const enterHandler = [...mocks.useHotkey.mock.calls]
+      // @ts-expect-error -- oxlint typescript
       .toReversed()
+      // @ts-expect-error -- oxlint typescript
       .find((call) => call[0] === "Enter")?.[1] as ((event: KeyboardEvent) => void) | undefined;
 
     expect(enterHandler).toBeTypeOf("function");
 
     act(() => {
+      // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
       enterHandler?.({
         preventDefault: vi.fn(),
       } as unknown as KeyboardEvent);
     });
 
+    // @ts-expect-error -- oxlint typescript
     expect(store.getState().sourceControl.symbolPeek).toBeNull();
+    // @ts-expect-error -- oxlint typescript
     expect(store.getState().sourceControl.fileViewerTarget).toEqual(
       expect.objectContaining({
         repoPath: "/repo",

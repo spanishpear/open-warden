@@ -1,5 +1,7 @@
 import type { Bucket, FileStatus } from "@/features/source-control/types";
 
+// @ts-expect-error -- oxlint typescript
+// oxlint-disable-next-line eslint(no-unused-vars)
 type CommandSection = "actions" | "files" | "history";
 
 type CommandItemBase = {
@@ -31,4 +33,6 @@ export type CommandCommitItem = CommandItemBase & {
   onSelect: () => void | Promise<void>;
 };
 
+// @ts-expect-error -- oxlint typescript
+// oxlint-disable-next-line eslint(no-unused-vars)
 type CommandItem = CommandActionItem | CommandFileItem | CommandCommitItem;

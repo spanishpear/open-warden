@@ -72,6 +72,7 @@ export function getVisibleBucketedFiles(regionId: string): BucketedFile[] {
     const path = element.dataset.filePath;
     const bucket = element.dataset.bucket;
     if (!path || !bucket) return null;
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
     return { path, bucket } as BucketedFile;
   });
 }

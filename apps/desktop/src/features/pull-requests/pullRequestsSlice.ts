@@ -112,13 +112,13 @@ const pullRequestsSlice = createSlice({
 export const {
   clearCurrentPullRequestReview,
   clearPullRequestFileJumpTarget,
-  
+
   setActiveConversationThreadId,
   setPullRequestFileJumpTarget,
   setCurrentPullRequestReview,
   setPullRequestPreviewActiveFilePath,
   setPullRequestPreviewFileJumpTarget,
-  
+
   setPullRequestFilesViewMode,
 } = pullRequestsSlice.actions;
 

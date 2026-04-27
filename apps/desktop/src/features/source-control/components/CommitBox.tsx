@@ -27,6 +27,7 @@ export function CommitBox() {
         onKeyDown={(e) => {
           if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
             e.preventDefault();
+            // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
             void dispatch(commitAction());
           }
         }}
@@ -35,6 +36,7 @@ export function CommitBox() {
         type="button"
         className="bg-destructive text-destructive-foreground hover:bg-destructive/90 mt-1.5 flex w-full items-center justify-center gap-1.5 px-2 py-1.5 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-60"
         onClick={() => {
+          // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
           void dispatch(commitAction());
         }}
         disabled={!canCommit}

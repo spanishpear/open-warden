@@ -54,8 +54,10 @@ export function highlightCode(code: string, lang: string): Promise<string> {
 
   const promise = highlighterPromise.then(async (highlighter) => {
     let effectiveLang = lang;
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
     if (!highlighter.getLoadedLanguages().includes(lang as BundledLanguage)) {
       try {
+        // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
         await highlighter.loadLanguage(lang as BundledLanguage);
       } catch {
         effectiveLang = "text";
@@ -237,6 +239,7 @@ const components: Record<string, FC<any>> = {
       codeChild?.type === "element" &&
       codeChild.tagName === "code" &&
       Array.isArray(codeChild.properties?.className) &&
+      // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-conversion), typescript-eslint(no-unsafe-type-assertion)
       (codeChild.properties.className as string[]).some((c) => String(c).startsWith("language-"))
     ) {
       return <>{children}</>;

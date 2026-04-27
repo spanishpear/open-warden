@@ -37,6 +37,7 @@ export function ResizableSidebarLayout({
 
     registry.register(panelId, sidebarPanelRef.current);
 
+    // oxlint-disable-next-line typescript-eslint(consistent-return)
     return () => {
       registry.unregister(panelId);
     };

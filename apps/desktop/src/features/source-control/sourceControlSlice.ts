@@ -292,8 +292,6 @@ const sourceControlSlice = createSlice({
 });
 
 export const {
-  
-  
   clearDiffSelection,
   closeFileViewer,
   clearHistorySelection,
@@ -307,7 +305,7 @@ export const {
   setCommitMessage,
   setCollapseStaged,
   setCollapseUnstaged,
-  
+
   setDiffStyle,
   setHistoryCommitId,
   setHistoryFilter,

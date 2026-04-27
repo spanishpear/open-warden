@@ -15,6 +15,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
 
   return (
     <Sonner
+      // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
       icons={{
@@ -25,6 +26,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
         loading: <Loader2Icon className="size-4 animate-spin" />,
       }}
       style={
+        // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
         {
           "--normal-bg": "var(--popover)",
           "--normal-text": "var(--popover-foreground)",

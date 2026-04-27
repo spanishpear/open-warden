@@ -186,6 +186,7 @@ export function PullRequestsScreen() {
       return;
     }
 
+    // oxlint-disable-next-line typescript-eslint(no-floating-promises)
     navigate(
       buildPullRequestPreviewPath({
         providerId: pullRequest.providerId,

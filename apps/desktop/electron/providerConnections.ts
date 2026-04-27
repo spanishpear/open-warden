@@ -40,6 +40,7 @@ function resolveProviderConnectionsPath() {
 
 function isMissingFileError(error: unknown): boolean {
   return (
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
     error instanceof Error && "code" in error && (error as NodeJS.ErrnoException).code === "ENOENT"
   );
 }

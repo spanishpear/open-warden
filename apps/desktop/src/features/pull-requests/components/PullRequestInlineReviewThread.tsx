@@ -154,6 +154,7 @@ export function PullRequestInlineReviewThread({
 
   const openConversation = () => {
     dispatch(setActiveConversationThreadId(thread.id));
+    // oxlint-disable-next-line typescript-eslint(no-floating-promises)
     navigate("../conversation", { relative: "path" });
   };
 

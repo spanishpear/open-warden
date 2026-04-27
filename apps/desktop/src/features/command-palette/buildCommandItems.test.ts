@@ -5,6 +5,7 @@ import {
   buildCommandCommitItems,
   buildCommandFileItems,
   splitCommandPath,
+  // @ts-expect-error -- oxlint typescript
 } from "@/features/command-palette/buildCommandItems";
 
 describe("buildCommandItems", () => {

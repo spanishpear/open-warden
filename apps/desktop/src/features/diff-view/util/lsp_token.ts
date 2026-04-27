@@ -96,6 +96,8 @@ export function buildDiagnosticsByLine(diagnostics: LspDiagnostic[]): Map<number
   return diagnosticsByLine;
 }
 
+// @ts-expect-error -- oxlint typescript
+// oxlint-disable-next-line eslint(no-unused-vars)
 function findDiagnosticSeverityForToken(
   token: HTMLElement,
   diagnosticsByLine: Map<number, LspDiagnostic[]>,

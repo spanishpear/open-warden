@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 
+// @ts-expect-error -- oxlint typescript
 import type { RootState } from "@/app/store";
 import { getNextSymbolPeekIndex } from "./symbolPeekNavigation";
 
@@ -33,6 +34,7 @@ function createState(overrides: Partial<RootState["sourceControl"]>): RootState 
       ...overrides,
     },
     comments: [],
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
     hostedReposApi: {} as RootState["hostedReposApi"],
     hostedRepos: {
       selectedProviderId: null,
@@ -59,6 +61,7 @@ function createState(overrides: Partial<RootState["sourceControl"]>): RootState 
       activeConversationThreadId: null,
       fileJumpTarget: null,
     },
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
     gitApi: {} as RootState["gitApi"],
   };
 }

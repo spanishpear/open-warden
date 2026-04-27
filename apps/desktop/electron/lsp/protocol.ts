@@ -45,9 +45,13 @@ export class JsonRpcProtocol {
   constructor({
     input,
     output,
+    // oxlint-disable-next-line typescript-eslint(unbound-method)
     onNotification,
+    // oxlint-disable-next-line typescript-eslint(unbound-method)
     onRequest,
+    // oxlint-disable-next-line typescript-eslint(unbound-method)
     onResponse,
+    // oxlint-disable-next-line typescript-eslint(unbound-method)
     onTransportError,
   }: JsonRpcProtocolOptions) {
     this.input = input;
@@ -156,6 +160,7 @@ export class JsonRpcProtocol {
 
   private dispatchMessage(body: string) {
     try {
+      // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
       const message = JSON.parse(body) as JsonRpcMessage;
 
       if ("method" in message && "id" in message) {

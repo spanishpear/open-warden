@@ -6,6 +6,7 @@ import {
   setSymbolPeekActiveIndex,
   setSymbolPeekQuery,
   sourceControlReducer,
+  // @ts-expect-error -- oxlint typescript
 } from "@/features/source-control/sourceControlSlice";
 
 describe("sourceControlSlice symbol peek", () => {

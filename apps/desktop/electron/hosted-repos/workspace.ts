@@ -491,6 +491,7 @@ async function readManagedRepoWorkspaces(hostedRepo: HostedRepoRef) {
 
   try {
     const raw = await fs.readFile(statePath, "utf8");
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
     const parsed = JSON.parse(raw) as Partial<ManagedPullRequestWorkspaceState> & {
       workspaces?: Array<Partial<PreparedPullRequestWorkspace>>;
     };

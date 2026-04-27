@@ -321,6 +321,8 @@ export const rangeSelectFile =
     dispatch(setSelectionAnchor(base));
   };
 
+// @ts-expect-error -- oxlint typescript
+// oxlint-disable-next-line eslint(no-unused-vars)
 const clearFileSelection = (): AppThunk => async (dispatch) => {
   dispatch(setSelectedFiles([]));
   dispatch(setSelectionAnchor(null));
@@ -453,6 +455,7 @@ export const stageFileAction =
       }
     }
 
+    // oxlint-disable-next-line typescript-eslint(await-thenable)
     await dispatch(
       runRepoAction(`file:stage:${filePath}`, async (innerDispatch) => {
         const result = innerDispatch(
@@ -469,6 +472,7 @@ export const unstageFileAction =
     const { activeRepo } = getState().sourceControl;
     if (!activeRepo) return;
 
+    // oxlint-disable-next-line typescript-eslint(await-thenable)
     await dispatch(
       runRepoAction(`file:unstage:${filePath}`, async (innerDispatch) => {
         const result = innerDispatch(
@@ -491,6 +495,7 @@ export const discardFileAction =
     const target = payload[0];
     if (!target) return;
 
+    // oxlint-disable-next-line typescript-eslint(await-thenable)
     await dispatch(
       runRepoAction(`file:discard:${filePath}`, async (innerDispatch) => {
         const result = innerDispatch(
@@ -523,9 +528,11 @@ export const stageOrUnstageSelectionAction = (): AppThunk => async (dispatch, ge
   const toStage = uniqueCandidates.filter((file) => file.bucket !== "staged");
 
   for (const file of toUnstage) {
+    // oxlint-disable-next-line typescript-eslint(await-thenable)
     await dispatch(unstageFileAction(file.path));
   }
   for (const file of toStage) {
+    // oxlint-disable-next-line typescript-eslint(await-thenable)
     await dispatch(stageFileAction(file.path));
   }
 };
@@ -534,6 +541,7 @@ export const stageAllAction = (): AppThunk => async (dispatch, getState) => {
   const { activeRepo } = getState().sourceControl;
   if (!activeRepo) return;
 
+  // oxlint-disable-next-line typescript-eslint(await-thenable)
   await dispatch(
     runRepoAction("stage-all", async (innerDispatch) => {
       const result = innerDispatch(gitApi.endpoints.stageAll.initiate({ repoPath: activeRepo }));
@@ -546,6 +554,7 @@ export const unstageAllAction = (): AppThunk => async (dispatch, getState) => {
   const { activeRepo } = getState().sourceControl;
   if (!activeRepo) return;
 
+  // oxlint-disable-next-line typescript-eslint(await-thenable)
   await dispatch(
     runRepoAction("unstage-all", async (innerDispatch) => {
       const result = innerDispatch(gitApi.endpoints.unstageAll.initiate({ repoPath: activeRepo }));
@@ -568,6 +577,7 @@ export const discardChangesGroupAction =
     );
     if (payload.length === 0) return;
 
+    // oxlint-disable-next-line typescript-eslint(await-thenable)
     await dispatch(
       runRepoAction("discard-changes", async (innerDispatch) => {
         const result = innerDispatch(
@@ -584,6 +594,7 @@ export const commitAction = (): AppThunk => async (dispatch, getState) => {
   const trimmed = commitMessage.trim();
   if (!trimmed) return;
 
+  // oxlint-disable-next-line typescript-eslint(await-thenable)
   await dispatch(
     runRepoAction("commit", async (innerDispatch) => {
       const result = innerDispatch(

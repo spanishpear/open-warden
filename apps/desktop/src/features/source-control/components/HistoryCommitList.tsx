@@ -19,6 +19,7 @@ export function HistoryCommitList() {
     activeRepo ? { repoPath: activeRepo } : skipToken,
   );
 
+  // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
   const allHistoryCommits = historyCommits as HistoryCommit[];
   const query = historyFilter.trim().toLowerCase();
   const filteredHistoryCommits = query
@@ -68,6 +69,7 @@ export function HistoryCommitList() {
                 commit={commit}
                 navIndex={index}
                 onSelect={(commitId) => {
+                  // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
                   void dispatch(selectHistoryCommit(commitId));
                 }}
               />

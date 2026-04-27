@@ -81,6 +81,7 @@ export function PullRequestReviewConversationScreen() {
                 }),
               );
               dispatch(setPullRequestFilesViewMode("review"));
+              // oxlint-disable-next-line typescript-eslint(no-floating-promises)
               navigate("/changes/pull-request/files");
             }}
           />

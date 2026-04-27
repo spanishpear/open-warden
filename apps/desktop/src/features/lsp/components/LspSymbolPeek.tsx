@@ -275,6 +275,7 @@ function LspSymbolPeek({ document, containerRef, symbolPeek }: LspSymbolPeekProp
   useEffect(() => {
     for (const relPath of locationPaths) {
       // Prime cache for peek list excerpts so cross-file results are stable.
+      // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
       void dispatch(
         gitApi.util.prefetch("getRepoFile", { repoPath: document.repoPath, relPath }, {}),
       );
@@ -313,6 +314,7 @@ function LspSymbolPeek({ document, containerRef, symbolPeek }: LspSymbolPeekProp
     const returnToDiff = symbolPeek?.returnToDiff ?? null;
 
     if (returnToDiff?.kind === "changes" && !isRoute(location.pathname, "/changes/files")) {
+      // oxlint-disable-next-line typescript-eslint(no-floating-promises)
       navigate("/changes/files");
     }
 
@@ -378,6 +380,7 @@ function LspSymbolPeek({ document, containerRef, symbolPeek }: LspSymbolPeekProp
 
     frameId = requestAnimationFrame(updateTop);
 
+    // oxlint-disable-next-line typescript-eslint(consistent-return)
     return () => {
       cancelled = true;
       cancelAnimationFrame(frameId);
@@ -399,6 +402,7 @@ function LspSymbolPeek({ document, containerRef, symbolPeek }: LspSymbolPeekProp
 
   useVerticalNavigationHotkeys({
     onNext: (event) => {
+      // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
       const state = { sourceControl: { symbolPeek } } as RootState;
       const nextIndex = getNextSymbolPeekIndex(state, true);
       if (nextIndex !== null) {
@@ -408,6 +412,7 @@ function LspSymbolPeek({ document, containerRef, symbolPeek }: LspSymbolPeekProp
       }
     },
     onPrevious: (event) => {
+      // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
       const state = { sourceControl: { symbolPeek } } as RootState;
       const nextIndex = getNextSymbolPeekIndex(state, false);
       if (nextIndex !== null) {

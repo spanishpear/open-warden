@@ -23,6 +23,7 @@ export function useReviewKeyboardNav(regionId = "review-files") {
         ? gitApi.endpoints.getBranchFiles.select(branchFilesArgs)(state).data
         : undefined;
 
+      // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
       return ((reviewFiles ?? []) as FileItem[]).map((file) => file.path);
     },
     getActivePath: (state) => state.sourceControl.reviewActivePath,

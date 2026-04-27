@@ -2,6 +2,7 @@ import type { GitProviderId, HostedRepoRef } from "../../src/platform/desktop/co
 
 import { runGitInRepo } from "./git";
 
+// oxlint-disable-next-line typescript-eslint(consistent-return)
 function providerWebOrigin(providerId: GitProviderId) {
   switch (providerId) {
     case "github":

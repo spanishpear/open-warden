@@ -32,6 +32,7 @@ export function useFirstCommentTip() {
       markTipSeen();
     }, 5000);
 
+    // oxlint-disable-next-line typescript-eslint(consistent-return)
     return () => clearTimeout(timer);
   }, [showTip]);
 

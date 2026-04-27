@@ -171,6 +171,7 @@ type GitHubPullRequestByHeadNode = NonNullable<
   >["nodes"]
 >[number];
 
+// oxlint-disable-next-line typescript-eslint(no-unnecessary-type-parameters)
 export async function githubRequest<T>(pathname: string, token: string) {
   const response = await fetch(`https://api.github.com${pathname}`, {
     headers: {
@@ -187,6 +188,7 @@ export async function githubRequest<T>(pathname: string, token: string) {
   }
 
   return {
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
     data: (await response.json()) as T,
     headers: response.headers,
   };
@@ -202,6 +204,7 @@ function githubPermissionErrorHint(message: string) {
 
 function parseGitHubErrorMessage(text: string, status: number) {
   try {
+    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
     const payload = JSON.parse(text) as {
       message?: unknown;
       documentation_url?: unknown;
@@ -263,6 +266,7 @@ export async function githubJsonRequest<T>(
     throw new Error(parseGitHubErrorMessage(message, response.status));
   }
 
+  // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
   return (await response.json()) as T;
 }
 
@@ -290,6 +294,7 @@ export async function githubGraphqlRequest<T>(
     throw new Error(parseGitHubErrorMessage(message, response.status));
   }
 
+  // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
   const payload = (await response.json()) as T & { errors?: Array<{ message: string }> };
   if (Array.isArray(payload.errors) && payload.errors.length > 0) {
     throw new Error(payload.errors[0]?.message ?? "GitHub GraphQL request failed.");
@@ -504,9 +509,7 @@ function toPullRequestChangedFileStatus(status: string): PullRequestChangedFile[
   return "modified";
 }
 
-function toPullRequestChangedFile(
-  file: GitHubPullRequestFileResponse,
-): PullRequestChangedFile {
+function toPullRequestChangedFile(file: GitHubPullRequestFileResponse): PullRequestChangedFile {
   return {
     path: file.filename,
     previousPath: file.previous_filename ?? null,

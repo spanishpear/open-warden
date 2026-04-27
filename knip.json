@@ -15,15 +15,8 @@
         "scripts/**/*.{js,mjs,cjs,ts}",
         "tests/e2e/**/*.{spec,test}.{ts,tsx}"
       ],
-      "project": [
-        "src/**/*.{ts,tsx}",
-        "electron/**/*.{ts,tsx}",
-        "scripts/**/*.{js,mjs,cjs,ts}"
-      ],
-      "ignore": [
-        "src/**/*.d.ts",
-        "src/components/ui/**"
-      ],
+      "project": ["src/**/*.{ts,tsx}", "electron/**/*.{ts,tsx}", "scripts/**/*.{js,mjs,cjs,ts}"],
+      "ignore": ["src/**/*.d.ts", "src/components/ui/**"],
       "ignoreDependencies": [
         "tw-animate-css",
         "tailwindcss",
