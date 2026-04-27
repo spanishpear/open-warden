@@ -25,7 +25,7 @@ const updateManager = createUpdateManager({
 const gotSingleInstanceLock = app.requestSingleInstanceLock();
 
 if (!gotSingleInstanceLock) {
-  app.quit();
+  app.exit(0);
 }
 
 configureDesktopApi({
