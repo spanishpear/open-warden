@@ -33,6 +33,7 @@ import { EMPTY_FILES } from "@/shared/stableDefaults";
 import { setPullRequestPreviewActiveFilePath } from "@/features/pull-requests/pullRequestsSlice";
 import FilesSidebar from "@/features/pull-requests/screens/PullRequestFileList";
 import { buildPullRequestAnchorAnnotations } from "@/features/pull-requests/utils/reviewAnchors";
+import { findParsedFileDiff } from "../utils/findParsedFileDiff";
 import { useThrottledDiffSelection } from "@/features/source-control/hooks/useThrottledDiffSelection";
 import { errorMessageFrom } from "@/features/source-control/shared-utils/errorMessage";
 import type {
@@ -44,35 +45,6 @@ import type {
 
 function flattenParsedPatchFiles(parsedPatch: ParsedPatch | null): FileDiffMetadata[] {
   return parsedPatch?.flatMap((patch) => patch.files) ?? [];
-}
-
-function matchesParsedFileDiff(fileDiff: FileDiffMetadata, file: PullRequestChangedFile): boolean {
-  if (fileDiff.name === file.path) {
-    return (fileDiff.prevName ?? null) === (file.previousPath ?? null);
-  }
-
-  if (file.previousPath && fileDiff.prevName === file.previousPath) {
-    return fileDiff.name === file.path || fileDiff.name === file.previousPath;
-  }
-
-  return false;
-}
-
-function findParsedFileDiff(
-  parsedFiles: FileDiffMetadata[],
-  file: PullRequestChangedFile | null,
-): FileDiffMetadata | null {
-  if (!file) {
-    return null;
-  }
-
-  return (
-    parsedFiles.find((fileDiff) => matchesParsedFileDiff(fileDiff, file)) ??
-    parsedFiles.find((fileDiff) => fileDiff.name === file.path) ??
-    (file.previousPath
-      ? (parsedFiles.find((fileDiff) => fileDiff.prevName === file.previousPath) ?? null)
-      : null)
-  );
 }
 
 export const PullRequestFiles = () => {
