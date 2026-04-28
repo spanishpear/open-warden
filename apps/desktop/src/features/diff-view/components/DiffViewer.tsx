@@ -166,7 +166,7 @@ export const DiffViewer = forwardRef<DiffViewerHandle, DiffViewerProps>(function
   }));
 
   const [expandUnchanged, setExpandUnchanged] = useState(false);
-  const activeDiffIdentity = `${oldFile?.name}-${newFile?.name}-${expandUnchanged ? "expanded" : "collapsed"}`;
+  const activeDiffIdentity = `${activePath}-${oldFile?.name}-${newFile?.name}-${expandUnchanged ? "expanded" : "collapsed"}`;
   const [forceShowLargeDiffIdentity, setForceShowLargeDiffIdentity] = useState<string | null>(null);
   const forceShowLargeDiff = forceShowLargeDiffIdentity === activeDiffIdentity;
 
