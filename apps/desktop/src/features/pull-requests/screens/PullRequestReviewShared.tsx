@@ -23,6 +23,9 @@ import {
 import { useGetGitSnapshotQuery } from "@/features/source-control/api";
 import {
   clearReviewSelection,
+  selectActiveRepo,
+  selectReviewBaseRef,
+  selectReviewHeadRef,
   setReviewBaseRef,
   setReviewHeadRef,
 } from "@/features/source-control/sourceControlSlice";
@@ -78,10 +81,10 @@ function reviewSessionMatchesPullRequest(
 export function usePullRequestReviewSession() {
   const dispatch = useAppDispatch();
 
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
+  const activeRepo = useAppSelector(selectActiveRepo);
   const currentReview = useAppSelector((state) => state.pullRequests.currentReview);
-  const reviewBaseRef = useAppSelector((state) => state.sourceControl.reviewBaseRef);
-  const reviewHeadRef = useAppSelector((state) => state.sourceControl.reviewHeadRef);
+  const reviewBaseRef = useAppSelector(selectReviewBaseRef);
+  const reviewHeadRef = useAppSelector(selectReviewHeadRef);
 
   const { activeBranch } = useGetGitSnapshotQuery(activeRepo || "", {
     skip: !activeRepo,

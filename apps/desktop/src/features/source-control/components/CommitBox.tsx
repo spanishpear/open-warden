@@ -4,12 +4,17 @@ import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { Input } from "@/components/ui/input";
 import { useGetGitSnapshotQuery } from "@/features/source-control/api";
 import { commitAction, setCommitMessageValue } from "@/features/source-control/actions";
+import {
+  selectActiveRepo,
+  selectCommitMessage,
+  selectRunningAction,
+} from "@/features/source-control/sourceControlSlice";
 
 export function CommitBox() {
   const dispatch = useAppDispatch();
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
-  const runningAction = useAppSelector((state) => state.sourceControl.runningAction);
-  const commitMessage = useAppSelector((state) => state.sourceControl.commitMessage);
+  const activeRepo = useAppSelector(selectActiveRepo);
+  const runningAction = useAppSelector(selectRunningAction);
+  const commitMessage = useAppSelector(selectCommitMessage);
   const { data: snapshotData } = useGetGitSnapshotQuery(activeRepo, {
     skip: !activeRepo,
   });

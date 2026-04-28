@@ -3,11 +3,12 @@ import { useAppSelector } from "@/app/hooks";
 import { GeneralFileViewer } from "@/features/source-control/components/GeneralFileViewer";
 import { RepoFilesSidebar } from "@/features/source-control/components/RepoFilesSidebar";
 import { useChangesKeyboardNav } from "@/features/source-control/hooks/useChangesKeyboardNav";
+import { selectFileViewerTarget } from "@/features/source-control/sourceControlSlice";
 
 export function ChangesFilesScreen() {
   useChangesKeyboardNav("files");
 
-  const fileViewerTarget = useAppSelector((state) => state.sourceControl.fileViewerTarget);
+  const fileViewerTarget = useAppSelector(selectFileViewerTarget);
 
   return (
     <ResizableSidebarLayout

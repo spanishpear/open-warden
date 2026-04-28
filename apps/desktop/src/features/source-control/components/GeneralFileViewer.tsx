@@ -8,6 +8,7 @@ import { useTheme } from "next-themes";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { Button } from "@/components/ui/button";
 import { DIFF_LINE_FOCUS_CSS, useDiffLineFocus } from "@/features/source-control/diffLineFocus";
+import { selectFileViewerTarget } from "@/features/source-control/sourceControlSlice";
 import { getDiffTheme, getDiffThemeType } from "@/features/diff-view/diffRenderConfig";
 import { useGetRepoFileQuery } from "@/features/source-control/api";
 import { useCurrentLspDocument } from "@/features/lsp/hooks/useCurrentLspDocument";
@@ -65,7 +66,7 @@ export function GeneralFileViewer(props: GeneralFileViewerProps) {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { resolvedTheme } = useTheme();
-  const reduxTarget = useAppSelector((state) => state.sourceControl.fileViewerTarget);
+  const reduxTarget = useAppSelector(selectFileViewerTarget);
   const target = props.target ?? reduxTarget;
   const viewerRef = useRef<HTMLDivElement | null>(null);
   const returnToDiffTarget = target?.returnToDiff ?? null;

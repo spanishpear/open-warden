@@ -32,6 +32,11 @@ import {
 import { useThrottledDiffSelection } from "@/features/source-control/hooks/useThrottledDiffSelection";
 import {
   clearReviewSelection,
+  selectActiveRepo,
+  selectDiffFocusTarget,
+  selectReviewActivePath,
+  selectReviewBaseRef,
+  selectReviewHeadRef,
   setReviewActivePath,
   setReviewBaseRef,
   setReviewHeadRef,
@@ -112,8 +117,8 @@ function ReviewDiffPane({
   readyForDiff,
   branchFiles,
 }: ReviewDiffPaneProps) {
-  const reviewActivePath = useAppSelector((state) => state.sourceControl.reviewActivePath);
-  const diffFocusTarget = useAppSelector((state) => state.sourceControl.diffFocusTarget);
+  const reviewActivePath = useAppSelector(selectReviewActivePath);
+  const diffFocusTarget = useAppSelector(selectDiffFocusTarget);
   const selectedReviewFile = branchFiles.find((file) => file.path === reviewActivePath);
   const previewSelection = useThrottledDiffSelection(
     reviewActivePath
@@ -189,9 +194,9 @@ function ReviewDiffPane({
 
 export function ReviewScreen() {
   const dispatch = useAppDispatch();
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
-  const reviewBaseRef = useAppSelector((state) => state.sourceControl.reviewBaseRef);
-  const reviewHeadRef = useAppSelector((state) => state.sourceControl.reviewHeadRef);
+  const activeRepo = useAppSelector(selectActiveRepo);
+  const reviewBaseRef = useAppSelector(selectReviewBaseRef);
+  const reviewHeadRef = useAppSelector(selectReviewHeadRef);
 
   const { activeBranch } = useGetGitSnapshotQuery(activeRepo, {
     skip: !activeRepo,

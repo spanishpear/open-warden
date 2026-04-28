@@ -26,6 +26,7 @@ import { errorMessageFrom } from "@/features/source-control/shared-utils/errorMe
 import {
   closeSymbolPeek,
   openFileViewer,
+  selectSymbolPeek,
   setSymbolPeekActiveIndex,
   setSymbolPeekQuery,
 } from "@/features/source-control/sourceControlSlice";
@@ -203,7 +204,7 @@ function SymbolPeekPreview({
 }
 
 export function LspSymbolPeekContainer({ document, containerRef }: SymbolPeekProps) {
-  const symbolPeek = useAppSelector((state) => state.sourceControl.symbolPeek);
+  const symbolPeek = useAppSelector(selectSymbolPeek);
 
   const isVisible =
     document !== undefined &&

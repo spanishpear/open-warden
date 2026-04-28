@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { ResizableSidebarLayout } from "@/components/layout/ResizableSidebarLayout";
+import { selectActiveRepo } from "@/features/source-control/sourceControlSlice";
 import { Button } from "@/components/ui/button";
 import {
   hostedReposApi,
@@ -37,7 +38,7 @@ const PREFETCH_SECTIONS = [
 const BACKGROUND_PREFETCH_DELAY_MS = 150;
 
 export function InboxScreen() {
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
+  const activeRepo = useAppSelector(selectActiveRepo);
   const dispatch = useAppDispatch();
   const prefetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastPrefetchRunRef = useRef<string | null>(null);

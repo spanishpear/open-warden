@@ -12,6 +12,11 @@ import { useHistoryKeyboardNav } from "@/features/source-control/hooks/useHistor
 import { useHistorySync } from "@/features/source-control/hooks/useHistorySync";
 import { useThrottledDiffSelection } from "@/features/source-control/hooks/useThrottledDiffSelection";
 import { errorMessageFrom } from "@/features/source-control/shared-utils/errorMessage";
+import {
+  selectActivePath,
+  selectActiveRepo,
+  selectHistoryCommitId,
+} from "@/features/source-control/sourceControlSlice";
 
 export function HistoryScreen() {
   useHistoryKeyboardNav();
@@ -37,9 +42,9 @@ function HistorySelectionSync() {
 }
 
 function HistoryDiffPane() {
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
-  const historyCommitId = useAppSelector((state) => state.sourceControl.historyCommitId);
-  const activePath = useAppSelector((state) => state.sourceControl.activePath);
+  const activeRepo = useAppSelector(selectActiveRepo);
+  const historyCommitId = useAppSelector(selectHistoryCommitId);
+  const activePath = useAppSelector(selectActivePath);
   const { data: historyFiles } = useGetCommitFilesQuery(
     activeRepo && historyCommitId ? { repoPath: activeRepo, commitId: historyCommitId } : skipToken,
   );

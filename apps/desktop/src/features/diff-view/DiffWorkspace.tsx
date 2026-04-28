@@ -13,6 +13,7 @@ import {
 } from "@/features/diff-view/useDiffLspHover";
 import { LspSymbolPeekContainer } from "@/features/lsp/components/LspSymbolPeek";
 import { useLspTokenNavigation } from "@/features/lsp/useLspTokenNavigation";
+import { selectActiveBucket, selectActiveRepo } from "@/features/source-control/sourceControlSlice";
 import type {
   CommentContext,
   DiffAnnotationItem,
@@ -119,8 +120,8 @@ export function DiffWorkspace({
   disableFileHeader = false,
   hideHeaderMetadataControls = false,
 }: Props) {
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
-  const activeBucket = useAppSelector((state) => state.sourceControl.activeBucket);
+  const activeRepo = useAppSelector(selectActiveRepo);
+  const activeBucket = useAppSelector(selectActiveBucket);
   const jumpContext = lspJumpContextKind ?? commentContext.kind;
   const viewerRef = useRef<DiffViewerHandle | null>(null);
 

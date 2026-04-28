@@ -8,13 +8,17 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useGetCommitHistoryQuery } from "@/features/source-control/api";
 import { selectHistoryCommit } from "@/features/source-control/actions";
 import { HISTORY_FILTER_INPUT_ID } from "@/features/source-control/constants";
-import { setHistoryFilter } from "@/features/source-control/sourceControlSlice";
+import {
+  selectActiveRepo,
+  selectHistoryFilter,
+  setHistoryFilter,
+} from "@/features/source-control/sourceControlSlice";
 import type { HistoryCommit } from "@/features/source-control/types";
 
 export function HistoryCommitList() {
   const dispatch = useAppDispatch();
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
-  const historyFilter = useAppSelector((state) => state.sourceControl.historyFilter);
+  const activeRepo = useAppSelector(selectActiveRepo);
+  const historyFilter = useAppSelector(selectHistoryFilter);
   const { data: historyCommits = [], isFetching: loadingHistoryCommits } = useGetCommitHistoryQuery(
     activeRepo ? { repoPath: activeRepo } : skipToken,
   );

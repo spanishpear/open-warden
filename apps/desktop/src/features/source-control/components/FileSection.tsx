@@ -4,6 +4,10 @@ import type { MouseEvent } from "react";
 import { useAppSelector } from "@/app/hooks";
 import { AccordionContent, AccordionTrigger } from "@/components/ui/accordion";
 import type { Bucket, BucketedFile } from "@/features/source-control/types";
+import {
+  selectActiveRepo,
+  selectRunningAction,
+} from "@/features/source-control/sourceControlSlice";
 import { FileRow } from "./FileRow";
 import { SourceControlFileBrowser } from "./SourceControlFileBrowser";
 
@@ -38,8 +42,8 @@ export function FileSection({
   onUnstageAll,
   onDiscardChangesGroup,
 }: Props) {
-  const runningAction = useAppSelector((state) => state.sourceControl.runningAction);
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
+  const runningAction = useAppSelector(selectRunningAction);
+  const activeRepo = useAppSelector(selectActiveRepo);
   const fileBrowserMode = useAppSelector(
     (state) => state.settings.appSettings.sourceControl.fileTreeRenderMode,
   );

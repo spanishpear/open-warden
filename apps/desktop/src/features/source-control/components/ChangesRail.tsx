@@ -8,6 +8,7 @@ import {
 import { useLocation, useNavigate } from "react-router";
 
 import SidebarTabButton from "@/components/ui/sidebar-tab";
+import { selectActiveRepo } from "@/features/source-control/sourceControlSlice";
 import { useAppSelector } from "@/app/hooks";
 import { useResolveActivePullRequestForBranchQuery } from "@/features/hosted-repos/api";
 import { useGetGitSnapshotQuery } from "@/features/source-control/api";
@@ -82,7 +83,7 @@ function PullRequestRailTabs({
 export function ChangesRail() {
   const navigate = useNavigate();
   const location = useLocation();
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
+  const activeRepo = useAppSelector(selectActiveRepo);
   const { activeBranch } = useGetGitSnapshotQuery(activeRepo, {
     skip: !activeRepo,
     selectFromResult: ({ data }) => ({

@@ -8,6 +8,7 @@ import { useFirstCommentTip } from "@/features/comments/useFirstCommentTip";
 import { CommentAnnotation } from "@/features/diff-view/components/CommentAnnotation";
 import { CommentComposer } from "@/features/diff-view/components/CommentComposer";
 import type { MentionConfig } from "@/components/markdown/MarkdownEditor";
+import { selectActiveRepo } from "@/features/source-control/sourceControlSlice";
 import type {
   CommentContext,
   CommentItem,
@@ -64,7 +65,7 @@ export function useDiffCommentAnnotations({
   includeCurrentFileComments = true,
   commentMentions,
 }: UseDiffCommentAnnotationsOptions) {
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
+  const activeRepo = useAppSelector(selectActiveRepo);
   const [selectedRange, setSelectedRange] = useState<SelectionRange | null>(null);
 
   const { annotations: commentAnnotations } = useCurrentFileComments(

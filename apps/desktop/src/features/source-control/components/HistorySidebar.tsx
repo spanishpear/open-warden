@@ -2,7 +2,11 @@ import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { refreshActiveRepo } from "@/features/source-control/actions";
 import CurrentRepositoryHeader from "@/features/source-control/components/CurrentRepoHeader";
 import { HistoryCommitList } from "@/features/source-control/components/HistoryCommitList";
-import { setHistoryNavTarget } from "@/features/source-control/sourceControlSlice";
+import {
+  selectActiveRepo,
+  selectRunningAction,
+  setHistoryNavTarget,
+} from "@/features/source-control/sourceControlSlice";
 
 type HistorySidebarProps = {
   activeBranch?: string;
@@ -10,8 +14,8 @@ type HistorySidebarProps = {
 
 export function HistorySidebar({ activeBranch }: HistorySidebarProps) {
   const dispatch = useAppDispatch();
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
-  const runningAction = useAppSelector((state) => state.sourceControl.runningAction);
+  const activeRepo = useAppSelector(selectActiveRepo);
+  const runningAction = useAppSelector(selectRunningAction);
 
   return (
     <aside

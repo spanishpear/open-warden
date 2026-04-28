@@ -4,6 +4,7 @@ import { useNavigate } from "react-router";
 import { GitBranch, GitPullRequest, Plug, Unplug } from "lucide-react";
 
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
+import { selectActiveRepo } from "@/features/source-control/sourceControlSlice";
 import { Button } from "@/components/ui/button";
 import {
   hostedReposApi,
@@ -100,7 +101,7 @@ function PullRequestRow({
 export function PullRequestsScreen() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
+  const activeRepo = useAppSelector(selectActiveRepo);
   const [githubDialogOpen, setGithubDialogOpen] = useState(false);
   const [bitbucketDialogOpen, setBitbucketDialogOpen] = useState(false);
   const [pullRequestsPage, setPullRequestsPage] = useState(1);

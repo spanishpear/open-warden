@@ -5,6 +5,7 @@ import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
+import { selectActiveRepo } from "@/features/source-control/sourceControlSlice";
 import { Button } from "@/components/ui/button";
 import { openPullRequestReview } from "@/features/hosted-repos/actions";
 import {
@@ -306,7 +307,7 @@ function PullRequestOverviewDetailsSidebar({
 export const PullRequestOverview = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
+  const activeRepo = useAppSelector(selectActiveRepo);
   const activePreviewFilePath = useAppSelector((state) => state.pullRequests.previewActiveFilePath);
   const { providerId, owner, repo, pullRequestNumber } = useParams();
   const [openingMode, setOpeningMode] = useState<PullRequestOpenMode | null>(null);

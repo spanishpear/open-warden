@@ -31,6 +31,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { useFirstCommentTip } from "@/features/comments/useFirstCommentTip";
+import { selectActiveRepo, selectDiffStyle } from "@/features/source-control/sourceControlSlice";
 import { CommentComposer } from "@/features/diff-view/components/CommentComposer";
 import {
   getDiffTheme,
@@ -321,8 +322,8 @@ export function PullRequestWindowedDiff({
   windowedAnchor,
 }: PullRequestWindowedDiffProps) {
   const { resolvedTheme } = useTheme();
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
-  const diffStyle = useAppSelector((state) => state.sourceControl.diffStyle);
+  const activeRepo = useAppSelector(selectActiveRepo);
+  const diffStyle = useAppSelector(selectDiffStyle);
   const repoCommentCount = useAppSelector(
     activeRepo ? selectRepoCommentCount(activeRepo) : () => 0,
   );

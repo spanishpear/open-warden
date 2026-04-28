@@ -8,6 +8,7 @@ const VIRTUALIZER_CONFIG = {
 } as const;
 
 import { useAppSelector } from "@/app/hooks";
+import { selectDiffStyle } from "@/features/source-control/sourceControlSlice";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -154,7 +155,7 @@ export const DiffViewer = forwardRef<DiffViewerHandle, DiffViewerProps>(function
   ref,
 ) {
   const { resolvedTheme } = useTheme();
-  const diffStyle = useAppSelector((state) => state.sourceControl.diffStyle);
+  const diffStyle = useAppSelector(selectDiffStyle);
   const diffThemeType = getDiffThemeType(resolvedTheme);
   const diffTheme = useMemo(() => getDiffTheme(), []);
   const diffThemeCacheSalt = getDiffThemeCacheSalt(diffThemeType);

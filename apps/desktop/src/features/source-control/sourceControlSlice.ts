@@ -1,3 +1,4 @@
+import type { RootState } from "@/app/store";
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 import type { WorkspaceSession } from "@/platform/desktop";
@@ -329,3 +330,31 @@ export const {
 } = sourceControlSlice.actions;
 
 export const sourceControlReducer = sourceControlSlice.reducer;
+
+// ── Fine-grained selectors ──────────────────────────────────────
+export const selectRepos = (state: RootState) => state.sourceControl.repos;
+export const selectActiveRepo = (state: RootState) => state.sourceControl.activeRepo;
+export const selectRecentRepos = (state: RootState) => state.sourceControl.recentRepos;
+export const selectHistoryFilter = (state: RootState) => state.sourceControl.historyFilter;
+export const selectHistoryCommitId = (state: RootState) => state.sourceControl.historyCommitId;
+export const selectHistoryNavTarget = (state: RootState) => state.sourceControl.historyNavTarget;
+export const selectCollapseStaged = (state: RootState) => state.sourceControl.collapseStaged;
+export const selectCollapseUnstaged = (state: RootState) => state.sourceControl.collapseUnstaged;
+export const selectChangesSidebarMode = (state: RootState) =>
+  state.sourceControl.changesSidebarMode;
+export const selectActiveBucket = (state: RootState) => state.sourceControl.activeBucket;
+export const selectActivePath = (state: RootState) => state.sourceControl.activePath;
+export const selectRepoTreeActivePath = (state: RootState) =>
+  state.sourceControl.repoTreeActivePath;
+export const selectDiffStyle = (state: RootState) => state.sourceControl.diffStyle;
+export const selectCommitMessage = (state: RootState) => state.sourceControl.commitMessage;
+export const selectLastCommitId = (state: RootState) => state.sourceControl.lastCommitId;
+export const selectRunningAction = (state: RootState) => state.sourceControl.runningAction;
+export const selectSelectedFiles = (state: RootState) => state.sourceControl.selectedFiles;
+export const selectSelectionAnchor = (state: RootState) => state.sourceControl.selectionAnchor;
+export const selectReviewBaseRef = (state: RootState) => state.sourceControl.reviewBaseRef;
+export const selectReviewHeadRef = (state: RootState) => state.sourceControl.reviewHeadRef;
+export const selectReviewActivePath = (state: RootState) => state.sourceControl.reviewActivePath;
+export const selectDiffFocusTarget = (state: RootState) => state.sourceControl.diffFocusTarget;
+export const selectFileViewerTarget = (state: RootState) => state.sourceControl.fileViewerTarget;
+export const selectSymbolPeek = (state: RootState) => state.sourceControl.symbolPeek;

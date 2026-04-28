@@ -15,6 +15,11 @@ import { ThemeSwitcher } from "@/app/ThemeSwitcher";
 import { FEATURE_NAV_ITEMS, FEATURE_SIDEBARS, type FeatureKey } from "@/app/featureNavigation";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import type { RootState } from "@/app/store";
+import {
+  selectActiveRepo,
+  selectReviewBaseRef,
+  selectReviewHeadRef,
+} from "@/features/source-control/sourceControlSlice";
 import { useSidebarToggleHotkeys } from "@/app/useSidebarToggleHotkeys";
 import { useSidebarPanelRegistry } from "@/components/layout/SidebarPanelRegistry";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -74,8 +79,8 @@ function selectHeaderCommentContext(
   return getCommentContext(
     activeFeature,
     currentPath,
-    state.sourceControl.reviewBaseRef,
-    state.sourceControl.reviewHeadRef,
+    selectReviewBaseRef(state),
+    selectReviewHeadRef(state),
   );
 }
 
@@ -84,7 +89,7 @@ function selectHeaderCommentCount(
   activeFeature: FeatureKey,
   currentPath: string,
 ): number {
-  const activeRepo = state.sourceControl.activeRepo;
+  const activeRepo = selectActiveRepo(state);
   if (!activeRepo) return 0;
 
   const commentContext = selectHeaderCommentContext(state, activeFeature, currentPath);

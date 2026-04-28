@@ -11,6 +11,11 @@ import { SidebarPanelRegistryProvider } from "@/components/layout/SidebarPanelRe
 import { AppCommandPalette } from "@/features/command-palette/AppCommandPalette";
 import { closeRepo, openRepo, selectFolder, selectRepo } from "@/features/source-control/actions";
 import { RecentProjectsPicker } from "@/features/source-control/RecentProjectsPicker";
+import {
+  selectActiveRepo,
+  selectRecentRepos,
+  selectRepos,
+} from "@/features/source-control/sourceControlSlice";
 
 export type AppShellOutletContext = {
   openRecentProjectsPicker: () => void;
@@ -20,8 +25,8 @@ export function AppShell() {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useAppDispatch();
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
-  const recentRepos = useAppSelector((state) => state.sourceControl.recentRepos);
+  const activeRepo = useAppSelector(selectActiveRepo);
+  const recentRepos = useAppSelector(selectRecentRepos);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [recentProjectsPickerOpen, setRecentProjectsPickerOpen] = useState(false);
   const isSettingsRoute = location.pathname.startsWith("/settings");
@@ -111,9 +116,9 @@ type RepoTabsContainerProps = {
 function RepoTabsContainer({ currentPath, onShowRecentProjects }: RepoTabsContainerProps) {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const repos = useAppSelector((state) => state.sourceControl.repos);
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
-  const recentRepos = useAppSelector((state) => state.sourceControl.recentRepos);
+  const repos = useAppSelector(selectRepos);
+  const activeRepo = useAppSelector(selectActiveRepo);
+  const recentRepos = useAppSelector(selectRecentRepos);
 
   function navigateToChangesAfterRepoSwitch(switchingRepo: boolean) {
     if (!switchingRepo) {

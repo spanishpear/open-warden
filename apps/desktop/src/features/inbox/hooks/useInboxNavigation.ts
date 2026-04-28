@@ -5,6 +5,7 @@ import { buildPreviewTabPath } from "@/features/pull-requests/screens/PullReques
 import { openPullRequestReview } from "@/features/hosted-repos/actions";
 import { hostedReposApi } from "@/features/hosted-repos/api";
 import type { PullRequestSummary } from "@/platform/desktop";
+import { selectActiveRepo } from "@/features/source-control/sourceControlSlice";
 
 export type UseInboxNavigationReturn = {
   navigateToPreview: (pr: PullRequestSummary) => void;
@@ -16,7 +17,7 @@ export type UseInboxNavigationReturn = {
 export function useInboxNavigation(): UseInboxNavigationReturn {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
+  const activeRepo = useAppSelector(selectActiveRepo);
 
   function prefetchPRDiff(pr: PullRequestSummary) {
     if (!activeRepo) return;

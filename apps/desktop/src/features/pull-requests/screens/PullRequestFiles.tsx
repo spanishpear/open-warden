@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
+import { selectActiveRepo } from "@/features/source-control/sourceControlSlice";
 import { ResizableSidebarLayout } from "@/components/layout/ResizableSidebarLayout";
 import {
   Empty,
@@ -75,7 +76,7 @@ function findParsedFileDiff(
 }
 
 export const PullRequestFiles = () => {
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
+  const activeRepo = useAppSelector(selectActiveRepo);
   const currentReview = useAppSelector((state) => state.pullRequests.currentReview);
   const { providerId, owner, repo, pullRequestNumber } = useParams();
 

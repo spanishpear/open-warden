@@ -4,6 +4,11 @@ import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { useGetGitSnapshotQuery } from "@/features/source-control/api";
 import {
   clearDiffSelection,
+  selectActiveBucket,
+  selectActivePath,
+  selectActiveRepo,
+  selectSelectedFiles,
+  selectSelectionAnchor,
   setActiveBucket,
   setSelectedFiles,
   setSelectionAnchor,
@@ -12,11 +17,11 @@ import { findExistingBucket } from "@/features/source-control/utils";
 
 export function useChangesSync() {
   const dispatch = useAppDispatch();
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
-  const activePath = useAppSelector((state) => state.sourceControl.activePath);
-  const activeBucket = useAppSelector((state) => state.sourceControl.activeBucket);
-  const selectedFiles = useAppSelector((state) => state.sourceControl.selectedFiles);
-  const selectionAnchor = useAppSelector((state) => state.sourceControl.selectionAnchor);
+  const activeRepo = useAppSelector(selectActiveRepo);
+  const activePath = useAppSelector(selectActivePath);
+  const activeBucket = useAppSelector(selectActiveBucket);
+  const selectedFiles = useAppSelector(selectSelectedFiles);
+  const selectionAnchor = useAppSelector(selectSelectionAnchor);
   const { data: snapshotData } = useGetGitSnapshotQuery(activeRepo, { skip: !activeRepo });
   const snapshot = activeRepo ? snapshotData : undefined;
 

@@ -11,7 +11,11 @@ import {
 import { countCommentsForPathInRepoContext } from "@/features/comments/selectors";
 import { useGetCommitFilesQuery, useGetCommitHistoryQuery } from "@/features/source-control/api";
 import { selectHistoryFile } from "@/features/source-control/actions";
-import { setHistoryNavTarget } from "@/features/source-control/sourceControlSlice";
+import {
+  selectActiveRepo,
+  selectHistoryCommitId,
+  setHistoryNavTarget,
+} from "@/features/source-control/sourceControlSlice";
 import type { FileItem } from "@/features/source-control/types";
 import { FileListPane, type FileListPaneRowArgs } from "./FileListPane";
 import { FileListRow } from "./FileListRow";
@@ -19,8 +23,8 @@ import { EMPTY_COMMITS, EMPTY_FILE_ITEMS } from "@/shared/stableDefaults";
 
 export function HistoryFilesPane() {
   const dispatch = useAppDispatch();
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
-  const historyCommitId = useAppSelector((state) => state.sourceControl.historyCommitId);
+  const activeRepo = useAppSelector(selectActiveRepo);
+  const historyCommitId = useAppSelector(selectHistoryCommitId);
   const fileBrowserMode = useAppSelector(
     (state) => state.settings.appSettings.sourceControl.fileTreeRenderMode,
   );

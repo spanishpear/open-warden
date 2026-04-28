@@ -31,10 +31,8 @@ function parsePreviewTabFromPathname(pathname: string): PreviewTab {
 }
 
 export function PullRequestPreviewLayout() {
-  const location = useLocation();
   const navigate = useNavigate();
   const { providerId, owner, repo, pullRequestNumber } = useParams();
-  const activeTab = parsePreviewTabFromPathname(location.pathname);
   const parsedPullRequestNumber = Number.parseInt(pullRequestNumber ?? "", 10);
 
   const hasValidRoute = Boolean(
@@ -65,7 +63,7 @@ export function PullRequestPreviewLayout() {
 
   return (
     <div className="flex h-full min-h-0">
-      <PullRequestPreviewModeRail activeTab={activeTab} onTabChange={handleTabChange} />
+      <PullRequestPreviewModeRail onTabChange={handleTabChange} />
       <div className="min-w-0 flex-1 h-full">
         <Outlet />
       </div>
@@ -73,13 +71,9 @@ export function PullRequestPreviewLayout() {
   );
 }
 
-function PullRequestPreviewModeRail({
-  activeTab,
-  onTabChange,
-}: {
-  activeTab: PreviewTab;
-  onTabChange: (tab: PreviewTab) => void;
-}) {
+function PullRequestPreviewModeRail({ onTabChange }: { onTabChange: (tab: PreviewTab) => void }) {
+  const location = useLocation();
+  const activeTab = parsePreviewTabFromPathname(location.pathname);
   return (
     <aside className="border-border/70 bg-surface-toolbar flex w-12 shrink-0 flex-col items-center gap-1 border-r px-2 py-2">
       <PreviewModeRailButton
