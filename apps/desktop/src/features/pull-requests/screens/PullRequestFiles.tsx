@@ -34,7 +34,6 @@ import { setPullRequestPreviewActiveFilePath } from "@/features/pull-requests/pu
 import FilesSidebar from "@/features/pull-requests/screens/PullRequestFileList";
 import { buildPullRequestAnchorAnnotations } from "@/features/pull-requests/utils/reviewAnchors";
 import { findParsedFileDiff } from "../utils/findParsedFileDiff";
-import { useThrottledDiffSelection } from "@/features/source-control/hooks/useThrottledDiffSelection";
 import { errorMessageFrom } from "@/features/source-control/shared-utils/errorMessage";
 import type {
   GitProviderId,
@@ -225,13 +224,7 @@ function FilesDiffViewer({
   });
   const commentMentions = usePullRequestMentionCandidates(conversation);
   const selectedFile = files.find((file) => file.path === selectedPath) ?? null;
-  const previewSelection = useThrottledDiffSelection(
-    selectedFile
-      ? { path: selectedFile.path, previousPath: selectedFile.previousPath ?? undefined }
-      : null,
-  );
-  const previewPath = previewSelection?.path ?? selectedFile?.path ?? "";
-  const previewFile = files.find((file) => file.path === previewPath) ?? selectedFile;
+  const previewPath = selectedFile?.path ?? "";
   const canComment = Boolean(compareBaseRef && compareHeadRef);
 
   useEffect(() => {
@@ -282,10 +275,10 @@ function FilesDiffViewer({
     };
   }, [files, patchText, selectedPath]);
 
-  const selectedFileDiff = findParsedFileDiff(parsedFiles, previewFile ?? selectedFile);
-  const anchorAnnotations = previewFile
+  const selectedFileDiff = findParsedFileDiff(parsedFiles, selectedFile);
+  const anchorAnnotations = selectedFile
     ? buildPullRequestAnchorAnnotations({
-        anchors: anchorsByFile[previewFile.path] ?? [],
+        anchors: anchorsByFile[selectedFile.path] ?? [],
         repoPath,
         pullRequestNumber,
         compareBaseRef,
@@ -392,14 +385,14 @@ function FilesDiffViewer({
           pullRequestNumber={pullRequestNumber}
           compareBaseRef={compareBaseRef}
           compareHeadRef={compareHeadRef}
-          activePath={previewFile?.path ?? selectedFile.path}
-          activePreviousPath={previewFile?.previousPath ?? selectedFile.previousPath ?? undefined}
+          activePath={selectedFile.path}
+          activePreviousPath={selectedFile.previousPath ?? undefined}
         />
         <DiffWorkspace
           oldFile={null}
           newFile={null}
           fileDiff={selectedFileDiff}
-          activePath={previewFile?.path ?? selectedFile.path}
+          activePath={selectedFile.path}
           commentContext={{ kind: "review", baseRef: compareBaseRef, headRef: compareHeadRef }}
           canComment={canComment}
           includeCurrentFileComments={false}

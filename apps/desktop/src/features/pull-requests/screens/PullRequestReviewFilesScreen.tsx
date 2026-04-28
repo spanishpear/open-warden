@@ -22,10 +22,10 @@ import {
   clearPullRequestFileJumpTarget,
   setPullRequestFilesViewMode,
 } from "@/features/pull-requests/pullRequestsSlice";
+import { findParsedFileDiff } from "@/features/pull-requests/utils/findParsedFileDiff";
 import { buildPullRequestAnchorAnnotations } from "@/features/pull-requests/utils/reviewAnchors";
 import { useGetBranchFilesQuery } from "@/features/source-control/api";
 import { GeneralFileViewer } from "@/features/source-control/components/GeneralFileViewer";
-import { useThrottledDiffSelection } from "@/features/source-control/hooks/useThrottledDiffSelection";
 import { errorMessageFrom } from "@/features/source-control/shared-utils/errorMessage";
 import {
   selectFileViewerTarget,
@@ -71,16 +71,7 @@ function PullRequestDiffPane({
   focusedLineKey,
 }: PullRequestDiffPaneProps) {
   const reviewActivePath = useAppSelector(selectReviewActivePath);
-  const selectedReviewFile = branchFiles.find((file) => file.path === reviewActivePath);
-  const previewSelection = useThrottledDiffSelection(
-    reviewActivePath
-      ? {
-          path: reviewActivePath,
-          previousPath: selectedReviewFile?.previousPath ?? undefined,
-        }
-      : null,
-  );
-  const previewPath = previewSelection?.path ?? reviewActivePath;
+  const selectedReviewFile = branchFiles.find((file) => file.path === reviewActivePath) ?? null;
   const commentMentions = usePullRequestMentionCandidates(conversation);
   const { anchorsByFile } = usePullRequestReviewAnchors({
     repoPath: reviewRepoPath,
@@ -89,9 +80,9 @@ function PullRequestDiffPane({
     files: branchFiles,
     reviewThreads: conversation?.reviewThreads ?? [],
   });
-  const annotationItems = previewPath
+  const annotationItems = reviewActivePath
     ? buildPullRequestAnchorAnnotations({
-        anchors: anchorsByFile[previewPath] ?? [],
+        anchors: anchorsByFile[reviewActivePath] ?? [],
         repoPath: reviewRepoPath,
         pullRequestNumber,
         compareBaseRef: reviewBaseRef,
@@ -111,7 +102,7 @@ function PullRequestDiffPane({
 
   useEffect(() => {
     let cancelled = false;
-    if (!patchText || !previewPath) {
+    if (!patchText || !reviewActivePath) {
       setParsedFiles([]);
       setIsParsingPatch(false);
       return () => {
@@ -119,7 +110,7 @@ function PullRequestDiffPane({
       };
     }
 
-    const request = getParsedPatchRequest(previewPath, patchText);
+    const request = getParsedPatchRequest(reviewActivePath, patchText);
     if (!request) {
       setParsedFiles([]);
       setIsParsingPatch(false);
@@ -143,10 +134,9 @@ function PullRequestDiffPane({
     return () => {
       cancelled = true;
     };
-  }, [patchText, previewPath]);
+  }, [patchText, reviewActivePath]);
 
-  const selectedFileDiff =
-    parsedFiles.find((f) => f.name === previewPath || f.prevName === previewPath) ?? null;
+  const selectedFileDiff = findParsedFileDiff(parsedFiles, selectedReviewFile);
   const oldFile = null;
   const newFile = null;
   const loadingPatch = isParsingPatch || (!patchText && pullRequestDiffQuery.isLoading);
@@ -161,8 +151,8 @@ function PullRequestDiffPane({
         pullRequestNumber={pullRequestNumber}
         compareBaseRef={reviewBaseRef}
         compareHeadRef={reviewHeadRef}
-        activePath={previewPath ?? ""}
-        activePreviousPath={previewSelection?.previousPath}
+        activePath={reviewActivePath ?? ""}
+        activePreviousPath={selectedReviewFile?.previousPath ?? undefined}
       />
       <div className="grid min-h-0 flex-1">
         {!reviewActivePath ? (
@@ -173,7 +163,7 @@ function PullRequestDiffPane({
               oldFile={oldFile}
               newFile={newFile}
               fileDiff={selectedFileDiff}
-              activePath={previewPath ?? ""}
+              activePath={reviewActivePath ?? ""}
               commentContext={{ kind: "review", baseRef: reviewBaseRef, headRef: reviewHeadRef }}
               canComment
               includeCurrentFileComments={false}
