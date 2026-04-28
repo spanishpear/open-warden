@@ -2,6 +2,8 @@ import { WorkerPoolContextProvider } from "@pierre/diffs/react";
 import DiffsWorker from "@pierre/diffs/worker/worker.js?worker";
 import { useMemo, type ReactNode } from "react";
 
+import { getDiffTheme } from "@/features/diff-view/diffRenderConfig";
+
 export function DiffWorkerPoolProvider({ children }: { children?: ReactNode }) {
   const workerPoolSize = useMemo(() => {
     const cores =
@@ -19,6 +21,8 @@ export function DiffWorkerPoolProvider({ children }: { children?: ReactNode }) {
       highlighterOptions={{
         useTokenTransformer: true,
         tokenizeMaxLineLength: 1_000,
+        theme: getDiffTheme(),
+        langs: ["rust", "typescript", "tsx", "javascript", "jsx"],
       }}
     >
       {children}
