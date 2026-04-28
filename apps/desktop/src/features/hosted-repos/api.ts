@@ -156,6 +156,7 @@ export const hostedReposApi = createApi({
       providesTags: (_result, _error, { repoPath, pullRequestNumber }) => [
         { type: "PullRequestConversation", id: `${repoPath}:${String(pullRequestNumber)}` },
       ],
+      keepUnusedDataFor: 300,
     }),
     getPullRequestFiles: builder.query<PullRequestChangedFile[], PullRequestLocatorInput>({
       async queryFn(input) {
@@ -168,6 +169,7 @@ export const hostedReposApi = createApi({
       providesTags: (_result, _error, { repoPath, pullRequestNumber }) => [
         { type: "PullRequestFiles", id: `${repoPath}:${String(pullRequestNumber)}` },
       ],
+      keepUnusedDataFor: 300,
     }),
     getPullRequestPatch: builder.query<string, PullRequestLocatorInput>({
       async queryFn(input) {
@@ -180,6 +182,7 @@ export const hostedReposApi = createApi({
       providesTags: (_result, _error, { repoPath, pullRequestNumber }) => [
         { type: "PullRequestPatch", id: `${repoPath}:${String(pullRequestNumber)}` },
       ],
+      keepUnusedDataFor: 300,
     }),
     getPullRequestDiffCached: builder.query<string, PullRequestLocatorInput>({
       async queryFn(input) {
@@ -192,6 +195,7 @@ export const hostedReposApi = createApi({
       providesTags: (_result, _error, { repoPath, pullRequestNumber }) => [
         { type: "PullRequestPatch", id: `${repoPath}:${String(pullRequestNumber)}` },
       ],
+      keepUnusedDataFor: 300,
     }),
 
     preparePullRequestCompareRefs: builder.query<PullRequestCompareRefs, PullRequestLocatorInput>({

@@ -4,6 +4,16 @@ import { useMemo, type ReactNode } from "react";
 
 import { getDiffTheme } from "@/features/diff-view/diffRenderConfig";
 
+// Module-level constants — created once, never recreated on render
+const WORKER_FACTORY = () => new DiffsWorker();
+const TOTAL_AST_LRU_CACHE_SIZE = 240;
+const HIGHLIGHTER_OPTIONS = {
+  useTokenTransformer: true,
+  tokenizeMaxLineLength: 1_000,
+  theme: getDiffTheme(),
+  langs: ["rust", "typescript", "tsx", "javascript", "jsx"],
+};
+
 export function DiffWorkerPoolProvider({ children }: { children?: ReactNode }) {
   const workerPoolSize = useMemo(() => {
     const cores =
@@ -14,16 +24,11 @@ export function DiffWorkerPoolProvider({ children }: { children?: ReactNode }) {
   return (
     <WorkerPoolContextProvider
       poolOptions={{
-        workerFactory: () => new DiffsWorker(),
+        workerFactory: WORKER_FACTORY,
         poolSize: workerPoolSize,
-        totalASTLRUCacheSize: 240,
+        totalASTLRUCacheSize: TOTAL_AST_LRU_CACHE_SIZE,
       }}
-      highlighterOptions={{
-        useTokenTransformer: true,
-        tokenizeMaxLineLength: 1_000,
-        theme: getDiffTheme(),
-        langs: ["rust", "typescript", "tsx", "javascript", "jsx"],
-      }}
+      highlighterOptions={HIGHLIGHTER_OPTIONS}
     >
       {children}
     </WorkerPoolContextProvider>
