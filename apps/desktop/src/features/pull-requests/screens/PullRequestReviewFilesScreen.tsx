@@ -99,6 +99,7 @@ function PullRequestDiffPane({
 
   const [parsedFiles, setParsedFiles] = useState<FileDiffMetadata[]>([]);
   const [isParsingPatch, setIsParsingPatch] = useState(false);
+  const cacheKeyPrefix = `pr-${reviewRepoPath}:${pullRequestNumber}`;
 
   useEffect(() => {
     let cancelled = false;
@@ -110,7 +111,9 @@ function PullRequestDiffPane({
       };
     }
 
-    const request = getParsedPatchRequest(reviewActivePath, patchText);
+    const request = getParsedPatchRequest(reviewActivePath, patchText, "", {
+      cacheKeyPrefix,
+    });
     if (!request) {
       setParsedFiles([]);
       setIsParsingPatch(false);
@@ -134,7 +137,7 @@ function PullRequestDiffPane({
     return () => {
       cancelled = true;
     };
-  }, [patchText, reviewActivePath]);
+  }, [cacheKeyPrefix, patchText, reviewActivePath]);
 
   const selectedFileDiff = findParsedFileDiff(parsedFiles, selectedReviewFile);
   const oldFile = null;

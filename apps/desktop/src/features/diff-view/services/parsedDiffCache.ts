@@ -20,6 +20,7 @@ type ParsedDiffRequest = {
 type ParsedPatchRequest = {
   key: string;
   patchText: string;
+  cacheKeyPrefix?: string;
 };
 
 const MAX_PARSED_DIFF_CACHE_SIZE = 64;
@@ -139,7 +140,7 @@ export function getParsedPatchRequest(
   activePath: string | null,
   patchText: string | null,
   cacheSalt = "",
-  options: { allowLargeDiff?: boolean } = {},
+  options: { allowLargeDiff?: boolean; cacheKeyPrefix?: string } = {},
 ): ParsedPatchRequest | null {
   if (!activePath || patchText == null) return null;
 
@@ -153,7 +154,7 @@ export function getParsedPatchRequest(
   const patchHash = hashStringFNV1a(patchText + cacheSalt);
   const key = `p-${patchHash}:${patchText.length}`;
 
-  return { key, patchText };
+  return { key, patchText, cacheKeyPrefix: options.cacheKeyPrefix };
 }
 
 export function peekCachedParsedDiff(key: string): ParsedDiff | null | undefined {
@@ -224,7 +225,11 @@ export async function loadParsedPatch(
 
   const controller = new AbortController();
 
-  const parsePromise = parsePatchInWorker(request.patchText, controller.signal)
+  const parsePromise = parsePatchInWorker(
+    request.patchText,
+    request.cacheKeyPrefix,
+    controller.signal,
+  )
     .then((parsedPatches) => {
       touchParsedPatch(request.key, parsedPatches);
       return parsedPatches;

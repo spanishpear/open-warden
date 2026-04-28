@@ -29,6 +29,11 @@ type ParseResponseMessage =
       message: string;
     };
 
+type ParsePatchRequest = {
+  resolve: (value: ReturnType<typeof parsePatchFiles>) => void;
+  reject: (reason?: unknown) => void;
+};
+
 type ParseTask = {
   requestId: number;
   oldFile: ParseWorkerFile;
@@ -51,13 +56,7 @@ type ActiveParseTask = {
 let nextRequestId = 1;
 let worker: Worker | null = null;
 let activeParseTask: ActiveParseTask | null = null;
-const patchRequests = new Map<
-  number,
-  {
-    resolve: (value: ReturnType<typeof parsePatchFiles>) => void;
-    reject: (reason?: unknown) => void;
-  }
->();
+const patchRequests = new Map<number, ParsePatchRequest>();
 
 function priorityWeight(priority: ParsePriority): number {
   return priority === "high" ? 1 : 0;
@@ -276,6 +275,7 @@ export function parseDiffInWorker(
 
 export function parsePatchInWorker(
   patchText: string,
+  cacheKeyPrefix?: string,
   signal?: AbortSignal,
 ): Promise<ReturnType<typeof parsePatchFiles>> {
   const requestId = nextRequestId++;
@@ -306,7 +306,7 @@ export function parsePatchInWorker(
     });
 
     /* eslint-disable unicorn/require-post-message-target-origin -- Worker.postMessage does not accept targetOrigin */
-    getWorker().postMessage({ type: "parse-patch", requestId, patchText });
+    getWorker().postMessage({ type: "parse-patch", requestId, patchText, cacheKeyPrefix });
     /* eslint-enable unicorn/require-post-message-target-origin */
   });
 }

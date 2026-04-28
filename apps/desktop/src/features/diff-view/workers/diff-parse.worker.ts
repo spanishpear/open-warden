@@ -19,6 +19,7 @@ type ParseRequestMessage =
       type: "parse-patch";
       requestId: number;
       patchText: string;
+      cacheKeyPrefix?: string;
     };
 
 type ParseResponseMessage =
@@ -65,7 +66,7 @@ self.addEventListener("message", (event: MessageEvent<ParseRequestMessage>) => {
 
   if (message.type === "parse-patch") {
     try {
-      const data = parsePatchFiles(message.patchText);
+      const data = parsePatchFiles(message.patchText, message.cacheKeyPrefix);
       const response: ParseResponseMessage = {
         type: "parsed-patch",
         requestId: message.requestId,

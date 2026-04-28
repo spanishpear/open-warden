@@ -226,6 +226,7 @@ function FilesDiffViewer({
   const selectedFile = files.find((file) => file.path === selectedPath) ?? null;
   const previewPath = selectedFile?.path ?? "";
   const canComment = Boolean(compareBaseRef && compareHeadRef);
+  const cacheKeyPrefix = `pr-${repoPath}:${pullRequestNumber}`;
 
   useEffect(() => {
     let cancelled = false;
@@ -239,7 +240,9 @@ function FilesDiffViewer({
       };
     }
 
-    const request = getParsedPatchRequest(parseTargetPath, patchText);
+    const request = getParsedPatchRequest(parseTargetPath, patchText, "", {
+      cacheKeyPrefix,
+    });
     if (!request) {
       setParsedFiles([]);
       setParsedPatchError("Diff unavailable");
@@ -273,7 +276,7 @@ function FilesDiffViewer({
     return () => {
       cancelled = true;
     };
-  }, [files, patchText, selectedPath]);
+  }, [cacheKeyPrefix, files, patchText, selectedPath]);
 
   const selectedFileDiff = findParsedFileDiff(parsedFiles, selectedFile);
   const anchorAnnotations = selectedFile
