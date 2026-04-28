@@ -41,7 +41,23 @@ import {
   useGetCommitHistoryQuery,
   useGetGitSnapshotQuery,
 } from "@/features/source-control/api";
-import { setReviewActivePath } from "@/features/source-control/sourceControlSlice";
+import {
+  selectActiveBucket,
+  selectActivePath,
+  selectActiveRepo,
+  selectCommitMessage,
+  selectDiffStyle,
+  selectHistoryCommitId,
+  selectRecentRepos,
+  selectRepos,
+  selectReviewActivePath,
+  selectReviewBaseRef,
+  selectReviewHeadRef,
+  selectRunningAction,
+  selectSelectedFiles,
+  setReviewActivePath,
+} from "@/features/source-control/sourceControlSlice";
+import { EMPTY_COMMITS, EMPTY_FILE_ITEMS } from "@/shared/stableDefaults";
 import type {
   BucketedFile,
   CommentContext,
@@ -170,19 +186,19 @@ function AppCommandPaletteContent({ onOpenChange }: AppCommandPaletteContentProp
   const { setTheme } = useTheme();
   const feature = featureKeyFromPath(location.pathname);
 
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
-  const repos = useAppSelector((state) => state.sourceControl.repos);
-  const recentRepos = useAppSelector((state) => state.sourceControl.recentRepos);
-  const runningAction = useAppSelector((state) => state.sourceControl.runningAction);
-  const activeBucket = useAppSelector((state) => state.sourceControl.activeBucket);
-  const activePath = useAppSelector((state) => state.sourceControl.activePath);
-  const selectedFiles = useAppSelector((state) => state.sourceControl.selectedFiles);
-  const commitMessage = useAppSelector((state) => state.sourceControl.commitMessage);
-  const diffStyle = useAppSelector((state) => state.sourceControl.diffStyle);
-  const historyCommitId = useAppSelector((state) => state.sourceControl.historyCommitId);
-  const reviewBaseRef = useAppSelector((state) => state.sourceControl.reviewBaseRef);
-  const reviewHeadRef = useAppSelector((state) => state.sourceControl.reviewHeadRef);
-  const reviewActivePath = useAppSelector((state) => state.sourceControl.reviewActivePath);
+  const activeRepo = useAppSelector(selectActiveRepo);
+  const repos = useAppSelector(selectRepos);
+  const recentRepos = useAppSelector(selectRecentRepos);
+  const runningAction = useAppSelector(selectRunningAction);
+  const activeBucket = useAppSelector(selectActiveBucket);
+  const activePath = useAppSelector(selectActivePath);
+  const selectedFiles = useAppSelector(selectSelectedFiles);
+  const commitMessage = useAppSelector(selectCommitMessage);
+  const diffStyle = useAppSelector(selectDiffStyle);
+  const historyCommitId = useAppSelector(selectHistoryCommitId);
+  const reviewBaseRef = useAppSelector(selectReviewBaseRef);
+  const reviewHeadRef = useAppSelector(selectReviewHeadRef);
+  const reviewActivePath = useAppSelector(selectReviewActivePath);
   const comments = useAppSelector((state) => state.comments);
 
   const { snapshot } = useGetGitSnapshotQuery(activeRepo, {
@@ -201,7 +217,7 @@ function AppCommandPaletteContent({ onOpenChange }: AppCommandPaletteContentProp
   const { commits } = useGetCommitHistoryQuery(
     activeRepo ? { repoPath: activeRepo, limit: 200 } : skipToken,
     {
-      selectFromResult: ({ data }) => ({ commits: data ?? [] }),
+      selectFromResult: ({ data }) => ({ commits: data ?? EMPTY_COMMITS }),
     },
   );
 
@@ -210,7 +226,7 @@ function AppCommandPaletteContent({ onOpenChange }: AppCommandPaletteContentProp
       ? { repoPath: activeRepo, commitId: historyCommitId }
       : skipToken,
     {
-      selectFromResult: ({ data }) => ({ historyFiles: data ?? [] }),
+      selectFromResult: ({ data }) => ({ historyFiles: data ?? EMPTY_FILE_ITEMS }),
     },
   );
 
@@ -224,7 +240,7 @@ function AppCommandPaletteContent({ onOpenChange }: AppCommandPaletteContentProp
         }
       : skipToken,
     {
-      selectFromResult: ({ data }) => ({ reviewFiles: data ?? [] }),
+      selectFromResult: ({ data }) => ({ reviewFiles: data ?? EMPTY_FILE_ITEMS }),
     },
   );
 

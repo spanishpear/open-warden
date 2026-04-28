@@ -16,6 +16,9 @@ import {
   unstageFileAction,
 } from "@/features/source-control/actions";
 import {
+  selectActiveRepo,
+  selectCollapseStaged,
+  selectCollapseUnstaged,
   setCollapseStaged,
   setCollapseUnstaged,
 } from "@/features/source-control/sourceControlSlice";
@@ -43,9 +46,9 @@ function toBucketedFile(file: FileItem, bucket: Bucket) {
 
 function ChangesFileList() {
   const dispatch = useAppDispatch();
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
-  const collapseStaged = useAppSelector((state) => state.sourceControl.collapseStaged);
-  const collapseUnstaged = useAppSelector((state) => state.sourceControl.collapseUnstaged);
+  const activeRepo = useAppSelector(selectActiveRepo);
+  const collapseStaged = useAppSelector(selectCollapseStaged);
+  const collapseUnstaged = useAppSelector(selectCollapseUnstaged);
   const { snapshot: snapshotData, isLoadingSnapshot } = useGetGitSnapshotQuery(activeRepo, {
     skip: !activeRepo,
     refetchOnFocus: true,

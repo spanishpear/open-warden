@@ -11,8 +11,8 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { countCommentsForPathInRepoContext } from "@/features/comments/selectors";
-import { useGetPullRequestConversationQuery } from "@/features/hosted-repos/api";
+import { selectCommentCountByFile } from "@/features/comments/memoizedSelectors";
+import * as hostedReposApi from "@/features/hosted-repos/api";
 import {
   FileListPane,
   type FileListPaneRowArgs,
@@ -62,7 +62,7 @@ export default function PullRequestFileList({
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [commentFilter, setCommentFilter] = useState<FileCommentFilter>("all");
-  const { reviewThreads } = useGetPullRequestConversationQuery(
+  const { reviewThreads } = hostedReposApi.useGetPullRequestConversationQuery(
     repoPath && pullRequestNumber > 0 ? { repoPath, pullRequestNumber } : skipToken,
     {
       selectFromResult: ({ data }) => ({
@@ -70,20 +70,13 @@ export default function PullRequestFileList({
       }),
     },
   );
-  const comments = useAppSelector((state) => state.comments);
-  const pendingCommentCountByPath = useMemo(() => {
-    const counts: Record<string, number> = {};
-
-    for (const file of files) {
-      counts[file.path] = countCommentsForPathInRepoContext(comments, repoPath, file.path, {
-        kind: "review",
-        baseRef: compareBaseRef,
-        headRef: compareHeadRef,
-      });
-    }
-
-    return counts;
-  }, [comments, compareBaseRef, compareHeadRef, files, repoPath]);
+  const pendingCommentCountByPath = useAppSelector(
+    selectCommentCountByFile(repoPath, {
+      kind: "review",
+      baseRef: compareBaseRef,
+      headRef: compareHeadRef,
+    }),
+  );
   const commentCountByPath = useMemo(() => {
     const counts: Record<string, number> = {};
 
@@ -203,10 +196,7 @@ export default function PullRequestFileList({
           <PullRequestFileRow
             key={`${row.file.path}:${row.file.previousPath ?? ""}`}
             row={row}
-            repoPath={repoPath}
-            pullRequestNumber={pullRequestNumber}
-            compareBaseRef={compareBaseRef}
-            compareHeadRef={compareHeadRef}
+            commentCount={commentCountByPath[row.file.path] ?? 0}
           />
         )}
       />
@@ -238,44 +228,14 @@ function PullRequestVisibleSelectionSync({
 
 type PullRequestFileRowProps = {
   row: FileListPaneRowArgs<PullRequestChangedFile>;
-  repoPath: string;
-  pullRequestNumber: number;
-  compareBaseRef: string;
-  compareHeadRef: string;
+  commentCount: number;
 };
 
-function PullRequestFileRow({
-  row,
-  repoPath,
-  pullRequestNumber,
-  compareBaseRef,
-  compareHeadRef,
-}: PullRequestFileRowProps) {
+function PullRequestFileRow({ row, commentCount }: PullRequestFileRowProps) {
   const dispatch = useAppDispatch();
   const isActive = useAppSelector(
     (state) => state.pullRequests.previewActiveFilePath === row.file.path,
   );
-  const { reviewThreads } = useGetPullRequestConversationQuery(
-    repoPath && pullRequestNumber > 0 ? { repoPath, pullRequestNumber } : skipToken,
-    {
-      selectFromResult: ({ data }) => ({
-        reviewThreads: data?.reviewThreads ?? EMPTY_REVIEW_THREADS,
-      }),
-    },
-  );
-  const pendingCommentCount = useAppSelector((state) =>
-    countCommentsForPathInRepoContext(state.comments, repoPath, row.file.path, {
-      kind: "review",
-      baseRef: compareBaseRef,
-      headRef: compareHeadRef,
-    }),
-  );
-  const reviewThreadCount = countPullRequestThreadsForFile({
-    path: row.file.path,
-    previousPath: row.file.previousPath,
-    reviewThreads,
-  });
-  const commentCount = reviewThreadCount + pendingCommentCount;
 
   return (
     <FileListRow

@@ -3,10 +3,12 @@ import { shallowEqual } from "react-redux";
 
 import { useAppSelector } from "@/app/hooks";
 import { fileComments, toLineAnnotations } from "@/features/comments/actions";
+import { selectRepoCommentCount } from "@/features/comments/memoizedSelectors";
 import { useFirstCommentTip } from "@/features/comments/useFirstCommentTip";
 import { CommentAnnotation } from "@/features/diff-view/components/CommentAnnotation";
 import { CommentComposer } from "@/features/diff-view/components/CommentComposer";
 import type { MentionConfig } from "@/components/markdown/MarkdownEditor";
+import { selectActiveRepo } from "@/features/source-control/sourceControlSlice";
 import type {
   CommentContext,
   CommentItem,
@@ -63,7 +65,7 @@ export function useDiffCommentAnnotations({
   includeCurrentFileComments = true,
   commentMentions,
 }: UseDiffCommentAnnotationsOptions) {
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
+  const activeRepo = useAppSelector(selectActiveRepo);
   const [selectedRange, setSelectedRange] = useState<SelectionRange | null>(null);
 
   const { annotations: commentAnnotations } = useCurrentFileComments(
@@ -73,10 +75,9 @@ export function useDiffCommentAnnotations({
     canComment && includeCurrentFileComments,
   );
 
-  const repoCommentCount = useAppSelector((state) => {
-    if (!canComment || !activeRepo) return 0;
-    return state.comments.filter((c) => c.repoPath === activeRepo).length;
-  });
+  const repoCommentCount = useAppSelector(
+    canComment && activeRepo ? selectRepoCommentCount(activeRepo) : () => 0,
+  );
 
   const { showFirstCommentTip } = useFirstCommentTip();
 

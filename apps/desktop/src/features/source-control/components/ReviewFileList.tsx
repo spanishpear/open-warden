@@ -8,7 +8,10 @@ import {
 } from "@/features/source-control/components/FileListPane";
 import { FileListRow } from "@/features/source-control/components/FileListRow";
 import { useReviewKeyboardNav } from "@/features/source-control/hooks/useReviewKeyboardNav";
-import { setReviewActivePath } from "@/features/source-control/sourceControlSlice";
+import {
+  selectReviewActivePath,
+  setReviewActivePath,
+} from "@/features/source-control/sourceControlSlice";
 import type { FileItem } from "@/features/source-control/types";
 
 type ReviewSelectionSyncProps = {
@@ -23,7 +26,7 @@ export function ReviewSelectionSync({
   hasBranchFilesData,
 }: ReviewSelectionSyncProps) {
   const dispatch = useAppDispatch();
-  const reviewActivePath = useAppSelector((state) => state.sourceControl.reviewActivePath);
+  const reviewActivePath = useAppSelector(selectReviewActivePath);
 
   useEffect(() => {
     if (!readyForDiff) {

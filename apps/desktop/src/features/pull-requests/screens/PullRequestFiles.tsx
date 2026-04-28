@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
+import { selectActiveRepo } from "@/features/source-control/sourceControlSlice";
 import { ResizableSidebarLayout } from "@/components/layout/ResizableSidebarLayout";
 import {
   Empty,
@@ -28,6 +29,7 @@ import {
 import ReviewCommentsCopyToolbar from "@/features/pull-requests/components/ReviewCopyBar";
 import { usePullRequestMentionCandidates } from "@/features/pull-requests/hooks/usePullRequestMentionCandidates";
 import { usePullRequestReviewAnchors } from "@/features/pull-requests/hooks/usePullRequestReviewAnchors";
+import { EMPTY_FILES } from "@/shared/stableDefaults";
 import { setPullRequestPreviewActiveFilePath } from "@/features/pull-requests/pullRequestsSlice";
 import FilesSidebar from "@/features/pull-requests/screens/PullRequestFileList";
 import { buildPullRequestAnchorAnnotations } from "@/features/pull-requests/utils/reviewAnchors";
@@ -74,7 +76,7 @@ function findParsedFileDiff(
 }
 
 export const PullRequestFiles = () => {
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
+  const activeRepo = useAppSelector(selectActiveRepo);
   const currentReview = useAppSelector((state) => state.pullRequests.currentReview);
   const { providerId, owner, repo, pullRequestNumber } = useParams();
 
@@ -119,7 +121,7 @@ export const PullRequestFiles = () => {
 
   const { files, filesError, isLoadingFiles } = useGetPullRequestFilesQuery(queryArg, {
     selectFromResult: ({ data, error, isLoading, isFetching }) => ({
-      files: data ?? [],
+      files: data ?? EMPTY_FILES,
       filesError: data ? "" : errorMessageFrom(error, ""),
       isLoadingFiles: isLoading || isFetching,
     }),
@@ -130,7 +132,7 @@ export const PullRequestFiles = () => {
       conversation: data ?? null,
       reviewThreads: data?.reviewThreads ?? [],
     }),
-    pollingInterval: 10000,
+    pollingInterval: 30_000,
     refetchOnFocus: true,
     refetchOnReconnect: true,
   });

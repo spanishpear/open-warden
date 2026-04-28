@@ -4,9 +4,10 @@ import { useAppSelector } from "@/app/hooks";
 import { useResolveActivePullRequestForBranchQuery } from "@/features/hosted-repos/api";
 import { useGetGitSnapshotQuery } from "@/features/source-control/api";
 import { errorMessageFrom } from "@/features/source-control/shared-utils/errorMessage";
+import { selectActiveRepo } from "@/features/source-control/sourceControlSlice";
 
 export function ActivePullRequestRouteLayout() {
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
+  const activeRepo = useAppSelector(selectActiveRepo);
   const currentReview = useAppSelector((state) => state.pullRequests.currentReview);
 
   const { activeBranch, loadingSnapshot, fetchingSnapshot } = useGetGitSnapshotQuery(activeRepo, {

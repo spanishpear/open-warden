@@ -7,6 +7,7 @@ import {
   ReviewSelectionSync,
 } from "@/features/source-control/components/ReviewFileList";
 import type { FileItem } from "@/features/source-control/types";
+import { selectRunningAction } from "@/features/source-control/sourceControlSlice";
 import type { PullRequestReviewSession } from "@/features/pull-requests/pullRequestsSlice";
 import { PullRequestSidebarSummary } from "@/features/pull-requests/components/PullRequestSidebarSummary";
 
@@ -28,7 +29,7 @@ export function PullRequestFilesSidebar({
   isLoadingBranchFiles,
 }: PullRequestFilesSidebarProps) {
   const dispatch = useAppDispatch();
-  const runningAction = useAppSelector((state) => state.sourceControl.runningAction);
+  const runningAction = useAppSelector(selectRunningAction);
   const { activeBranch } = useGetGitSnapshotQuery(activeRepo, {
     skip: !activeRepo,
     selectFromResult: ({ data }) => ({

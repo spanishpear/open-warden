@@ -4,6 +4,7 @@ import { useNavigate } from "react-router";
 import { GitBranch, GitPullRequest, Plug, Unplug } from "lucide-react";
 
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
+import { selectActiveRepo } from "@/features/source-control/sourceControlSlice";
 import { Button } from "@/components/ui/button";
 import {
   hostedReposApi,
@@ -19,6 +20,7 @@ import {
   ConnectBitbucketDialog,
   ConnectGitHubDialog,
 } from "@/features/pull-requests/components/ConnectToProviders";
+import { EMPTY_CONNECTIONS } from "@/shared/stableDefaults";
 
 function formatPullRequestUpdatedAt(updatedAt: string) {
   const date = new Date(updatedAt);
@@ -99,7 +101,7 @@ function PullRequestRow({
 export function PullRequestsScreen() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
+  const activeRepo = useAppSelector(selectActiveRepo);
   const [githubDialogOpen, setGithubDialogOpen] = useState(false);
   const [bitbucketDialogOpen, setBitbucketDialogOpen] = useState(false);
   const [pullRequestsPage, setPullRequestsPage] = useState(1);
@@ -108,7 +110,7 @@ export function PullRequestsScreen() {
 
   const { connections, loadingConnections } = useListProviderConnectionsQuery(undefined, {
     selectFromResult: ({ data, isLoading, isFetching }) => ({
-      connections: data ?? [],
+      connections: data ?? EMPTY_CONNECTIONS,
       loadingConnections: isLoading || isFetching,
     }),
   });

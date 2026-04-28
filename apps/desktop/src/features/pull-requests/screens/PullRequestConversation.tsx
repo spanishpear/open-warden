@@ -5,13 +5,14 @@ import {
 } from "@/features/hosted-repos/api";
 import { PullRequestConversationTab } from "@/features/pull-requests/components/PullRequestConversationTab";
 import { errorMessageFrom } from "@/features/source-control/shared-utils/errorMessage";
+import { selectActiveRepo } from "@/features/source-control/sourceControlSlice";
 import { skipToken } from "@reduxjs/toolkit/query";
 import { useState } from "react";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 
 export const PullRequestConversation = () => {
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
+  const activeRepo = useAppSelector(selectActiveRepo);
   const { providerId, owner, repo, pullRequestNumber } = useParams();
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
 

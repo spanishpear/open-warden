@@ -12,6 +12,12 @@ import { useChangesKeyboardNav } from "@/features/source-control/hooks/useChange
 import { useChangesSync } from "@/features/source-control/hooks/useChangesSync";
 import { useThrottledDiffSelection } from "@/features/source-control/hooks/useThrottledDiffSelection";
 import { errorMessageFrom } from "@/features/source-control/shared-utils/errorMessage";
+import {
+  selectActiveBucket,
+  selectActivePath,
+  selectActiveRepo,
+  selectDiffFocusTarget,
+} from "@/features/source-control/sourceControlSlice";
 
 export function ChangesScreen() {
   useChangesKeyboardNav("changes");
@@ -30,10 +36,10 @@ export function ChangesScreen() {
 }
 
 function ChangesDiffPane() {
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
-  const activeBucket = useAppSelector((state) => state.sourceControl.activeBucket);
-  const activePath = useAppSelector((state) => state.sourceControl.activePath);
-  const diffFocusTarget = useAppSelector((state) => state.sourceControl.diffFocusTarget);
+  const activeRepo = useAppSelector(selectActiveRepo);
+  const activeBucket = useAppSelector(selectActiveBucket);
+  const activePath = useAppSelector(selectActivePath);
+  const diffFocusTarget = useAppSelector(selectDiffFocusTarget);
 
   const previewSelection = useThrottledDiffSelection(
     activePath

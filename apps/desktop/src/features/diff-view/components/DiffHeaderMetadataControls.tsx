@@ -10,7 +10,11 @@ import { copyComments, fileComments } from "@/features/comments/actions";
 import { compactComments } from "@/features/comments/selectors";
 import { OpenInExternalEditor } from "@/features/source-control/components/OpenInExternalEditor";
 import { setDiffStyleValue } from "@/features/source-control/actions";
-import { openFileViewer } from "@/features/source-control/sourceControlSlice";
+import {
+  openFileViewer,
+  selectActiveRepo,
+  selectDiffStyle,
+} from "@/features/source-control/sourceControlSlice";
 import type { CommentContext } from "@/features/source-control/types";
 
 type Props = {
@@ -36,8 +40,8 @@ export function DiffHeaderMetadataControls({
 }: Props) {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
-  const diffStyle = useAppSelector((state) => state.sourceControl.diffStyle);
+  const activeRepo = useAppSelector(selectActiveRepo);
+  const diffStyle = useAppSelector(selectDiffStyle);
   const comments = useAppSelector((state) => state.comments);
   const expandUnchangedLabel = expandUnchanged
     ? "Collapse unchanged sections"

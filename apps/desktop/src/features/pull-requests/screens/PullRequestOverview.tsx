@@ -5,6 +5,7 @@ import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
+import { selectActiveRepo } from "@/features/source-control/sourceControlSlice";
 import { Button } from "@/components/ui/button";
 import { openPullRequestReview } from "@/features/hosted-repos/actions";
 import {
@@ -31,6 +32,7 @@ import {
   setPullRequestPreviewActiveFilePath,
   setPullRequestPreviewFileJumpTarget,
 } from "@/features/pull-requests/pullRequestsSlice";
+import { EMPTY_FILES } from "@/shared/stableDefaults";
 import { buildPullRequestsInboxPath } from "@/features/pull-requests/utils";
 import type { PullRequestReviewAnchor } from "@/features/source-control/types";
 import type { PullRequestChangedFile, PullRequestConversation } from "@/platform/desktop";
@@ -110,6 +112,8 @@ type PullRequestOverviewReviewSectionsProps = {
   files: PullRequestChangedFile[];
   conversation: PullRequestConversation;
   onOpenAnchorInFiles: (anchor: PullRequestReviewAnchor) => void;
+  compareBaseRef: string;
+  compareHeadRef: string;
 };
 
 function PullRequestOverviewReviewSections({
@@ -119,16 +123,9 @@ function PullRequestOverviewReviewSections({
   files,
   conversation,
   onOpenAnchorInFiles,
+  compareBaseRef,
+  compareHeadRef,
 }: PullRequestOverviewReviewSectionsProps) {
-  const currentReview = useAppSelector((state) => state.pullRequests.currentReview);
-  const compareBaseRef =
-    currentReview?.repoPath === activeRepo && currentReview.pullRequestNumber === pullRequestNumber
-      ? currentReview.compareBaseRef
-      : "";
-  const compareHeadRef =
-    currentReview?.repoPath === activeRepo && currentReview.pullRequestNumber === pullRequestNumber
-      ? currentReview.compareHeadRef
-      : "";
   const commentMentions = usePullRequestMentionCandidates(conversation);
   const pendingActions = usePullRequestPendingReviewActions({
     repoPath: activeRepo,
@@ -254,6 +251,8 @@ type PullRequestOverviewDetailsSidebarProps = {
   totalDeletions: number;
   issueCommentCount: number;
   reviewThreadCount: number;
+  compareBaseRef: string;
+  compareHeadRef: string;
 };
 
 function PullRequestOverviewDetailsSidebar({
@@ -265,16 +264,9 @@ function PullRequestOverviewDetailsSidebar({
   totalDeletions,
   issueCommentCount,
   reviewThreadCount,
+  compareBaseRef,
+  compareHeadRef,
 }: PullRequestOverviewDetailsSidebarProps) {
-  const currentReview = useAppSelector((state) => state.pullRequests.currentReview);
-  const compareBaseRef =
-    currentReview?.repoPath === activeRepo && currentReview.pullRequestNumber === pullRequestNumber
-      ? currentReview.compareBaseRef
-      : "";
-  const compareHeadRef =
-    currentReview?.repoPath === activeRepo && currentReview.pullRequestNumber === pullRequestNumber
-      ? currentReview.compareHeadRef
-      : "";
   const pendingActions = usePullRequestPendingReviewActions({
     repoPath: activeRepo,
     pullRequestNumber,
@@ -315,7 +307,7 @@ function PullRequestOverviewDetailsSidebar({
 export const PullRequestOverview = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
+  const activeRepo = useAppSelector(selectActiveRepo);
   const activePreviewFilePath = useAppSelector((state) => state.pullRequests.previewActiveFilePath);
   const { providerId, owner, repo, pullRequestNumber } = useParams();
   const [openingMode, setOpeningMode] = useState<PullRequestOpenMode | null>(null);
@@ -364,16 +356,28 @@ export const PullRequestOverview = () => {
       conversation: data ?? null,
       loadingConversation: isLoading || isFetching,
     }),
-    pollingInterval: 10000,
+    pollingInterval: 30_000,
     refetchOnFocus: true,
     refetchOnReconnect: true,
   });
 
   const { files } = useGetPullRequestFilesQuery(queryArg, {
     selectFromResult: ({ data }) => ({
-      files: data ?? [],
+      files: data ?? EMPTY_FILES,
     }),
   });
+  // single selector for currentReview used by child subtrees
+  const currentReview = useAppSelector((state) => state.pullRequests.currentReview);
+  const compareBaseRef =
+    currentReview?.repoPath === activeRepo &&
+    currentReview.pullRequestNumber === parsedPullRequestNumber
+      ? currentReview.compareBaseRef
+      : "";
+  const compareHeadRef =
+    currentReview?.repoPath === activeRepo &&
+    currentReview.pullRequestNumber === parsedPullRequestNumber
+      ? currentReview.compareHeadRef
+      : "";
 
   async function handleOpen(mode: PullRequestOpenMode) {
     if (!Number.isFinite(parsedPullRequestNumber)) {
@@ -533,6 +537,8 @@ export const PullRequestOverview = () => {
                 files={files}
                 conversation={conversation}
                 onOpenAnchorInFiles={openAnchorInFiles}
+                compareBaseRef={compareBaseRef}
+                compareHeadRef={compareHeadRef}
               />
             </div>
 
@@ -545,6 +551,8 @@ export const PullRequestOverview = () => {
               totalDeletions={totalDeletions}
               issueCommentCount={issueCommentCount}
               reviewThreadCount={reviewThreadCount}
+              compareBaseRef={compareBaseRef}
+              compareHeadRef={compareHeadRef}
             />
           </div>
         </div>

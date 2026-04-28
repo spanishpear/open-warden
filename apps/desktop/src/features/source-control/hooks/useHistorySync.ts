@@ -5,15 +5,18 @@ import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { useGetCommitFilesQuery, useGetCommitHistoryQuery } from "@/features/source-control/api";
 import {
   clearHistorySelection,
+  selectActivePath,
+  selectActiveRepo,
+  selectHistoryCommitId,
   setActivePath,
   setHistoryCommitId,
 } from "@/features/source-control/sourceControlSlice";
 
 export function useHistorySync() {
   const dispatch = useAppDispatch();
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
-  const historyCommitId = useAppSelector((state) => state.sourceControl.historyCommitId);
-  const activePath = useAppSelector((state) => state.sourceControl.activePath);
+  const activeRepo = useAppSelector(selectActiveRepo);
+  const historyCommitId = useAppSelector(selectHistoryCommitId);
+  const activePath = useAppSelector(selectActivePath);
 
   const { data: historyCommits } = useGetCommitHistoryQuery(
     activeRepo ? { repoPath: activeRepo } : skipToken,

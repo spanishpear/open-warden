@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { ResizableSidebarLayout } from "@/components/layout/ResizableSidebarLayout";
+import { selectActiveRepo } from "@/features/source-control/sourceControlSlice";
 import { Button } from "@/components/ui/button";
 import {
   hostedReposApi,
@@ -11,6 +12,7 @@ import {
   useResolveHostedRepoQuery,
 } from "@/features/hosted-repos/api";
 import { InboxPRRow } from "@/features/inbox/components/InboxPRRow";
+import { Virtualizer } from "@pierre/diffs/react";
 import { InboxQuickFilters, type InboxFilter } from "@/features/inbox/components/InboxQuickFilters";
 import { InboxSectionSidebar } from "@/features/inbox/components/InboxSectionSidebar";
 import { useInboxNavigation } from "@/features/inbox/hooks/useInboxNavigation";
@@ -37,7 +39,7 @@ const PREFETCH_SECTIONS = [
 const BACKGROUND_PREFETCH_DELAY_MS = 150;
 
 export function InboxScreen() {
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
+  const activeRepo = useAppSelector(selectActiveRepo);
   const dispatch = useAppDispatch();
   const prefetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastPrefetchRunRef = useRef<string | null>(null);
@@ -277,7 +279,10 @@ export function InboxScreen() {
             </div>
           ) : null}
 
-          <div className="flex-1 overflow-y-auto px-2 py-2">
+          <Virtualizer
+            config={{ overscrollSize: 400, intersectionObserverMargin: 800 }}
+            className="flex-1 overflow-y-auto px-2 py-2"
+          >
             {filteredPRs.map((pr) => (
               <InboxPRRow
                 key={pr.id}
@@ -286,7 +291,7 @@ export function InboxScreen() {
                 onMouseEnter={prefetchPRDetail}
               />
             ))}
-          </div>
+          </Virtualizer>
         </div>
       }
     />

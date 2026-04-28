@@ -1,13 +1,17 @@
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { refreshActiveRepo } from "@/features/source-control/actions";
 import { useGetGitSnapshotQuery } from "@/features/source-control/api";
+import {
+  selectActiveRepo,
+  selectRunningAction,
+} from "@/features/source-control/sourceControlSlice";
 import CurrentRepositoryHeader from "@/features/source-control/components/CurrentRepoHeader";
 import { RepoFilesTab } from "@/features/source-control/components/RepoFilesTab";
 
 export function RepoFilesSidebar() {
   const dispatch = useAppDispatch();
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
-  const runningAction = useAppSelector((state) => state.sourceControl.runningAction);
+  const activeRepo = useAppSelector(selectActiveRepo);
+  const runningAction = useAppSelector(selectRunningAction);
   const { activeBranch } = useGetGitSnapshotQuery(activeRepo, {
     skip: !activeRepo,
     selectFromResult: ({ data }) => ({

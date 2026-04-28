@@ -2,10 +2,12 @@ import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { useGetRepoFilesQuery } from "@/features/source-control/api";
 import {
   openFileViewer,
+  selectActiveRepo,
   setRepoTreeActivePath,
 } from "@/features/source-control/sourceControlSlice";
 import type { RepoFileItem } from "@/features/source-control/types";
 import { FileListPane, type FileListPaneRowArgs } from "./FileListPane";
+import { EMPTY_ARRAY } from "@/shared/stableDefaults";
 
 type RepoTreeFileRowProps = {
   row: FileListPaneRowArgs<RepoFileItem>;
@@ -21,7 +23,7 @@ function splitPath(path: string) {
 
 function RepoTreeFileRow({ row }: RepoTreeFileRowProps) {
   const dispatch = useAppDispatch();
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
+  const activeRepo = useAppSelector(selectActiveRepo);
   const isActive = useAppSelector(
     (state) => state.sourceControl.repoTreeActivePath === row.file.path,
   );
@@ -70,7 +72,7 @@ function RepoTreeFileRow({ row }: RepoTreeFileRowProps) {
 }
 
 export function RepoFilesTab() {
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
+  const activeRepo = useAppSelector(selectActiveRepo);
   const fileBrowserMode = useAppSelector(
     (state) => state.settings.appSettings.sourceControl.fileTreeRenderMode,
   );
@@ -79,7 +81,7 @@ export function RepoFilesTab() {
     refetchOnFocus: true,
     refetchOnReconnect: true,
     selectFromResult: ({ data, isLoading }) => ({
-      repoFiles: data ?? [],
+      repoFiles: data ?? EMPTY_ARRAY,
       isLoadingRepoFiles: isLoading,
     }),
   });

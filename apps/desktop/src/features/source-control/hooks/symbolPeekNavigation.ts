@@ -1,4 +1,5 @@
 import type { RootState } from "@/app/store";
+import { selectSymbolPeek } from "@/features/source-control/sourceControlSlice";
 import { getWrappedNavigationIndex } from "@/lib/keyboard-navigation";
 
 function matchesSymbolPeekQueryText(text: string, query: string) {
@@ -11,7 +12,7 @@ function matchesSymbolPeekQueryText(text: string, query: string) {
 }
 
 function getFilteredSymbolPeekIndexes(state: RootState) {
-  const symbolPeek = state.sourceControl.symbolPeek;
+  const symbolPeek = selectSymbolPeek(state);
   if (!symbolPeek) {
     return [] as number[];
   }
@@ -23,7 +24,7 @@ function getFilteredSymbolPeekIndexes(state: RootState) {
 }
 
 export function getNextSymbolPeekIndex(state: RootState, nextKey: boolean) {
-  const symbolPeek = state.sourceControl.symbolPeek;
+  const symbolPeek = selectSymbolPeek(state);
   if (!symbolPeek || symbolPeek.locations.length === 0) {
     return null;
   }

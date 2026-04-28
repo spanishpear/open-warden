@@ -27,6 +27,10 @@ import { useGetBranchFilesQuery } from "@/features/source-control/api";
 import { GeneralFileViewer } from "@/features/source-control/components/GeneralFileViewer";
 import { useThrottledDiffSelection } from "@/features/source-control/hooks/useThrottledDiffSelection";
 import { errorMessageFrom } from "@/features/source-control/shared-utils/errorMessage";
+import {
+  selectFileViewerTarget,
+  selectReviewActivePath,
+} from "@/features/source-control/sourceControlSlice";
 import type { FileItem } from "@/features/source-control/types";
 import type { GitProviderId, PullRequestConversation } from "@/platform/desktop";
 
@@ -66,7 +70,7 @@ function PullRequestDiffPane({
   focusedLineIndex,
   focusedLineKey,
 }: PullRequestDiffPaneProps) {
-  const reviewActivePath = useAppSelector((state) => state.sourceControl.reviewActivePath);
+  const reviewActivePath = useAppSelector(selectReviewActivePath);
   const selectedReviewFile = branchFiles.find((file) => file.path === reviewActivePath);
   const previewSelection = useThrottledDiffSelection(
     reviewActivePath
@@ -202,10 +206,10 @@ function PullRequestDiffPane({
 
 export function PullRequestReviewFilesScreen() {
   const dispatch = useAppDispatch();
-  const reviewActivePath = useAppSelector((state) => state.sourceControl.reviewActivePath);
+  const reviewActivePath = useAppSelector(selectReviewActivePath);
   const filesViewMode = useAppSelector((state) => state.pullRequests.filesViewMode);
   const fileJumpTarget = useAppSelector((state) => state.pullRequests.fileJumpTarget);
-  const fileViewerTarget = useAppSelector((state) => state.sourceControl.fileViewerTarget);
+  const fileViewerTarget = useAppSelector(selectFileViewerTarget);
 
   const { activeRepo, resolvedReview } = usePullRequestReviewSession();
 

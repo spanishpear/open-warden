@@ -22,6 +22,7 @@ import { FileWarning } from "lucide-react";
 
 import { useAppSelector } from "@/app/hooks";
 import type { MentionConfig } from "@/components/markdown/MarkdownEditor";
+import { selectRepoCommentCount } from "@/features/comments/memoizedSelectors";
 import {
   Empty,
   EmptyDescription,
@@ -30,6 +31,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { useFirstCommentTip } from "@/features/comments/useFirstCommentTip";
+import { selectActiveRepo, selectDiffStyle } from "@/features/source-control/sourceControlSlice";
 import { CommentComposer } from "@/features/diff-view/components/CommentComposer";
 import {
   getDiffTheme,
@@ -77,6 +79,9 @@ pre[data-diff-type='single'] {
   border-radius: 999px;
 }
 `;
+
+// Module-level constant — getDiffTheme() returns a static value
+const DIFF_THEME = getDiffTheme();
 
 type WindowedAnchor = {
   side: "deletions" | "additions";
@@ -222,26 +227,48 @@ function WindowedFileDiff({
 }) {
   const poolManager = useContext(WorkerPoolContext);
   const instanceRef = useRef<ImperativeFileDiff<DiffAnnotationItem> | null>(null);
+  const latestHydrationRef = useRef({
+    fileDiff,
+    lineAnnotations,
+    options,
+    poolManager: poolManager ?? undefined,
+  });
+
+  latestHydrationRef.current = {
+    fileDiff,
+    lineAnnotations,
+    options,
+    poolManager: poolManager ?? undefined,
+  };
+
   const getHoveredLine = useCallback(() => instanceRef.current?.getHoveredLine(), []);
   const diffsTagName = DIFFS_TAG_NAME as string;
 
-  const ref = useCallback(
-    (node: HTMLElement | null) => {
-      if (node) {
-        instanceRef.current = new ImperativeFileDiff(options, poolManager ?? undefined, true);
-        instanceRef.current.hydrate({
-          fileDiff,
-          fileContainer: node,
-          lineAnnotations,
-        });
+  const ref = useCallback((node: HTMLElement | null) => {
+    if (node) {
+      if (instanceRef.current) {
         return;
       }
 
-      instanceRef.current?.cleanUp();
-      instanceRef.current = null;
-    },
-    [fileDiff, lineAnnotations, options, poolManager],
-  );
+      const {
+        fileDiff: initialFileDiff,
+        lineAnnotations: initialLineAnnotations,
+        options: initialOptions,
+        poolManager: initialPoolManager,
+      } = latestHydrationRef.current;
+
+      instanceRef.current = new ImperativeFileDiff(initialOptions, initialPoolManager, true);
+      instanceRef.current.hydrate({
+        fileDiff: initialFileDiff,
+        fileContainer: node,
+        lineAnnotations: initialLineAnnotations,
+      });
+      return;
+    }
+
+    instanceRef.current?.cleanUp();
+    instanceRef.current = null;
+  }, []);
 
   useLayoutEffect(() => {
     const instance = instanceRef.current;
@@ -251,14 +278,22 @@ function WindowedFileDiff({
 
     const forceRender = !areOptionsEqual(instance.options, options);
     instance.setOptions(options);
+    instance.setLineAnnotations(lineAnnotations);
     instance.render({
       forceRender,
       fileDiff,
-      lineAnnotations,
       renderRange,
     });
+  }, [fileDiff, lineAnnotations, options, renderRange]);
+
+  useLayoutEffect(() => {
+    const instance = instanceRef.current;
+    if (!instance) {
+      return;
+    }
+
     instance.setSelectedLines(selectedLines);
-  }, [fileDiff, lineAnnotations, options, renderRange, selectedLines]);
+  }, [selectedLines]);
 
   return createElement(
     diffsTagName,
@@ -290,17 +325,15 @@ export function PullRequestWindowedDiff({
   windowedAnchor,
 }: PullRequestWindowedDiffProps) {
   const { resolvedTheme } = useTheme();
-  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
-  const diffStyle = useAppSelector((state) => state.sourceControl.diffStyle);
-  const repoCommentCount = useAppSelector((state) => {
-    if (!activeRepo) return 0;
-    return state.comments.filter((comment) => comment.repoPath === activeRepo).length;
-  });
+  const activeRepo = useAppSelector(selectActiveRepo);
+  const diffStyle = useAppSelector(selectDiffStyle);
+  const repoCommentCount = useAppSelector(
+    activeRepo ? selectRepoCommentCount(activeRepo) : () => 0,
+  );
   const [selectedRange, setSelectedRange] = useState<SelectionRange | null>(null);
   const { showFirstCommentTip } = useFirstCommentTip();
   const diffThemeType = getDiffThemeType(resolvedTheme);
   const diffThemeCacheSalt = getDiffThemeCacheSalt(diffThemeType);
-  const diffTheme = useMemo(() => getDiffTheme(), []);
   const { currentFileDiff, diffRenderGate, isParsingDiff } = useParsedDiff({
     activePath,
     oldFile,
@@ -359,7 +392,7 @@ export function PullRequestWindowedDiff({
   const diffOptions = useMemo<FileDiffOptions<DiffAnnotationItem>>(
     () => ({
       diffStyle,
-      theme: diffTheme,
+      theme: DIFF_THEME,
       themeType: diffThemeType,
       unsafeCSS: WINDOWED_DIFF_CSS,
       disableFileHeader: true,
@@ -372,25 +405,34 @@ export function PullRequestWindowedDiff({
       onLineSelected: setSelectedRange,
       onLineSelectionEnd: setSelectedRange,
     }),
-    [diffStyle, diffTheme, diffThemeType],
+    [diffStyle, diffThemeType],
   );
 
-  const lineAnnotations = selectedRange
-    ? [
-        ...annotationItems,
-        {
-          lineNumber: selectedRange.end,
-          metadata: {
-            type: "composer",
-            side: selectedRange.side ?? "deletions",
-            endSide: selectedRange.endSide,
-            startLine: selectedRange.start,
-            endLine: selectedRange.end,
-          },
-          side: selectedRange.side ?? "deletions",
-        } satisfies DiffLineAnnotation<DiffAnnotationItem>,
-      ]
-    : annotationItems;
+  const composerAnnotation = useMemo<DiffLineAnnotation<DiffAnnotationItem> | null>(() => {
+    if (!selectedRange) {
+      return null;
+    }
+
+    return {
+      lineNumber: selectedRange.end,
+      metadata: {
+        type: "composer",
+        side: selectedRange.side ?? "deletions",
+        endSide: selectedRange.endSide,
+        startLine: selectedRange.start,
+        endLine: selectedRange.end,
+      },
+      side: selectedRange.side ?? "deletions",
+    };
+  }, [selectedRange]);
+
+  const lineAnnotations = useMemo<DiffLineAnnotation<DiffAnnotationItem>[]>(() => {
+    if (!composerAnnotation) {
+      return annotationItems;
+    }
+
+    return [...annotationItems, composerAnnotation];
+  }, [annotationItems, composerAnnotation]);
 
   if (!currentFileDiff && diffRenderGate === "unrenderable") {
     return (

@@ -149,6 +149,27 @@ function renderScreen() {
 
 describe("InboxScreen", () => {
   beforeEach(() => {
+    Object.defineProperty(window, "ResizeObserver", {
+      configurable: true,
+      writable: true,
+      value: class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    });
+    Object.defineProperty(window, "IntersectionObserver", {
+      configurable: true,
+      writable: true,
+      value: class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+        takeRecords() {
+          return [];
+        }
+      },
+    });
     mocks.activeRepo = "/tmp/repo";
     mocks.isRefreshing = false;
     mocks.refreshInbox.mockReset();
