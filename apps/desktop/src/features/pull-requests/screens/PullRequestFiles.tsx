@@ -28,6 +28,7 @@ import {
 import ReviewCommentsCopyToolbar from "@/features/pull-requests/components/ReviewCopyBar";
 import { usePullRequestMentionCandidates } from "@/features/pull-requests/hooks/usePullRequestMentionCandidates";
 import { usePullRequestReviewAnchors } from "@/features/pull-requests/hooks/usePullRequestReviewAnchors";
+import { EMPTY_FILES } from "@/shared/stableDefaults";
 import { setPullRequestPreviewActiveFilePath } from "@/features/pull-requests/pullRequestsSlice";
 import FilesSidebar from "@/features/pull-requests/screens/PullRequestFileList";
 import { buildPullRequestAnchorAnnotations } from "@/features/pull-requests/utils/reviewAnchors";
@@ -119,7 +120,7 @@ export const PullRequestFiles = () => {
 
   const { files, filesError, isLoadingFiles } = useGetPullRequestFilesQuery(queryArg, {
     selectFromResult: ({ data, error, isLoading, isFetching }) => ({
-      files: data ?? [],
+      files: data ?? EMPTY_FILES,
       filesError: data ? "" : errorMessageFrom(error, ""),
       isLoadingFiles: isLoading || isFetching,
     }),

@@ -6,6 +6,7 @@ import {
 } from "@/features/source-control/sourceControlSlice";
 import type { RepoFileItem } from "@/features/source-control/types";
 import { FileListPane, type FileListPaneRowArgs } from "./FileListPane";
+import { EMPTY_ARRAY } from "@/shared/stableDefaults";
 
 type RepoTreeFileRowProps = {
   row: FileListPaneRowArgs<RepoFileItem>;
@@ -79,7 +80,7 @@ export function RepoFilesTab() {
     refetchOnFocus: true,
     refetchOnReconnect: true,
     selectFromResult: ({ data, isLoading }) => ({
-      repoFiles: data ?? [],
+      repoFiles: data ?? EMPTY_ARRAY,
       isLoadingRepoFiles: isLoading,
     }),
   });

@@ -5,7 +5,7 @@ import {
   buildPullRequestReviewAnchors,
   type PullRequestAnchorFile,
 } from "@/features/pull-requests/utils/reviewAnchors";
-import { getPendingReviewCommentsForContext } from "@/features/pull-requests/utils/pendingReviewComments";
+import { selectPendingDrafts } from "@/features/comments/memoizedSelectors";
 
 export function usePullRequestReviewAnchors(args: {
   repoPath: string;
@@ -14,12 +14,13 @@ export function usePullRequestReviewAnchors(args: {
   files: PullRequestAnchorFile[];
   reviewThreads: PullRequestReviewThread[];
 }) {
-  const comments = useAppSelector((state) => state.comments);
-  const pendingDrafts = getPendingReviewCommentsForContext(comments, args.repoPath, {
-    kind: "review",
-    baseRef: args.compareBaseRef,
-    headRef: args.compareHeadRef,
-  });
+  const pendingDrafts = useAppSelector(
+    selectPendingDrafts(args.repoPath, {
+      kind: "review",
+      baseRef: args.compareBaseRef,
+      headRef: args.compareHeadRef,
+    }),
+  );
 
   return buildPullRequestReviewAnchors({
     files: args.files,

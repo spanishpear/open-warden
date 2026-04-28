@@ -19,6 +19,7 @@ import {
   ConnectBitbucketDialog,
   ConnectGitHubDialog,
 } from "@/features/pull-requests/components/ConnectToProviders";
+import { EMPTY_CONNECTIONS } from "@/shared/stableDefaults";
 
 function formatPullRequestUpdatedAt(updatedAt: string) {
   const date = new Date(updatedAt);
@@ -108,7 +109,7 @@ export function PullRequestsScreen() {
 
   const { connections, loadingConnections } = useListProviderConnectionsQuery(undefined, {
     selectFromResult: ({ data, isLoading, isFetching }) => ({
-      connections: data ?? [],
+      connections: data ?? EMPTY_CONNECTIONS,
       loadingConnections: isLoading || isFetching,
     }),
   });

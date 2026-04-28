@@ -3,11 +3,9 @@ import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { removeCommentsByIds } from "@/features/comments/commentsSlice";
 import { useSubmitPullRequestReviewCommentsMutation } from "@/features/hosted-repos/api";
+import { selectPendingDrafts } from "@/features/comments/memoizedSelectors";
 import { buildPendingReviewCommentsPayload } from "@/features/pull-requests/utils/pendingReviewDrafts";
-import {
-  buildSubmitPullRequestReviewCommentsInput,
-  getPendingReviewCommentsForContext,
-} from "@/features/pull-requests/utils/pendingReviewComments";
+import { buildSubmitPullRequestReviewCommentsInput } from "@/features/pull-requests/utils/pendingReviewComments";
 import { errorMessageFrom } from "@/features/source-control/shared-utils/errorMessage";
 import type { PullRequestReviewAnchor } from "@/features/source-control/types";
 
@@ -18,12 +16,13 @@ export function usePullRequestPendingReviewActions(args: {
   compareHeadRef: string;
 }) {
   const dispatch = useAppDispatch();
-  const comments = useAppSelector((state) => state.comments);
-  const pendingDrafts = getPendingReviewCommentsForContext(comments, args.repoPath, {
-    kind: "review",
-    baseRef: args.compareBaseRef,
-    headRef: args.compareHeadRef,
-  });
+  const pendingDrafts = useAppSelector(
+    selectPendingDrafts(args.repoPath, {
+      kind: "review",
+      baseRef: args.compareBaseRef,
+      headRef: args.compareHeadRef,
+    }),
+  );
   const [submitPullRequestReviewComments, { isLoading: isSubmittingReviewComments }] =
     useSubmitPullRequestReviewCommentsMutation();
 

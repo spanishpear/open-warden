@@ -42,6 +42,7 @@ import {
   useGetGitSnapshotQuery,
 } from "@/features/source-control/api";
 import { setReviewActivePath } from "@/features/source-control/sourceControlSlice";
+import { EMPTY_COMMITS, EMPTY_FILE_ITEMS } from "@/shared/stableDefaults";
 import type {
   BucketedFile,
   CommentContext,
@@ -201,7 +202,7 @@ function AppCommandPaletteContent({ onOpenChange }: AppCommandPaletteContentProp
   const { commits } = useGetCommitHistoryQuery(
     activeRepo ? { repoPath: activeRepo, limit: 200 } : skipToken,
     {
-      selectFromResult: ({ data }) => ({ commits: data ?? [] }),
+      selectFromResult: ({ data }) => ({ commits: data ?? EMPTY_COMMITS }),
     },
   );
 
@@ -210,7 +211,7 @@ function AppCommandPaletteContent({ onOpenChange }: AppCommandPaletteContentProp
       ? { repoPath: activeRepo, commitId: historyCommitId }
       : skipToken,
     {
-      selectFromResult: ({ data }) => ({ historyFiles: data ?? [] }),
+      selectFromResult: ({ data }) => ({ historyFiles: data ?? EMPTY_FILE_ITEMS }),
     },
   );
 
@@ -224,7 +225,7 @@ function AppCommandPaletteContent({ onOpenChange }: AppCommandPaletteContentProp
         }
       : skipToken,
     {
-      selectFromResult: ({ data }) => ({ reviewFiles: data ?? [] }),
+      selectFromResult: ({ data }) => ({ reviewFiles: data ?? EMPTY_FILE_ITEMS }),
     },
   );
 

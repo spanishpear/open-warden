@@ -31,6 +31,7 @@ import {
   setPullRequestPreviewActiveFilePath,
   setPullRequestPreviewFileJumpTarget,
 } from "@/features/pull-requests/pullRequestsSlice";
+import { EMPTY_FILES } from "@/shared/stableDefaults";
 import { buildPullRequestsInboxPath } from "@/features/pull-requests/utils";
 import type { PullRequestReviewAnchor } from "@/features/source-control/types";
 import type { PullRequestChangedFile, PullRequestConversation } from "@/platform/desktop";
@@ -110,6 +111,8 @@ type PullRequestOverviewReviewSectionsProps = {
   files: PullRequestChangedFile[];
   conversation: PullRequestConversation;
   onOpenAnchorInFiles: (anchor: PullRequestReviewAnchor) => void;
+  compareBaseRef: string;
+  compareHeadRef: string;
 };
 
 function PullRequestOverviewReviewSections({
@@ -119,16 +122,9 @@ function PullRequestOverviewReviewSections({
   files,
   conversation,
   onOpenAnchorInFiles,
+  compareBaseRef,
+  compareHeadRef,
 }: PullRequestOverviewReviewSectionsProps) {
-  const currentReview = useAppSelector((state) => state.pullRequests.currentReview);
-  const compareBaseRef =
-    currentReview?.repoPath === activeRepo && currentReview.pullRequestNumber === pullRequestNumber
-      ? currentReview.compareBaseRef
-      : "";
-  const compareHeadRef =
-    currentReview?.repoPath === activeRepo && currentReview.pullRequestNumber === pullRequestNumber
-      ? currentReview.compareHeadRef
-      : "";
   const commentMentions = usePullRequestMentionCandidates(conversation);
   const pendingActions = usePullRequestPendingReviewActions({
     repoPath: activeRepo,
@@ -254,6 +250,8 @@ type PullRequestOverviewDetailsSidebarProps = {
   totalDeletions: number;
   issueCommentCount: number;
   reviewThreadCount: number;
+  compareBaseRef: string;
+  compareHeadRef: string;
 };
 
 function PullRequestOverviewDetailsSidebar({
@@ -265,16 +263,9 @@ function PullRequestOverviewDetailsSidebar({
   totalDeletions,
   issueCommentCount,
   reviewThreadCount,
+  compareBaseRef,
+  compareHeadRef,
 }: PullRequestOverviewDetailsSidebarProps) {
-  const currentReview = useAppSelector((state) => state.pullRequests.currentReview);
-  const compareBaseRef =
-    currentReview?.repoPath === activeRepo && currentReview.pullRequestNumber === pullRequestNumber
-      ? currentReview.compareBaseRef
-      : "";
-  const compareHeadRef =
-    currentReview?.repoPath === activeRepo && currentReview.pullRequestNumber === pullRequestNumber
-      ? currentReview.compareHeadRef
-      : "";
   const pendingActions = usePullRequestPendingReviewActions({
     repoPath: activeRepo,
     pullRequestNumber,
@@ -371,9 +362,21 @@ export const PullRequestOverview = () => {
 
   const { files } = useGetPullRequestFilesQuery(queryArg, {
     selectFromResult: ({ data }) => ({
-      files: data ?? [],
+      files: data ?? EMPTY_FILES,
     }),
   });
+  // single selector for currentReview used by child subtrees
+  const currentReview = useAppSelector((state) => state.pullRequests.currentReview);
+  const compareBaseRef =
+    currentReview?.repoPath === activeRepo &&
+    currentReview.pullRequestNumber === parsedPullRequestNumber
+      ? currentReview.compareBaseRef
+      : "";
+  const compareHeadRef =
+    currentReview?.repoPath === activeRepo &&
+    currentReview.pullRequestNumber === parsedPullRequestNumber
+      ? currentReview.compareHeadRef
+      : "";
 
   async function handleOpen(mode: PullRequestOpenMode) {
     if (!Number.isFinite(parsedPullRequestNumber)) {
@@ -533,6 +536,8 @@ export const PullRequestOverview = () => {
                 files={files}
                 conversation={conversation}
                 onOpenAnchorInFiles={openAnchorInFiles}
+                compareBaseRef={compareBaseRef}
+                compareHeadRef={compareHeadRef}
               />
             </div>
 
@@ -545,6 +550,8 @@ export const PullRequestOverview = () => {
               totalDeletions={totalDeletions}
               issueCommentCount={issueCommentCount}
               reviewThreadCount={reviewThreadCount}
+              compareBaseRef={compareBaseRef}
+              compareHeadRef={compareHeadRef}
             />
           </div>
         </div>

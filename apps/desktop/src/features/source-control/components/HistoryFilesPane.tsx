@@ -15,6 +15,7 @@ import { setHistoryNavTarget } from "@/features/source-control/sourceControlSlic
 import type { FileItem } from "@/features/source-control/types";
 import { FileListPane, type FileListPaneRowArgs } from "./FileListPane";
 import { FileListRow } from "./FileListRow";
+import { EMPTY_COMMITS, EMPTY_FILE_ITEMS } from "@/shared/stableDefaults";
 
 export function HistoryFilesPane() {
   const dispatch = useAppDispatch();
@@ -26,14 +27,14 @@ export function HistoryFilesPane() {
   const { historyCommits } = useGetCommitHistoryQuery(
     activeRepo ? { repoPath: activeRepo } : skipToken,
     {
-      selectFromResult: ({ data }) => ({ historyCommits: data ?? [] }),
+      selectFromResult: ({ data }) => ({ historyCommits: data ?? EMPTY_COMMITS }),
     },
   );
   const { historyFiles, loadingHistoryFiles } = useGetCommitFilesQuery(
     activeRepo && historyCommitId ? { repoPath: activeRepo, commitId: historyCommitId } : skipToken,
     {
       selectFromResult: ({ data, isFetching }) => ({
-        historyFiles: data ?? [],
+        historyFiles: data ?? EMPTY_FILE_ITEMS,
         loadingHistoryFiles: isFetching,
       }),
     },
