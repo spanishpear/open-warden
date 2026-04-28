@@ -80,6 +80,9 @@ pre[data-diff-type='single'] {
 }
 `;
 
+// Module-level constant — getDiffTheme() returns a static value
+const DIFF_THEME = getDiffTheme();
+
 type WindowedAnchor = {
   side: "deletions" | "additions";
   startLine: number;
@@ -331,7 +334,6 @@ export function PullRequestWindowedDiff({
   const { showFirstCommentTip } = useFirstCommentTip();
   const diffThemeType = getDiffThemeType(resolvedTheme);
   const diffThemeCacheSalt = getDiffThemeCacheSalt(diffThemeType);
-  const diffTheme = useMemo(() => getDiffTheme(), []);
   const { currentFileDiff, diffRenderGate, isParsingDiff } = useParsedDiff({
     activePath,
     oldFile,
@@ -390,7 +392,7 @@ export function PullRequestWindowedDiff({
   const diffOptions = useMemo<FileDiffOptions<DiffAnnotationItem>>(
     () => ({
       diffStyle,
-      theme: diffTheme,
+      theme: DIFF_THEME,
       themeType: diffThemeType,
       unsafeCSS: WINDOWED_DIFF_CSS,
       disableFileHeader: true,
@@ -403,7 +405,7 @@ export function PullRequestWindowedDiff({
       onLineSelected: setSelectedRange,
       onLineSelectionEnd: setSelectedRange,
     }),
-    [diffStyle, diffTheme, diffThemeType],
+    [diffStyle, diffThemeType],
   );
 
   const composerAnnotation = useMemo<DiffLineAnnotation<DiffAnnotationItem> | null>(() => {
