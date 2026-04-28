@@ -2,6 +2,10 @@ import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState
 import { FileDiff as PierreFileDiff, Virtualizer } from "@pierre/diffs/react";
 import { FileWarning } from "lucide-react";
 import { useTheme } from "next-themes";
+const VIRTUALIZER_CONFIG = {
+  overscrollSize: 600,
+  intersectionObserverMargin: 1200,
+} as const;
 
 import { useAppSelector } from "@/app/hooks";
 import { Button } from "@/components/ui/button";
@@ -239,10 +243,7 @@ export const DiffViewer = forwardRef<DiffViewerHandle, DiffViewerProps>(function
     >
       {resolvedFileDiff ? (
         <Virtualizer
-          config={{
-            overscrollSize: 600,
-            intersectionObserverMargin: 1200,
-          }}
+          config={VIRTUALIZER_CONFIG}
           className="relative h-full min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden"
         >
           <PierreFileDiff

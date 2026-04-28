@@ -355,7 +355,7 @@ export const PullRequestOverview = () => {
       conversation: data ?? null,
       loadingConversation: isLoading || isFetching,
     }),
-    pollingInterval: 10000,
+    pollingInterval: 30_000,
     refetchOnFocus: true,
     refetchOnReconnect: true,
   });

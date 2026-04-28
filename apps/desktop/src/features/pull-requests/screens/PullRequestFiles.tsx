@@ -131,7 +131,7 @@ export const PullRequestFiles = () => {
       conversation: data ?? null,
       reviewThreads: data?.reviewThreads ?? [],
     }),
-    pollingInterval: 10000,
+    pollingInterval: 30_000,
     refetchOnFocus: true,
     refetchOnReconnect: true,
   });
