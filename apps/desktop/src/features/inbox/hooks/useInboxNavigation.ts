@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
+import type { AppDispatch } from "@/app/store";
 import { buildPullRequestPreviewPath } from "@/features/pull-requests/utils";
 import { buildPreviewTabPath } from "@/features/pull-requests/screens/PullRequestPreviewLayout";
 import { openPullRequestReview } from "@/features/hosted-repos/actions";
@@ -14,22 +15,49 @@ export type UseInboxNavigationReturn = {
   prefetchPRDetail: (pr: PullRequestSummary) => void;
 };
 
+function prefetchPullRequestDiff(
+  dispatch: AppDispatch,
+  repoPath: string,
+  pullRequestNumber: number,
+) {
+  dispatch(
+    hostedReposApi.util.prefetch(
+      "getPullRequestDiffCached",
+      { repoPath, pullRequestNumber },
+      { force: false },
+    ),
+  );
+}
+
+export function prefetchPullRequestDetail(
+  dispatch: AppDispatch,
+  repoPath: string | null,
+  pr: Pick<PullRequestSummary, "number">,
+) {
+  if (!repoPath) return;
+
+  prefetchPullRequestDiff(dispatch, repoPath, pr.number);
+
+  dispatch(
+    hostedReposApi.util.prefetch(
+      "getPullRequestConversation",
+      { repoPath, pullRequestNumber: pr.number },
+      { force: false },
+    ),
+  );
+  dispatch(
+    hostedReposApi.util.prefetch(
+      "getPullRequestFiles",
+      { repoPath, pullRequestNumber: pr.number },
+      { force: false },
+    ),
+  );
+}
+
 export function useInboxNavigation(): UseInboxNavigationReturn {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const activeRepo = useAppSelector(selectActiveRepo);
-
-  function prefetchPRDiff(pr: PullRequestSummary) {
-    if (!activeRepo) return;
-
-    dispatch(
-      hostedReposApi.util.prefetch(
-        "getPullRequestDiffCached",
-        { repoPath: activeRepo, pullRequestNumber: pr.number },
-        { force: false },
-      ),
-    );
-  }
 
   function navigateToPreview(pr: PullRequestSummary) {
     const path = buildPullRequestPreviewPath({
@@ -62,24 +90,7 @@ export function useInboxNavigation(): UseInboxNavigationReturn {
   }
 
   function prefetchPRDetail(pr: PullRequestSummary) {
-    if (!activeRepo) return;
-
-    prefetchPRDiff(pr);
-
-    dispatch(
-      hostedReposApi.util.prefetch(
-        "getPullRequestConversation",
-        { repoPath: activeRepo, pullRequestNumber: pr.number },
-        { force: false },
-      ),
-    );
-    dispatch(
-      hostedReposApi.util.prefetch(
-        "getPullRequestFiles",
-        { repoPath: activeRepo, pullRequestNumber: pr.number },
-        { force: false },
-      ),
-    );
+    prefetchPullRequestDetail(dispatch, activeRepo, pr);
   }
 
   return {

@@ -207,4 +207,23 @@ describe("electron inbox PR cache", () => {
     expect(snapshot?.prs).toHaveLength(500);
     expect(elapsedMs).toBeLessThan(250);
   });
+
+  it("round-trips cached pull request change stats through sqlite snapshots", async () => {
+    const { cacheInboxSnapshot, getCachedInboxSnapshot } = await import("./pr-cache");
+
+    const pullRequest = createPullRequest(88);
+    pullRequest.changeStats = {
+      fileCount: 14,
+      additions: 32,
+      deletions: 11,
+    };
+
+    cacheInboxSnapshot("/tmp/repo", "open", [pullRequest], false);
+
+    expect(getCachedInboxSnapshot("/tmp/repo", "open")?.prs[0]?.changeStats).toEqual({
+      fileCount: 14,
+      additions: 32,
+      deletions: 11,
+    });
+  });
 });

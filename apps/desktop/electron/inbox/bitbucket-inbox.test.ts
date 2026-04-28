@@ -197,7 +197,7 @@ describe("bitbucket inbox queries", () => {
       totalFetched: 1,
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
     const [url, init] = fetchMock.mock.calls[0] ?? [];
     const urlStr = url instanceof Request ? url.url : String(url);
     const searchParams = new URL(urlStr).searchParams;
@@ -349,7 +349,7 @@ describe("bitbucket inbox queries", () => {
 
     const result = await fetchBitbucketInboxPullRequests(hostedRepo, connection, USER_IDENTITY);
 
-    expect(fetchMock).toHaveBeenCalledTimes(4);
+    expect(fetchMock).toHaveBeenCalledTimes(6);
     expect(result.totalFetched).toBe(2);
     expect(result.isPartial).toBe(false);
     expect(result.prs.map((pr) => pr.number)).toEqual([201, 202]);
@@ -380,7 +380,7 @@ describe("bitbucket inbox queries", () => {
 
     const result = await fetchBitbucketInboxPullRequests(hostedRepo, connection, USER_IDENTITY);
 
-    expect(fetchMock).toHaveBeenCalledTimes(525);
+    expect(fetchMock).toHaveBeenCalledTimes(1025);
     expect(result.totalFetched).toBe(500);
     expect(result.prs).toHaveLength(500);
     expect(result.isPartial).toBe(true);
@@ -478,6 +478,41 @@ describe("bitbucket inbox queries", () => {
     expect(statusUrl).toContain(
       "/repositories/workspace-slug/repo-slug/commit/abc123hash503/statuses",
     );
+  });
+
+  it("maps diffstat results into cached changeStats on returned PR summary", async () => {
+    const pr = createPullRequest(506, "2026-04-27T11:00:00.000Z");
+
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse({ values: [pr] }))
+      .mockResolvedValueOnce(jsonResponse({ values: [] }))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          values: [
+            {
+              status: "modified",
+              old: { path: "src/old-name.ts" },
+              new: { path: "src/new-name.ts" },
+              lines_added: 7,
+              lines_removed: 2,
+            },
+            {
+              status: "added",
+              new: { path: "src/added.ts" },
+              lines_added: 3,
+              lines_removed: 1,
+            },
+          ],
+        }),
+      );
+
+    const result = await fetchBitbucketInboxPullRequests(hostedRepo, connection, USER_IDENTITY);
+
+    expect(result.prs[0]?.changeStats).toEqual({
+      fileCount: 2,
+      additions: 10,
+      deletions: 3,
+    });
   });
 
   it("returns empty buildStatuses when status fetch fails (graceful degradation)", async () => {

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { openPullRequestReview } from "@/features/hosted-repos/actions";
 import {
   hostedReposApi,
+  useGetInboxPullRequestsQuery,
   useGetPullRequestConversationQuery,
   useGetPullRequestFilesQuery,
   useResolveHostedRepoQuery,
@@ -32,11 +33,16 @@ import {
   setPullRequestPreviewActiveFilePath,
   setPullRequestPreviewFileJumpTarget,
 } from "@/features/pull-requests/pullRequestsSlice";
+import { resolvePullRequestChangeStats } from "@/platform/desktop/pullRequestChangeStats";
 import { EMPTY_FILES } from "@/shared/stableDefaults";
 import { buildPullRequestsInboxPath } from "@/features/pull-requests/utils";
 import type { PullRequestReviewAnchor } from "@/features/source-control/types";
 import type { PullRequestChangedFile, PullRequestConversation } from "@/platform/desktop";
-import type { GitProviderId, PullRequestOpenMode } from "@/platform/desktop/contracts";
+import type {
+  GitProviderId,
+  PullRequestChangeStats,
+  PullRequestOpenMode,
+} from "@/platform/desktop/contracts";
 
 type PullRequestQueryArg =
   | {
@@ -246,9 +252,7 @@ type PullRequestOverviewDetailsSidebarProps = {
   activeRepo: string;
   pullRequestNumber: number;
   detail: PullRequestConversation["detail"];
-  files: PullRequestChangedFile[];
-  totalAdditions: number;
-  totalDeletions: number;
+  changeStats: PullRequestChangeStats | null;
   issueCommentCount: number;
   reviewThreadCount: number;
   compareBaseRef: string;
@@ -259,9 +263,7 @@ function PullRequestOverviewDetailsSidebar({
   activeRepo,
   pullRequestNumber,
   detail,
-  files,
-  totalAdditions,
-  totalDeletions,
+  changeStats,
   issueCommentCount,
   reviewThreadCount,
   compareBaseRef,
@@ -289,10 +291,15 @@ function PullRequestOverviewDetailsSidebar({
           <OverviewDetailRow
             label="Changes"
             value={
-              <span>
-                {files.length} files <span className="text-emerald-500">+{totalAdditions}</span>{" "}
-                <span className="text-red-500">-{totalDeletions}</span>
-              </span>
+              changeStats ? (
+                <span>
+                  {changeStats.fileCount} files{" "}
+                  <span className="text-emerald-500">+{changeStats.additions}</span>{" "}
+                  <span className="text-red-500">-{changeStats.deletions}</span>
+                </span>
+              ) : (
+                <span className="text-muted-foreground">Loading…</span>
+              )
             }
           />
           <OverviewDetailRow label="Pending drafts" value={pendingActions.pendingDraftCount} />
@@ -361,11 +368,25 @@ export const PullRequestOverview = () => {
     refetchOnReconnect: true,
   });
 
-  const { files } = useGetPullRequestFilesQuery(queryArg, {
+  const { files, hasLoadedFiles } = useGetPullRequestFilesQuery(queryArg, {
     selectFromResult: ({ data }) => ({
       files: data ?? EMPTY_FILES,
+      hasLoadedFiles: data !== undefined,
     }),
   });
+  const { cachedChangeStats } = useGetInboxPullRequestsQuery(
+    activeRepo && hostedRepo?.providerId === "bitbucket" && hasValidRoute && routeMatchesActiveRepo
+      ? activeRepo
+      : skipToken,
+    {
+      selectFromResult: ({ data }) => ({
+        cachedChangeStats:
+          Object.values(data?.sections ?? {})
+            .flat()
+            .find((pr) => pr.number === parsedPullRequestNumber)?.changeStats ?? null,
+      }),
+    },
+  );
   // single selector for currentReview used by child subtrees
   const currentReview = useAppSelector((state) => state.pullRequests.currentReview);
   const compareBaseRef =
@@ -484,8 +505,11 @@ export const PullRequestOverview = () => {
   }
 
   const { detail } = conversation;
-  const totalAdditions = files.reduce((sum, file) => sum + file.additions, 0);
-  const totalDeletions = files.reduce((sum, file) => sum + file.deletions, 0);
+  const changeStats = resolvePullRequestChangeStats({
+    files,
+    hasLoadedFiles,
+    cachedChangeStats,
+  });
   const issueCommentCount = conversation.issueComments.length;
   const reviewThreadCount = conversation.reviewThreads.length;
 
@@ -497,9 +521,9 @@ export const PullRequestOverview = () => {
         detail={detail}
         openingMode={openingMode}
         isRefreshing={loadingConversation && !!conversation}
-        changedFilesCount={files.length}
-        additions={totalAdditions}
-        deletions={totalDeletions}
+        changedFilesCount={changeStats?.fileCount}
+        additions={changeStats?.additions}
+        deletions={changeStats?.deletions}
         onBack={() => navigate(buildPullRequestsInboxPath())}
         onOpen={(mode) => {
           void handleOpen(mode);
@@ -546,9 +570,7 @@ export const PullRequestOverview = () => {
               activeRepo={activeRepo ?? ""}
               pullRequestNumber={parsedPullRequestNumber}
               detail={detail}
-              files={files}
-              totalAdditions={totalAdditions}
-              totalDeletions={totalDeletions}
+              changeStats={changeStats}
               issueCommentCount={issueCommentCount}
               reviewThreadCount={reviewThreadCount}
               compareBaseRef={compareBaseRef}

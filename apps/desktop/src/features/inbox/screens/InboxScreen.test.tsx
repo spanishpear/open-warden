@@ -1,7 +1,7 @@
 /// <reference types="@testing-library/jest-dom" />
 
 import type { ReactNode } from "react";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { MemoryRouter } from "react-router";
 
@@ -20,6 +20,7 @@ const mocks = vi.hoisted(() => ({
   useResolveHostedRepoQuery: vi.fn(),
   navigateToPreview: vi.fn(),
   prefetchPRDetail: vi.fn(),
+  backgroundPrefetchPRDetail: vi.fn(),
 }));
 
 vi.mock("@/app/hooks", () => ({
@@ -61,6 +62,7 @@ vi.mock("@/features/hosted-repos/api", () => ({
 }));
 
 vi.mock("@/features/inbox/hooks/useInboxNavigation", () => ({
+  prefetchPullRequestDetail: mocks.backgroundPrefetchPRDetail,
   useInboxNavigation: () => ({
     navigateToPreview: mocks.navigateToPreview,
     navigateToDiff: vi.fn(),
@@ -178,6 +180,7 @@ describe("InboxScreen", () => {
     mocks.useGetInboxPullRequestsQuery.mockReset();
     mocks.navigateToPreview.mockReset();
     mocks.prefetchPRDetail.mockReset();
+    mocks.backgroundPrefetchPRDetail.mockReset();
 
     mocks.useResolveHostedRepoQuery.mockReturnValue({
       data: { providerId: "bitbucket" },
@@ -300,5 +303,26 @@ describe("InboxScreen", () => {
     fireEvent.click(screen.getByRole("button", { name: /Merging \/ recently merged/i }));
 
     expect(screen.getByText("Loading more data…")).toBeInTheDocument();
+  });
+
+  it("uses the shared PR detail prefetch helper for background hydration", () => {
+    vi.useFakeTimers();
+
+    try {
+      renderScreen();
+
+      act(() => {
+        vi.runOnlyPendingTimers();
+      });
+
+      expect(mocks.backgroundPrefetchPRDetail).toHaveBeenNthCalledWith(
+        1,
+        expect.any(Function),
+        "/tmp/repo",
+        expect.objectContaining({ id: "needs-1", number: 101 }),
+      );
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

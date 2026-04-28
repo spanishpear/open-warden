@@ -36,6 +36,7 @@ type SerializedInboxPullRequest = Pick<
   | "headRepo"
   | "updatedAt"
   | "section"
+  | "changeStats"
 > & {
   participants: SerializedInboxParticipant[];
   reviewers: SerializedInboxParticipant[];
@@ -72,6 +73,7 @@ function serializePullRequest(pr: InboxPullRequest): SerializedInboxPullRequest 
     headOwner: pr.headOwner,
     headRepo: pr.headRepo,
     updatedAt: pr.updatedAt,
+    changeStats: pr.changeStats,
     participants: pr.participants.map(serializeParticipant),
     reviewers: pr.reviewers.map(serializeParticipant),
     section: pr.section,
@@ -106,6 +108,7 @@ function deserializeSnapshot(dataJson: string): InboxPullRequest[] | null {
       headOwner: pr.headOwner,
       headRepo: pr.headRepo,
       updatedAt: pr.updatedAt,
+      changeStats: pr.changeStats,
       participants: pr.participants.map((p) => ({
         login: p.login,
         displayName: p.displayName,

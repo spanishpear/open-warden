@@ -6,7 +6,6 @@ import { ResizableSidebarLayout } from "@/components/layout/ResizableSidebarLayo
 import { selectActiveRepo } from "@/features/source-control/sourceControlSlice";
 import { Button } from "@/components/ui/button";
 import {
-  hostedReposApi,
   useGetInboxPullRequestsQuery,
   useRefreshInboxPullRequestsMutation,
   useResolveHostedRepoQuery,
@@ -15,7 +14,10 @@ import { InboxPRRow } from "@/features/inbox/components/InboxPRRow";
 import { Virtualizer } from "@pierre/diffs/react";
 import { InboxQuickFilters, type InboxFilter } from "@/features/inbox/components/InboxQuickFilters";
 import { InboxSectionSidebar } from "@/features/inbox/components/InboxSectionSidebar";
-import { useInboxNavigation } from "@/features/inbox/hooks/useInboxNavigation";
+import {
+  prefetchPullRequestDetail,
+  useInboxNavigation,
+} from "@/features/inbox/hooks/useInboxNavigation";
 import { errorMessageFrom } from "@/features/source-control/shared-utils/errorMessage";
 import { updateInboxSectionVisibility } from "@/features/settings/actions";
 
@@ -136,16 +138,7 @@ export function InboxScreen() {
 
       nextIndex += 1;
 
-      dispatch(
-        hostedReposApi.util.prefetch(
-          "getPullRequestDiffCached",
-          {
-            repoPath: activeRepo,
-            pullRequestNumber: nextPullRequest.number,
-          },
-          { force: false },
-        ),
-      );
+      prefetchPullRequestDetail(dispatch, activeRepo, nextPullRequest);
 
       prefetchTimerRef.current = setTimeout(scheduleNextPrefetch, BACKGROUND_PREFETCH_DELAY_MS);
     };

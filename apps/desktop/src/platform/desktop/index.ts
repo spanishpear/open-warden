@@ -70,6 +70,7 @@ export type {
   PreparePullRequestWorkspaceInput,
   ProviderConnection,
   PullRequestChangedFile,
+  PullRequestChangeStats,
   PullRequestCompareRefs,
   PullRequestConversation,
   PullRequestDetail,

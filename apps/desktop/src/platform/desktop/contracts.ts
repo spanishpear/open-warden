@@ -118,6 +118,12 @@ export type BuildStatus = {
   key: string;
 };
 
+export type PullRequestChangeStats = {
+  fileCount: number;
+  additions: number;
+  deletions: number;
+};
+
 export type PullRequestSummary = {
   id: string;
   providerId: GitProviderId;
@@ -139,6 +145,7 @@ export type PullRequestSummary = {
   authorAccountId?: string | null;
   commentCount?: number;
   buildStatuses?: BuildStatus[];
+  changeStats?: PullRequestChangeStats;
 };
 
 export type ListPullRequestsInput = {

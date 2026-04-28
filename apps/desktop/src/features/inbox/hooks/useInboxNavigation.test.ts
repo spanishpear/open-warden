@@ -6,6 +6,7 @@ import { buildPreviewTabPath } from "../../pull-requests/screens/PullRequestPrev
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   dispatch: vi.fn(),
+  prefetch: vi.fn(() => ({ type: "prefetch" })),
 }));
 
 vi.mock("react-router", () => ({ useNavigate: () => mocks.navigate }));
@@ -19,7 +20,7 @@ vi.mock("@/features/hosted-repos/actions", () => ({
 }));
 
 vi.mock("@/features/hosted-repos/api", () => ({
-  hostedReposApi: { util: { prefetch: vi.fn(() => ({ type: "prefetch" })) } },
+  hostedReposApi: { util: { prefetch: mocks.prefetch } },
 }));
 
 // Import after mocks
@@ -77,12 +78,29 @@ describe("useInboxNavigation", () => {
     expect(mocks.navigate).toHaveBeenCalledWith("/changes/pull-request/files");
   });
 
-  it("prefetchPRDetail dispatches prefetch for PR conversation", () => {
+  it("prefetchPRDetail warms diff, conversation, and files", () => {
     const { result } = renderHook(() => useInboxNavigation());
 
     result.current.prefetchPRDetail(pr);
 
-    // hostedReposApi.util.prefetch is mocked to return an action; assert dispatch was called
-    expect(mocks.dispatch).toHaveBeenCalled();
+    expect(mocks.prefetch).toHaveBeenNthCalledWith(
+      1,
+      "getPullRequestDiffCached",
+      { repoPath: "repo-path", pullRequestNumber: pr.number },
+      { force: false },
+    );
+    expect(mocks.prefetch).toHaveBeenNthCalledWith(
+      2,
+      "getPullRequestConversation",
+      { repoPath: "repo-path", pullRequestNumber: pr.number },
+      { force: false },
+    );
+    expect(mocks.prefetch).toHaveBeenNthCalledWith(
+      3,
+      "getPullRequestFiles",
+      { repoPath: "repo-path", pullRequestNumber: pr.number },
+      { force: false },
+    );
+    expect(mocks.dispatch).toHaveBeenCalledTimes(3);
   });
 });

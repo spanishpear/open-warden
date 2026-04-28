@@ -1,7 +1,9 @@
 import type { BuildStatus, HostedRepoRef } from "../../src/platform/desktop/contracts";
+import { summarizePullRequestFiles } from "../../src/platform/desktop/pullRequestChangeStats";
 import {
   bitbucketAuthorLogin,
   bitbucketRequest,
+  fetchBitbucketPullRequestFiles,
   fetchBitbucketPaginatedValues,
   toBitbucketPullRequestSummary,
   type BitbucketPullRequestResponse,
@@ -241,21 +243,36 @@ async function fetchBitbucketPullRequests(
         .toSorted((left, right) => right.updatedAt.localeCompare(left.updatedAt)),
     );
 
-    const statusResults = await Promise.allSettled(
-      prs.map((pr) => {
-        const commitHash = pullRequests.find(
-          (raw) => `${hostedRepo.providerId}:${String(raw.id)}` === pr.id,
-        )?.source?.commit?.hash;
-        if (!commitHash) {
-          return Promise.resolve([] as BuildStatus[]);
-        }
-        return fetchBuildStatusesForCommit(hostedRepo, connection, commitHash);
-      }),
-    );
+    const [statusResults, changeStatsResults] = await Promise.all([
+      Promise.allSettled(
+        prs.map((pr) => {
+          const commitHash = pullRequests.find(
+            (raw) => `${hostedRepo.providerId}:${String(raw.id)}` === pr.id,
+          )?.source?.commit?.hash;
+          if (!commitHash) {
+            return Promise.resolve([] as BuildStatus[]);
+          }
+
+          return fetchBuildStatusesForCommit(hostedRepo, connection, commitHash);
+        }),
+      ),
+      Promise.allSettled(
+        prs.map(async (pr) =>
+          summarizePullRequestFiles(
+            await fetchBitbucketPullRequestFiles(hostedRepo, connection, pr.number),
+          ),
+        ),
+      ),
+    ]);
 
     for (let i = 0; i < prs.length; i += 1) {
       const statusResult = statusResults[i];
       prs[i].buildStatuses = statusResult?.status === "fulfilled" ? statusResult.value : [];
+
+      const changeStatsResult = changeStatsResults[i];
+      if (changeStatsResult?.status === "fulfilled") {
+        prs[i].changeStats = changeStatsResult.value;
+      }
     }
 
     return {
