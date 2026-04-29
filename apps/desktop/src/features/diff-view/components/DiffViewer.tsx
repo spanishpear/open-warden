@@ -1,4 +1,12 @@
-import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+  useEffect,
+} from "react";
 import { FileDiff as PierreFileDiff, Virtualizer } from "@pierre/diffs/react";
 import { FileWarning } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -165,8 +173,15 @@ export const DiffViewer = forwardRef<DiffViewerHandle, DiffViewerProps>(function
     getViewportElement: () => viewportRef.current,
   }));
 
+  useEffect(() => {
+    // Scroll the Virtualizer's scroll container to top when the active file changes.
+    // The Virtualizer renders as the first child of viewportRef with overflow-y-auto.
+    const scrollContainer = viewportRef.current?.firstElementChild as HTMLElement | null;
+    scrollContainer?.scrollTo({ top: 0 });
+  }, [activePath]);
+
   const [expandUnchanged, setExpandUnchanged] = useState(false);
-  const activeDiffIdentity = `${activePath}-${oldFile?.name}-${newFile?.name}-${expandUnchanged ? "expanded" : "collapsed"}`;
+  const activeDiffIdentity = `${oldFile?.name}-${newFile?.name}-${expandUnchanged ? "expanded" : "collapsed"}`;
   const [forceShowLargeDiffIdentity, setForceShowLargeDiffIdentity] = useState<string | null>(null);
   const forceShowLargeDiff = forceShowLargeDiffIdentity === activeDiffIdentity;
 
