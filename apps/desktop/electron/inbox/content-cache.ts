@@ -1,10 +1,11 @@
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import { app } from "electron";
 
 export const CONTENT_CACHE_ROOT = path.join(app.getPath("userData"), "open-warden-content-cache");
+export const DIFF_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 function resolveCachePath(key: string): string {
   return path.join(CONTENT_CACHE_ROOT, key);
@@ -25,6 +26,14 @@ export function getCachedContent(key: string): string | null {
   const cachePath = resolveCachePath(key);
 
   if (!existsSync(cachePath)) {
+    return null;
+  }
+
+  const stats = statSync(cachePath);
+  const ageMs = Date.now() - stats.mtimeMs;
+
+  if (ageMs > DIFF_CACHE_TTL_MS) {
+    rmSync(cachePath, { force: true });
     return null;
   }
 

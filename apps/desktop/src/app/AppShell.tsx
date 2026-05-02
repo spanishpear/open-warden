@@ -9,6 +9,7 @@ import { RepoTabs } from "@/app/RepoTabs";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { SidebarPanelRegistryProvider } from "@/components/layout/SidebarPanelRegistry";
 import { AppCommandPalette } from "@/features/command-palette/AppCommandPalette";
+import { useBackgroundInboxPrefetch } from "@/features/inbox/hooks/useBackgroundInboxPrefetch";
 import { closeRepo, openRepo, selectFolder, selectRepo } from "@/features/source-control/actions";
 import { RecentProjectsPicker } from "@/features/source-control/RecentProjectsPicker";
 
@@ -26,6 +27,8 @@ export function AppShell() {
   const [recentProjectsPickerOpen, setRecentProjectsPickerOpen] = useState(false);
   const isSettingsRoute = location.pathname.startsWith("/settings");
   const activeFeature = isSettingsRoute ? null : featureKeyFromPath(location.pathname);
+
+  useBackgroundInboxPrefetch();
 
   const openRecentProjectsPicker = () => {
     setRecentProjectsPickerOpen(true);
