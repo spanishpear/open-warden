@@ -1,4 +1,4 @@
-interface SourceControlTreeDirectoryNode<TFile> {
+export interface SourceControlTreeDirectoryNode<TFile> {
   kind: "directory";
   name: string;
   path: string;
@@ -6,7 +6,7 @@ interface SourceControlTreeDirectoryNode<TFile> {
   children: SourceControlTreeNode<TFile>[];
 }
 
-interface SourceControlTreeFileNode<TFile> {
+export interface SourceControlTreeFileNode<TFile> {
   kind: "file";
   name: string;
   path: string;
@@ -23,6 +23,20 @@ type MutableDirectoryNode<TFile> = {
   fileCount: number;
   directories: Map<string, MutableDirectoryNode<TFile>>;
   files: SourceControlTreeFileNode<TFile>[];
+};
+
+export type BuildSourceControlFileTreeOptions<TFile> = {
+  flattenEmptyDirectories?: boolean;
+  compareDirectories?: (
+    left: SourceControlTreeDirectoryNode<TFile>,
+    right: SourceControlTreeDirectoryNode<TFile>,
+    depth: number,
+  ) => number;
+  compareFiles?: (
+    left: SourceControlTreeFileNode<TFile>,
+    right: SourceControlTreeFileNode<TFile>,
+    depth: number,
+  ) => number;
 };
 
 const SORT_LOCALE_OPTIONS: Intl.CollatorOptions = { numeric: true, sensitivity: "base" };
@@ -66,6 +80,8 @@ function compactDirectoryNode<TFile>(
 
 function toTreeNodes<TFile>(
   directory: MutableDirectoryNode<TFile>,
+  options: BuildSourceControlFileTreeOptions<TFile>,
+  depth: number,
 ): SourceControlTreeNode<TFile>[] {
   const subdirectories: SourceControlTreeDirectoryNode<TFile>[] = [
     ...directory.directories.values(),
@@ -76,16 +92,22 @@ function toTreeNodes<TFile>(
       name: subdirectory.name,
       path: subdirectory.path,
       fileCount: subdirectory.fileCount,
-      children: toTreeNodes(subdirectory),
+      children: toTreeNodes(subdirectory, options, depth + 1),
     }))
-    .map((subdirectory) => compactDirectoryNode(subdirectory));
+    .map((subdirectory) =>
+      options.flattenEmptyDirectories === false ? subdirectory : compactDirectoryNode(subdirectory),
+    )
+    .toSorted((left, right) => options.compareDirectories?.(left, right, depth) ?? 0);
 
-  const files = [...directory.files].toSorted(compareByName);
+  const files = [...directory.files].toSorted(
+    (left, right) => options.compareFiles?.(left, right, depth) ?? compareByName(left, right),
+  );
   return [...subdirectories, ...files];
 }
 
 export function buildSourceControlFileTree<TFile extends { path: string }>(
   files: ReadonlyArray<TFile>,
+  options: BuildSourceControlFileTreeOptions<TFile> = {},
 ): SourceControlTreeNode<TFile>[] {
   const root: MutableDirectoryNode<TFile> = {
     name: "",
@@ -137,7 +159,7 @@ export function buildSourceControlFileTree<TFile extends { path: string }>(
     }
   }
 
-  return toTreeNodes(root);
+  return toTreeNodes(root, options, 0);
 }
 
 export function collectDirectoryPaths<TFile>(

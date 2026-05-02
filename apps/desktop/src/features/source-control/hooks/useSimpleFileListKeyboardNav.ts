@@ -2,13 +2,10 @@ import { useStore } from "react-redux";
 
 import { useAppDispatch } from "@/app/hooks";
 import type { RootState } from "@/app/store";
+import { movePierreFileTreeFocusToFile } from "@/features/source-control/pierreFileTreeNavigation";
 import { setSymbolPeekActiveIndex } from "@/features/source-control/sourceControlSlice";
 import { isTypingTarget } from "@/features/source-control/utils";
-import {
-  getWrappedNavigationIndex,
-  scrollKeyboardNavItemIntoView,
-} from "@/lib/keyboard-navigation";
-import { getVisibleFilePaths, useVerticalNavigationHotkeys } from "./keyboardNavigation";
+import { useVerticalNavigationHotkeys } from "./keyboardNavigation";
 import { getNextSymbolPeekIndex } from "./symbolPeekNavigation";
 
 type UseSimpleFileListKeyboardNavOptions = {
@@ -22,8 +19,6 @@ type UseSimpleFileListKeyboardNavOptions = {
 
 export function useSimpleFileListKeyboardNav({
   regionId,
-  getAllFilePaths,
-  getActivePath,
   onSelectPath,
   enabled,
   includeSymbolPeek = true,
@@ -57,20 +52,11 @@ export function useSimpleFileListKeyboardNav({
 
     event.preventDefault();
 
-    const visibleFilePaths = getVisibleFilePaths(regionId);
-    const filePaths = visibleFilePaths.length > 0 ? visibleFilePaths : getAllFilePaths(state);
-    if (filePaths.length === 0) {
+    const targetFile = movePierreFileTreeFocusToFile(regionId, nextKey);
+    if (!targetFile) {
       return;
     }
 
-    const activeIndex = filePaths.findIndex((pathValue) => pathValue === getActivePath(state));
-    const targetIndex = getWrappedNavigationIndex(activeIndex, filePaths.length, nextKey);
-    const targetPath = filePaths[targetIndex];
-    if (!targetPath) {
-      return;
-    }
-
-    scrollKeyboardNavItemIntoView(regionId, targetIndex);
-    onSelectPath(targetPath);
+    onSelectPath(targetFile.realPath ?? targetFile.path);
   }
 }

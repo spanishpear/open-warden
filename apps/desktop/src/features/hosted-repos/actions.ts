@@ -48,7 +48,6 @@ export const openPullRequestReview =
         dispatch(resetRepoViewState());
         dispatch(clearCurrentPullRequestReview());
       }
-      // oxlint-disable-next-line typescript-eslint(await-thenable)
       await dispatch(refreshActiveRepo());
       return { errorMessage: null };
     } catch (error) {

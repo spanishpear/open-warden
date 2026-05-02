@@ -197,7 +197,7 @@ export const openRepo =
     await persistWorkspaceSession(getState);
   };
 
-export const selectFolder = (): AppThunk => async (dispatch) => {
+export const selectFolder = (): AppThunk<Promise<void>> => async (dispatch) => {
   let selected: string | null;
 
   try {
@@ -214,7 +214,7 @@ export const selectFolder = (): AppThunk => async (dispatch) => {
 };
 
 export const selectRepo =
-  (repo: string): AppThunk =>
+  (repo: string): AppThunk<Promise<void>> =>
   async (dispatch) => {
     await dispatch(openRepo(repo));
   };
@@ -239,7 +239,7 @@ export const closeRepo =
     };
   };
 
-export const refreshActiveRepo = (): AppThunk => async (dispatch, getState) => {
+export const refreshActiveRepo = (): AppThunk<Promise<void>> => async (dispatch, getState) => {
   const { activeRepo } = getState().sourceControl;
   if (!activeRepo) return;
 
@@ -251,7 +251,7 @@ export const refreshActiveRepo = (): AppThunk => async (dispatch, getState) => {
 };
 
 export const selectFile =
-  (bucket: Bucket, relPath: string): AppThunk =>
+  (bucket: Bucket, relPath: string): AppThunk<Promise<void>> =>
   async (dispatch, getState) => {
     if (!getState().sourceControl.activeRepo) return;
     dispatch(setActiveBucket(bucket));
@@ -260,8 +260,8 @@ export const selectFile =
     dispatch(setSelectionAnchor({ bucket, path: relPath }));
   };
 
-export const toggleSelectFile =
-  (bucket: Bucket, relPath: string): AppThunk =>
+export const toggleFileSelection =
+  (bucket: Bucket, relPath: string): AppThunk<Promise<void>> =>
   async (dispatch, getState) => {
     if (!getState().sourceControl.activeRepo) return;
 
@@ -273,14 +273,12 @@ export const toggleSelectFile =
       ? selectedFiles.filter((file) => fileSelectionKey(file) !== targetKey)
       : [...selectedFiles, target];
 
-    dispatch(setActiveBucket(bucket));
-    dispatch(setActivePath(relPath));
     dispatch(setSelectedFiles(dedupeSelection(nextSelection)));
     dispatch(setSelectionAnchor(target));
   };
 
 export const rangeSelectFile =
-  (target: SelectedFile, visibleRows: BucketedFile[]): AppThunk =>
+  (target: SelectedFile, visibleRows: SelectedFile[]): AppThunk<Promise<void>> =>
   async (dispatch, getState) => {
     if (!getState().sourceControl.activeRepo) return;
 
@@ -296,8 +294,6 @@ export const rangeSelectFile =
     );
 
     if (baseIndex < 0 || targetIndex < 0) {
-      dispatch(setActiveBucket(target.bucket));
-      dispatch(setActivePath(target.path));
       dispatch(setSelectedFiles([target]));
       dispatch(setSelectionAnchor(base));
       return;
@@ -315,21 +311,17 @@ export const rangeSelectFile =
         visibleRows.findIndex((row) => row.bucket === file.bucket && row.path === file.path) < 0,
     );
 
-    dispatch(setActiveBucket(target.bucket));
-    dispatch(setActivePath(target.path));
     dispatch(setSelectedFiles(dedupeSelection([...carryForward, ...rangeSelection])));
     dispatch(setSelectionAnchor(base));
   };
 
-// @ts-expect-error -- oxlint typescript
-// oxlint-disable-next-line eslint(no-unused-vars)
-const clearFileSelection = (): AppThunk => async (dispatch) => {
+export const clearFileSelection = (): AppThunk<Promise<void>> => async (dispatch) => {
   dispatch(setSelectedFiles([]));
   dispatch(setSelectionAnchor(null));
 };
 
 export const selectHistoryCommit =
-  (commitId: string): AppThunk =>
+  (commitId: string): AppThunk<Promise<void>> =>
   async (dispatch, getState) => {
     if (!getState().sourceControl.activeRepo) return;
     dispatch(setHistoryNavTarget("commits"));
@@ -337,7 +329,7 @@ export const selectHistoryCommit =
   };
 
 export const selectHistoryFile =
-  (relPath: string): AppThunk =>
+  (relPath: string): AppThunk<Promise<void>> =>
   async (dispatch, getState) => {
     if (!getState().sourceControl.activeRepo) return;
     if (!getState().sourceControl.historyCommitId) return;
@@ -415,6 +407,8 @@ export const navigateBackToDiffFromFileViewer = (): AppThunk => (dispatch, getSt
 function repoActionLabel(action: RunningAction): string {
   if (action === "stage-all") return "stage all files";
   if (action === "unstage-all") return "unstage all files";
+  if (action === "stage-files") return "stage files";
+  if (action === "unstage-files") return "unstage files";
   if (action === "discard-changes") return "discard selected changes";
   if (action === "commit") return "create commit";
   if (action.startsWith("file:stage:")) return "stage file";
@@ -424,7 +418,7 @@ function repoActionLabel(action: RunningAction): string {
 }
 
 const runRepoAction =
-  (action: RunningAction, thunk: AppThunk<Promise<void>>): AppThunk =>
+  (action: RunningAction, thunk: AppThunk<Promise<void>>): AppThunk<Promise<void>> =>
   async (dispatch, getState) => {
     const { activeRepo, runningAction } = getState().sourceControl;
     if (!activeRepo || runningAction) return;
@@ -440,7 +434,7 @@ const runRepoAction =
   };
 
 export const stageFileAction =
-  (filePath: string): AppThunk =>
+  (filePath: string): AppThunk<Promise<void>> =>
   async (dispatch, getState) => {
     const state = getState();
     const { activeRepo, activePath } = state.sourceControl;
@@ -455,7 +449,6 @@ export const stageFileAction =
       }
     }
 
-    // oxlint-disable-next-line typescript-eslint(await-thenable)
     await dispatch(
       runRepoAction(`file:stage:${filePath}`, async (innerDispatch) => {
         const result = innerDispatch(
@@ -467,12 +460,11 @@ export const stageFileAction =
   };
 
 export const unstageFileAction =
-  (filePath: string): AppThunk =>
+  (filePath: string): AppThunk<Promise<void>> =>
   async (dispatch, getState) => {
     const { activeRepo } = getState().sourceControl;
     if (!activeRepo) return;
 
-    // oxlint-disable-next-line typescript-eslint(await-thenable)
     await dispatch(
       runRepoAction(`file:unstage:${filePath}`, async (innerDispatch) => {
         const result = innerDispatch(
@@ -483,8 +475,46 @@ export const unstageFileAction =
     );
   };
 
+export const stageFilesAction =
+  (files: ReadonlyArray<{ path: string }>): AppThunk<Promise<void>> =>
+  async (dispatch, getState) => {
+    const { activeRepo } = getState().sourceControl;
+    if (!activeRepo || files.length === 0) return;
+
+    const paths = [...new Set(files.map((file) => file.path))];
+    await dispatch(
+      runRepoAction("stage-files", async (innerDispatch) => {
+        for (const path of paths) {
+          const result = innerDispatch(
+            gitApi.endpoints.stageFile.initiate({ repoPath: activeRepo, relPath: path }),
+          );
+          await result.unwrap();
+        }
+      }),
+    );
+  };
+
+export const unstageFilesAction =
+  (files: ReadonlyArray<{ path: string }>): AppThunk<Promise<void>> =>
+  async (dispatch, getState) => {
+    const { activeRepo } = getState().sourceControl;
+    if (!activeRepo || files.length === 0) return;
+
+    const paths = [...new Set(files.map((file) => file.path))];
+    await dispatch(
+      runRepoAction("unstage-files", async (innerDispatch) => {
+        for (const path of paths) {
+          const result = innerDispatch(
+            gitApi.endpoints.unstageFile.initiate({ repoPath: activeRepo, relPath: path }),
+          );
+          await result.unwrap();
+        }
+      }),
+    );
+  };
+
 export const discardFileAction =
-  (bucket: Bucket, filePath: string): AppThunk =>
+  (bucket: Bucket, filePath: string): AppThunk<Promise<void>> =>
   async (dispatch, getState) => {
     const state = getState();
     const { activeRepo } = state.sourceControl;
@@ -495,7 +525,6 @@ export const discardFileAction =
     const target = payload[0];
     if (!target) return;
 
-    // oxlint-disable-next-line typescript-eslint(await-thenable)
     await dispatch(
       runRepoAction(`file:discard:${filePath}`, async (innerDispatch) => {
         const result = innerDispatch(
@@ -510,38 +539,32 @@ export const discardFileAction =
     );
   };
 
-export const stageOrUnstageSelectionAction = (): AppThunk => async (dispatch, getState) => {
-  const { activeRepo, activeBucket, activePath, selectedFiles, runningAction } =
-    getState().sourceControl;
-  if (!activeRepo || runningAction) return;
+export const stageOrUnstageSelectionAction =
+  (): AppThunk<Promise<void>> => async (dispatch, getState) => {
+    const { activeRepo, activeBucket, activePath, selectedFiles, runningAction } =
+      getState().sourceControl;
+    if (!activeRepo || runningAction) return;
 
-  const candidates = selectedFiles.length
-    ? selectedFiles
-    : activePath
-      ? [{ bucket: activeBucket, path: activePath }]
-      : [];
-  if (candidates.length === 0) return;
+    const candidates = selectedFiles.length
+      ? selectedFiles
+      : activePath
+        ? [{ bucket: activeBucket, path: activePath }]
+        : [];
+    if (candidates.length === 0) return;
 
-  const uniqueCandidates = dedupeSelection(candidates);
+    const uniqueCandidates = dedupeSelection(candidates);
 
-  const toUnstage = uniqueCandidates.filter((file) => file.bucket === "staged");
-  const toStage = uniqueCandidates.filter((file) => file.bucket !== "staged");
+    const toUnstage = uniqueCandidates.filter((file) => file.bucket === "staged");
+    const toStage = uniqueCandidates.filter((file) => file.bucket !== "staged");
 
-  for (const file of toUnstage) {
-    // oxlint-disable-next-line typescript-eslint(await-thenable)
-    await dispatch(unstageFileAction(file.path));
-  }
-  for (const file of toStage) {
-    // oxlint-disable-next-line typescript-eslint(await-thenable)
-    await dispatch(stageFileAction(file.path));
-  }
-};
+    await dispatch(unstageFilesAction(toUnstage));
+    await dispatch(stageFilesAction(toStage));
+  };
 
-export const stageAllAction = (): AppThunk => async (dispatch, getState) => {
+export const stageAllAction = (): AppThunk<Promise<void>> => async (dispatch, getState) => {
   const { activeRepo } = getState().sourceControl;
   if (!activeRepo) return;
 
-  // oxlint-disable-next-line typescript-eslint(await-thenable)
   await dispatch(
     runRepoAction("stage-all", async (innerDispatch) => {
       const result = innerDispatch(gitApi.endpoints.stageAll.initiate({ repoPath: activeRepo }));
@@ -550,11 +573,10 @@ export const stageAllAction = (): AppThunk => async (dispatch, getState) => {
   );
 };
 
-export const unstageAllAction = (): AppThunk => async (dispatch, getState) => {
+export const unstageAllAction = (): AppThunk<Promise<void>> => async (dispatch, getState) => {
   const { activeRepo } = getState().sourceControl;
   if (!activeRepo) return;
 
-  // oxlint-disable-next-line typescript-eslint(await-thenable)
   await dispatch(
     runRepoAction("unstage-all", async (innerDispatch) => {
       const result = innerDispatch(gitApi.endpoints.unstageAll.initiate({ repoPath: activeRepo }));
@@ -564,7 +586,7 @@ export const unstageAllAction = (): AppThunk => async (dispatch, getState) => {
 };
 
 export const discardChangesGroupAction =
-  (files: BucketedFile[]): AppThunk =>
+  (files: BucketedFile[]): AppThunk<Promise<void>> =>
   async (dispatch, getState) => {
     const state = getState();
     const { activeRepo } = state.sourceControl;
@@ -577,7 +599,6 @@ export const discardChangesGroupAction =
     );
     if (payload.length === 0) return;
 
-    // oxlint-disable-next-line typescript-eslint(await-thenable)
     await dispatch(
       runRepoAction("discard-changes", async (innerDispatch) => {
         const result = innerDispatch(
@@ -588,13 +609,12 @@ export const discardChangesGroupAction =
     );
   };
 
-export const commitAction = (): AppThunk => async (dispatch, getState) => {
+export const commitAction = (): AppThunk<Promise<void>> => async (dispatch, getState) => {
   const { activeRepo, commitMessage } = getState().sourceControl;
   if (!activeRepo) return;
   const trimmed = commitMessage.trim();
   if (!trimmed) return;
 
-  // oxlint-disable-next-line typescript-eslint(await-thenable)
   await dispatch(
     runRepoAction("commit", async (innerDispatch) => {
       const result = innerDispatch(

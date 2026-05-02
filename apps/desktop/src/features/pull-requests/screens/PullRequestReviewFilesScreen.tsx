@@ -1,19 +1,13 @@
 import { skipToken } from "@reduxjs/toolkit/query";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { ResizableSidebarLayout } from "@/components/layout/ResizableSidebarLayout";
 import { DiffWorkspace } from "@/features/diff-view/DiffWorkspace";
-import {
-  getParsedPatchRequest,
-  loadParsedPatch,
-  type ParsedPatch,
-} from "@/features/diff-view/services/parsedDiffCache";
-import type { FileDiffMetadata } from "@pierre/diffs";
-import {
-  useGetPullRequestConversationQuery,
-  useGetPullRequestDiffCachedQuery,
-} from "@/features/hosted-repos/api";
+import { useGetPullRequestConversationQuery } from "@/features/hosted-repos/api";
+import { LspStatusNotice } from "@/features/lsp/components/LspStatusNotice";
+import { useCurrentLspDocument } from "@/features/lsp/hooks/useCurrentLspDocument";
+import { useDiffDiagnostics } from "@/features/lsp/hooks/useDiffDiagnostics";
 import ReviewCommentsCopyToolbar from "@/features/pull-requests/components/ReviewCopyBar";
 import { PullRequestFilesSidebar } from "@/features/pull-requests/components/PullRequestFilesSidebar";
 import { usePullRequestMentionCandidates } from "@/features/pull-requests/hooks/usePullRequestMentionCandidates";
@@ -22,15 +16,14 @@ import {
   clearPullRequestFileJumpTarget,
   setPullRequestFilesViewMode,
 } from "@/features/pull-requests/pullRequestsSlice";
-import { findParsedFileDiff } from "@/features/pull-requests/utils/findParsedFileDiff";
 import { buildPullRequestAnchorAnnotations } from "@/features/pull-requests/utils/reviewAnchors";
-import { useGetBranchFilesQuery } from "@/features/source-control/api";
-import { GeneralFileViewer } from "@/features/source-control/components/GeneralFileViewer";
-import { errorMessageFrom } from "@/features/source-control/shared-utils/errorMessage";
 import {
-  selectFileViewerTarget,
-  selectReviewActivePath,
-} from "@/features/source-control/sourceControlSlice";
+  useGetBranchFilesQuery,
+  useGetBranchFileVersionsQuery,
+} from "@/features/source-control/api";
+import { GeneralFileViewer } from "@/features/source-control/components/GeneralFileViewer";
+import { useThrottledDiffSelection } from "@/features/source-control/hooks/useThrottledDiffSelection";
+import { errorMessageFrom } from "@/features/source-control/shared-utils/errorMessage";
 import type { FileItem } from "@/features/source-control/types";
 import type { GitProviderId, PullRequestConversation } from "@/platform/desktop";
 
@@ -70,8 +63,17 @@ function PullRequestDiffPane({
   focusedLineIndex,
   focusedLineKey,
 }: PullRequestDiffPaneProps) {
-  const reviewActivePath = useAppSelector(selectReviewActivePath);
-  const selectedReviewFile = branchFiles.find((file) => file.path === reviewActivePath) ?? null;
+  const reviewActivePath = useAppSelector((state) => state.sourceControl.reviewActivePath);
+  const selectedReviewFile = branchFiles.find((file) => file.path === reviewActivePath);
+  const previewSelection = useThrottledDiffSelection(
+    reviewActivePath
+      ? {
+          path: reviewActivePath,
+          previousPath: selectedReviewFile?.previousPath ?? undefined,
+        }
+      : null,
+  );
+  const previewPath = previewSelection?.path ?? reviewActivePath;
   const commentMentions = usePullRequestMentionCandidates(conversation);
   const { anchorsByFile } = usePullRequestReviewAnchors({
     repoPath: reviewRepoPath,
@@ -80,9 +82,9 @@ function PullRequestDiffPane({
     files: branchFiles,
     reviewThreads: conversation?.reviewThreads ?? [],
   });
-  const annotationItems = reviewActivePath
+  const annotationItems = previewPath
     ? buildPullRequestAnchorAnnotations({
-        anchors: anchorsByFile[reviewActivePath] ?? [],
+        anchors: anchorsByFile[previewPath] ?? [],
         repoPath: reviewRepoPath,
         pullRequestNumber,
         compareBaseRef: reviewBaseRef,
@@ -91,61 +93,33 @@ function PullRequestDiffPane({
       })
     : [];
 
-  const pullRequestDiffQuery = useGetPullRequestDiffCachedQuery(
-    readyForDiff ? { repoPath: activeRepo, pullRequestNumber } : skipToken,
+  const branchFileVersionsQuery = useGetBranchFileVersionsQuery(
+    readyForDiff && previewSelection
+      ? {
+          repoPath: activeRepo,
+          baseRef: reviewBaseRef,
+          headRef: reviewHeadRef,
+          relPath: previewSelection.path,
+          previousPath: previewSelection.previousPath,
+        }
+      : skipToken,
   );
 
-  const patchText = pullRequestDiffQuery.currentData ?? pullRequestDiffQuery.data;
+  const reviewVersions = branchFileVersionsQuery.currentData ?? branchFileVersionsQuery.data;
+  const oldFile = reviewVersions?.oldFile ?? null;
+  const newFile = reviewVersions?.newFile ?? null;
+  const loadingPatch = !reviewVersions && branchFileVersionsQuery.isLoading;
+  const errorMessage = reviewVersions ? "" : errorMessageFrom(branchFileVersionsQuery.error, "");
+  const lspText = !loadingPatch && newFile ? newFile.contents : null;
+  const lspHoverDocument =
+    activeRepo && previewPath && lspText !== null
+      ? { repoPath: activeRepo, relPath: previewPath }
+      : undefined;
+  const lspDiagnostics = useDiffDiagnostics(activeRepo, previewPath ?? "");
 
-  const [parsedFiles, setParsedFiles] = useState<FileDiffMetadata[]>([]);
-  const [isParsingPatch, setIsParsingPatch] = useState(false);
-  const cacheKeyPrefix = `pr-${reviewRepoPath}:${pullRequestNumber}`;
+  useCurrentLspDocument(activeRepo, previewPath ?? "", lspText);
 
-  useEffect(() => {
-    let cancelled = false;
-    if (!patchText || !reviewActivePath) {
-      setParsedFiles([]);
-      setIsParsingPatch(false);
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    const request = getParsedPatchRequest(reviewActivePath, patchText, "", {
-      cacheKeyPrefix,
-    });
-    if (!request) {
-      setParsedFiles([]);
-      setIsParsingPatch(false);
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    setIsParsingPatch(true);
-
-    void loadParsedPatch(request, "high")
-      .then((parsedPatch: ParsedPatch | null) => {
-        if (cancelled) return;
-        const nextParsedFiles = parsedPatch?.flatMap((p) => p.files) ?? [];
-        setParsedFiles(nextParsedFiles);
-      })
-      .finally(() => {
-        if (!cancelled) setIsParsingPatch(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [cacheKeyPrefix, patchText, reviewActivePath]);
-
-  const selectedFileDiff = findParsedFileDiff(parsedFiles, selectedReviewFile);
-  const oldFile = null;
-  const newFile = null;
-  const loadingPatch = isParsingPatch || (!patchText && pullRequestDiffQuery.isLoading);
-  const errorMessage = patchText ? "" : errorMessageFrom(pullRequestDiffQuery.error, "");
-
-  const hasContent = Boolean(selectedFileDiff);
+  const hasContent = oldFile || newFile;
 
   return (
     <section className="flex h-full min-h-0 flex-col">
@@ -154,23 +128,26 @@ function PullRequestDiffPane({
         pullRequestNumber={pullRequestNumber}
         compareBaseRef={reviewBaseRef}
         compareHeadRef={reviewHeadRef}
-        activePath={reviewActivePath ?? ""}
-        activePreviousPath={selectedReviewFile?.previousPath ?? undefined}
+        activePath={previewPath ?? ""}
+        activePreviousPath={previewSelection?.previousPath}
       />
       <div className="grid min-h-0 flex-1">
         {!reviewActivePath ? (
           <div className="text-muted-foreground p-3 text-sm">Select a file to view diff.</div>
         ) : (
           <div className="relative flex h-full min-h-0 min-w-0 flex-col" key="pr-diff-viewer">
+            <LspStatusNotice repoPath={activeRepo} relPath={previewPath ?? ""} active />
             <DiffWorkspace
               oldFile={oldFile}
               newFile={newFile}
-              fileDiff={selectedFileDiff}
-              activePath={reviewActivePath ?? ""}
+              activePath={previewPath ?? ""}
               commentContext={{ kind: "review", baseRef: reviewBaseRef, headRef: reviewHeadRef }}
               canComment
               includeCurrentFileComments={false}
+              lspDiagnostics={lspDiagnostics}
               fileViewerRevision={reviewHeadRef}
+              lspHoverDocument={lspHoverDocument}
+              lspJumpContextKind="pull-request"
               focusedLineNumber={focusedLineNumber}
               focusedLineIndex={focusedLineIndex}
               focusedLineKey={focusedLineKey}
@@ -199,10 +176,10 @@ function PullRequestDiffPane({
 
 export function PullRequestReviewFilesScreen() {
   const dispatch = useAppDispatch();
-  const reviewActivePath = useAppSelector(selectReviewActivePath);
+  const reviewActivePath = useAppSelector((state) => state.sourceControl.reviewActivePath);
   const filesViewMode = useAppSelector((state) => state.pullRequests.filesViewMode);
   const fileJumpTarget = useAppSelector((state) => state.pullRequests.fileJumpTarget);
-  const fileViewerTarget = useAppSelector(selectFileViewerTarget);
+  const fileViewerTarget = useAppSelector((state) => state.sourceControl.fileViewerTarget);
 
   const { activeRepo, resolvedReview } = usePullRequestReviewSession();
 
@@ -225,7 +202,7 @@ export function PullRequestReviewFilesScreen() {
     },
   );
 
-  const { conversation } = useGetPullRequestConversationQuery(
+  const { conversation, reviewThreads } = useGetPullRequestConversationQuery(
     resolvedReview
       ? {
           repoPath: resolvedReview.repoPath,
@@ -235,6 +212,7 @@ export function PullRequestReviewFilesScreen() {
     {
       selectFromResult: ({ data }) => ({
         conversation: data ?? null,
+        reviewThreads: data?.reviewThreads ?? [],
       }),
       pollingInterval: 10000,
       refetchOnFocus: true,
@@ -290,6 +268,7 @@ export function PullRequestReviewFilesScreen() {
           branchFiles={branchFiles}
           hasBranchFilesData={hasBranchFilesData}
           isLoadingBranchFiles={isLoadingBranchFiles}
+          reviewThreads={reviewThreads}
         />
       }
       content={

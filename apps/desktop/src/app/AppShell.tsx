@@ -11,11 +11,6 @@ import { SidebarPanelRegistryProvider } from "@/components/layout/SidebarPanelRe
 import { AppCommandPalette } from "@/features/command-palette/AppCommandPalette";
 import { closeRepo, openRepo, selectFolder, selectRepo } from "@/features/source-control/actions";
 import { RecentProjectsPicker } from "@/features/source-control/RecentProjectsPicker";
-import {
-  selectActiveRepo,
-  selectRecentRepos,
-  selectRepos,
-} from "@/features/source-control/sourceControlSlice";
 
 export type AppShellOutletContext = {
   openRecentProjectsPicker: () => void;
@@ -25,8 +20,8 @@ export function AppShell() {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useAppDispatch();
-  const activeRepo = useAppSelector(selectActiveRepo);
-  const recentRepos = useAppSelector(selectRecentRepos);
+  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
+  const recentRepos = useAppSelector((state) => state.sourceControl.recentRepos);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [recentProjectsPickerOpen, setRecentProjectsPickerOpen] = useState(false);
   const isSettingsRoute = location.pathname.startsWith("/settings");
@@ -45,8 +40,7 @@ export function AppShell() {
       return;
     }
 
-    // oxlint-disable-next-line typescript-eslint(no-floating-promises)
-    navigate("/changes", { replace: true });
+    void navigate("/changes", { replace: true });
   }
 
   useHotkey(
@@ -97,12 +91,12 @@ export function AppShell() {
               });
             }}
             onChooseFolder={() => {
-              // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
               void dispatch(selectFolder());
             }}
           />
           <AppCommandPalette open={commandPaletteOpen} onOpenChange={setCommandPaletteOpen} />
         </div>
+        <div id="modal-root" />
       </SidebarPanelRegistryProvider>
     </NuqsAdapter>
   );
@@ -116,9 +110,9 @@ type RepoTabsContainerProps = {
 function RepoTabsContainer({ currentPath, onShowRecentProjects }: RepoTabsContainerProps) {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const repos = useAppSelector(selectRepos);
-  const activeRepo = useAppSelector(selectActiveRepo);
-  const recentRepos = useAppSelector(selectRecentRepos);
+  const repos = useAppSelector((state) => state.sourceControl.repos);
+  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
+  const recentRepos = useAppSelector((state) => state.sourceControl.recentRepos);
 
   function navigateToChangesAfterRepoSwitch(switchingRepo: boolean) {
     if (!switchingRepo) {
@@ -129,8 +123,7 @@ function RepoTabsContainer({ currentPath, onShowRecentProjects }: RepoTabsContai
       return;
     }
 
-    // oxlint-disable-next-line typescript-eslint(no-floating-promises)
-    navigate("/changes", { replace: true });
+    void navigate("/changes", { replace: true });
   }
 
   return (
@@ -140,15 +133,13 @@ function RepoTabsContainer({ currentPath, onShowRecentProjects }: RepoTabsContai
       recentRepos={recentRepos}
       onSelectRepo={(repo) => {
         const switchingRepo = repo !== activeRepo;
-        // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
         void dispatch(selectRepo(repo));
         navigateToChangesAfterRepoSwitch(switchingRepo);
       }}
       onCloseRepo={(repo) => {
         void dispatch(closeRepo(repo)).then((result) => {
           if (result.closedActiveRepo && currentPath !== "/changes") {
-            // oxlint-disable-next-line typescript-eslint(no-floating-promises)
-            navigate("/changes", { replace: true });
+            void navigate("/changes", { replace: true });
           }
         });
       }}
@@ -160,7 +151,6 @@ function RepoTabsContainer({ currentPath, onShowRecentProjects }: RepoTabsContai
       }}
       onShowAllRecentProjects={onShowRecentProjects}
       onOpenFolder={() => {
-        // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
         void dispatch(selectFolder());
       }}
     />

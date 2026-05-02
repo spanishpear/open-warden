@@ -1,30 +1,20 @@
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
-import type { MouseEvent } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Accordion, AccordionItem } from "@/components/ui/accordion";
 import { confirmDiscard } from "@/features/comments/actions";
 import { useGetGitSnapshotQuery } from "@/features/source-control/api";
 import {
   discardChangesGroupAction,
   discardFileAction,
-  rangeSelectFile,
-  selectFile,
   stageAllAction,
   stageFileAction,
-  toggleSelectFile,
+  stageFilesAction,
   unstageAllAction,
   unstageFileAction,
+  unstageFilesAction,
 } from "@/features/source-control/actions";
-import {
-  selectActiveRepo,
-  selectCollapseStaged,
-  selectCollapseUnstaged,
-  setCollapseStaged,
-  setCollapseUnstaged,
-} from "@/features/source-control/sourceControlSlice";
 import type { Bucket, BucketedFile, FileItem } from "@/features/source-control/types";
 import { CommitBox } from "./CommitBox";
-import { FileSection } from "./FileSection";
+import { ChangesUnifiedPierreFileTree } from "./ChangesUnifiedPierreFileTree";
 
 export function ChangesTab() {
   return (
@@ -46,9 +36,10 @@ function toBucketedFile(file: FileItem, bucket: Bucket) {
 
 function ChangesFileList() {
   const dispatch = useAppDispatch();
-  const activeRepo = useAppSelector(selectActiveRepo);
-  const collapseStaged = useAppSelector(selectCollapseStaged);
-  const collapseUnstaged = useAppSelector(selectCollapseUnstaged);
+  const activeRepo = useAppSelector((state) => state.sourceControl.activeRepo);
+  const fileBrowserMode = useAppSelector(
+    (state) => state.settings.appSettings.sourceControl.fileTreeRenderMode,
+  );
   const { snapshot: snapshotData, isLoadingSnapshot } = useGetGitSnapshotQuery(activeRepo, {
     skip: !activeRepo,
     refetchOnFocus: true,
@@ -69,72 +60,38 @@ function ChangesFileList() {
     ...untrackedFiles.map((file) => toBucketedFile(file, "untracked")),
   ];
   const stagedRows: BucketedFile[] = stagedFiles.map((file) => toBucketedFile(file, "staged"));
-  const visibleRows: BucketedFile[] = [
-    ...(collapseStaged ? [] : stagedRows),
-    ...(collapseUnstaged ? [] : changedFiles),
-  ];
-
   const onStageAll = () => {
-    // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
     void dispatch(stageAllAction());
   };
   const onUnstageAll = () => {
-    // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
     void dispatch(unstageAllAction());
   };
 
   const onDiscardChangesGroup = async (files: BucketedFile[]) => {
     if (files.length === 0) return;
     if (!(await confirmDiscard(`Discard all changes in CHANGES (${files.length} files)?`))) return;
-    // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
     void dispatch(discardChangesGroupAction(files));
   };
 
   const onStageFile = (path: string) => {
-    // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
     void dispatch(stageFileAction(path));
   };
 
   const onUnstageFile = (path: string) => {
-    // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
     void dispatch(unstageFileAction(path));
+  };
+
+  const onStageFiles = (files: BucketedFile[]) => {
+    void dispatch(stageFilesAction(files));
+  };
+
+  const onUnstageFiles = (files: BucketedFile[]) => {
+    void dispatch(unstageFilesAction(files));
   };
 
   const onDiscardFile = async (bucket: Bucket, path: string) => {
     if (!(await confirmDiscard(`Discard changes for ${path}?`))) return;
-    // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
     void dispatch(discardFileAction(bucket, path));
-  };
-
-  const onSelectFile = (bucket: Bucket, relPath: string, event: MouseEvent<HTMLButtonElement>) => {
-    if (event.shiftKey) {
-      // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
-      void dispatch(rangeSelectFile({ bucket, path: relPath }, visibleRows));
-      return;
-    }
-    if (event.metaKey || event.ctrlKey) {
-      // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
-      void dispatch(toggleSelectFile(bucket, relPath));
-      return;
-    }
-    // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
-    void dispatch(selectFile(bucket, relPath));
-  };
-
-  const openSections = [];
-  if (!collapseStaged) openSections.push("staged");
-  if (!collapseUnstaged) openSections.push("unstaged");
-
-  const handleAccordionChange = (value: string[]) => {
-    const isStagedOpen = value.includes("staged");
-    const isUnstagedOpen = value.includes("unstaged");
-
-    if (isStagedOpen !== !collapseStaged) {
-      dispatch(setCollapseStaged(!isStagedOpen));
-    }
-    if (isUnstagedOpen !== !collapseUnstaged) {
-      dispatch(setCollapseUnstaged(!isUnstagedOpen));
-    }
   };
 
   return (
@@ -144,45 +101,20 @@ function ChangesFileList() {
           {isLoadingSnapshot ? (
             <div className="text-muted-foreground px-2 py-2 text-xs">Loading changes...</div>
           ) : null}
-          <Accordion type="multiple" value={openSections} onValueChange={handleAccordionChange}>
-            <AccordionItem value="staged" className="border-border rounded-none border-t border-b">
-              <FileSection
-                sectionKey="staged"
-                title="STAGED CHANGES"
-                rows={stagedRows}
-                startIndex={0}
-                unstagedCount={unstagedFiles.length}
-                untrackedCount={untrackedFiles.length}
-                onSelectFile={onSelectFile}
-                onStageFile={onStageFile}
-                onUnstageFile={onUnstageFile}
-                onDiscardFile={onDiscardFile}
-                onStageAll={onStageAll}
-                onUnstageAll={onUnstageAll}
-                onDiscardChangesGroup={onDiscardChangesGroup}
-              />
-            </AccordionItem>
-            <AccordionItem
-              value="unstaged"
-              className="border-border rounded-none border-t-0 border-b"
-            >
-              <FileSection
-                sectionKey="unstaged"
-                title="CHANGES"
-                rows={changedFiles}
-                startIndex={collapseStaged ? 0 : stagedRows.length}
-                unstagedCount={unstagedFiles.length}
-                untrackedCount={untrackedFiles.length}
-                onSelectFile={onSelectFile}
-                onStageFile={onStageFile}
-                onUnstageFile={onUnstageFile}
-                onDiscardFile={onDiscardFile}
-                onStageAll={onStageAll}
-                onUnstageAll={onUnstageAll}
-                onDiscardChangesGroup={onDiscardChangesGroup}
-              />
-            </AccordionItem>
-          </Accordion>
+          <ChangesUnifiedPierreFileTree
+            mode={fileBrowserMode}
+            stagedRows={stagedRows}
+            changedRows={changedFiles}
+            activeRepo={activeRepo}
+            onStageAll={onStageAll}
+            onUnstageAll={onUnstageAll}
+            onStageFile={onStageFile}
+            onUnstageFile={onUnstageFile}
+            onStageFiles={onStageFiles}
+            onUnstageFiles={onUnstageFiles}
+            onDiscardFile={onDiscardFile}
+            onDiscardChangesGroup={onDiscardChangesGroup}
+          />
         </div>
       </ScrollArea>
     </div>

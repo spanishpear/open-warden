@@ -1,13 +1,6 @@
 import { useAppDispatch } from "@/app/hooks";
 import { gitApi } from "@/features/source-control/api";
-import {
-  selectActiveRepo,
-  selectReviewActivePath,
-  selectReviewBaseRef,
-  selectReviewHeadRef,
-  setReviewActivePath,
-} from "@/features/source-control/sourceControlSlice";
-import type { FileItem } from "@/features/source-control/types";
+import { setReviewActivePath } from "@/features/source-control/sourceControlSlice";
 import { useSimpleFileListKeyboardNav } from "./useSimpleFileListKeyboardNav";
 
 export function useReviewKeyboardNav(regionId = "review-files") {
@@ -16,9 +9,7 @@ export function useReviewKeyboardNav(regionId = "review-files") {
   useSimpleFileListKeyboardNav({
     regionId,
     getAllFilePaths: (state) => {
-      const activeRepo = selectActiveRepo(state);
-      const reviewBaseRef = selectReviewBaseRef(state);
-      const reviewHeadRef = selectReviewHeadRef(state);
+      const { activeRepo, reviewBaseRef, reviewHeadRef } = state.sourceControl;
       const branchFilesArgs =
         activeRepo && reviewBaseRef && reviewHeadRef
           ? {
@@ -31,10 +22,9 @@ export function useReviewKeyboardNav(regionId = "review-files") {
         ? gitApi.endpoints.getBranchFiles.select(branchFilesArgs)(state).data
         : undefined;
 
-      // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
-      return ((reviewFiles ?? []) as FileItem[]).map((file) => file.path);
+      return (reviewFiles ?? []).map((file) => file.path);
     },
-    getActivePath: selectReviewActivePath,
+    getActivePath: (state) => state.sourceControl.reviewActivePath,
     onSelectPath: (path) => {
       dispatch(setReviewActivePath(path));
     },

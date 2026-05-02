@@ -216,7 +216,6 @@ function onWorkerError(event: ErrorEvent) {
   recreateWorker();
   if (!currentTask) return;
   const error = event.error instanceof Error ? event.error : new Error(event.message);
-  // eslint-disable-next-line no-console
   console.warn("[DiffWorker] onWorkerError:", error);
   currentTask.task.reject(error);
   currentTask.rejectRun(error);

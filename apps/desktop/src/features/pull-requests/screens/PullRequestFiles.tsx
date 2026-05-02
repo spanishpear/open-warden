@@ -1,7 +1,8 @@
 import { skipToken } from "@reduxjs/toolkit/query";
 import { type FileDiffMetadata } from "@pierre/diffs";
+import { useWorkerPool } from "@pierre/diffs/react";
 import { FileCode2, LoaderCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router";
 
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
@@ -277,6 +278,25 @@ function FilesDiffViewer({
       cancelled = true;
     };
   }, [cacheKeyPrefix, files, patchText, selectedPath]);
+
+  // Pre-warm the Shiki highlight cache for ALL parsed files in the background.
+  // This way, when the user presses j/k to navigate to the next file, the
+  // syntax highlighting is already cached and renders instantly.
+  const workerPool = useWorkerPool();
+  const prewarmedRef = useRef(new Set<string>());
+  useEffect(() => {
+    if (!workerPool || parsedFiles.length === 0) return;
+    for (const file of parsedFiles) {
+      const key = file.name;
+      if (prewarmedRef.current.has(key)) continue;
+      if (workerPool.getDiffResultCache(file)) continue;
+      prewarmedRef.current.add(key);
+      workerPool.highlightDiffAST(
+        { __id: `prewarm-${key}`, onHighlightSuccess() {}, onHighlightError() {} },
+        file,
+      );
+    }
+  }, [parsedFiles, workerPool]);
 
   const selectedFileDiff = findParsedFileDiff(parsedFiles, selectedFile);
   const anchorAnnotations = selectedFile

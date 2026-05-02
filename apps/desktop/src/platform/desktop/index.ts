@@ -1,6 +1,6 @@
 import { createDesktopApiForwarder } from "./createDesktopApi";
 import type { DesktopBridge } from "./contracts";
-import { browserDesktopApi, unavailableDesktopApi } from "./browser";
+import { browserDesktopApi } from "./browser";
 
 function hasElectronRuntime() {
   if (typeof window === "undefined") return false;
@@ -16,21 +16,13 @@ function getElectronRuntime(): DesktopBridge | null {
   return window.desktopBridge ?? window.openWarden ?? null;
 }
 
-function browserFallbackEnabled() {
-  return import.meta.env.DEV && import.meta.env.VITE_DESKTOP_FALLBACK === "browser";
-}
-
 function resolveDesktopApi(): DesktopBridge {
   const electronRuntime = getElectronRuntime();
   if (electronRuntime) {
     return electronRuntime;
   }
 
-  if (browserFallbackEnabled()) {
-    return browserDesktopApi;
-  }
-
-  return unavailableDesktopApi;
+  return browserDesktopApi;
 }
 
 const desktopApi = createDesktopApiForwarder(() => resolveDesktopApi());

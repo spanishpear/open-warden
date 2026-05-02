@@ -7,8 +7,8 @@ import {
   ReviewSelectionSync,
 } from "@/features/source-control/components/ReviewFileList";
 import type { FileItem } from "@/features/source-control/types";
-import { selectRunningAction } from "@/features/source-control/sourceControlSlice";
 import type { PullRequestReviewSession } from "@/features/pull-requests/pullRequestsSlice";
+import type { PullRequestReviewThread } from "@/platform/desktop";
 import { PullRequestSidebarSummary } from "@/features/pull-requests/components/PullRequestSidebarSummary";
 
 type PullRequestFilesSidebarProps = {
@@ -18,6 +18,7 @@ type PullRequestFilesSidebarProps = {
   branchFiles: FileItem[];
   hasBranchFilesData: boolean;
   isLoadingBranchFiles: boolean;
+  reviewThreads?: PullRequestReviewThread[];
 };
 
 export function PullRequestFilesSidebar({
@@ -27,9 +28,10 @@ export function PullRequestFilesSidebar({
   branchFiles,
   hasBranchFilesData,
   isLoadingBranchFiles,
+  reviewThreads = [],
 }: PullRequestFilesSidebarProps) {
   const dispatch = useAppDispatch();
-  const runningAction = useAppSelector(selectRunningAction);
+  const runningAction = useAppSelector((state) => state.sourceControl.runningAction);
   const { activeBranch } = useGetGitSnapshotQuery(activeRepo, {
     skip: !activeRepo,
     selectFromResult: ({ data }) => ({
@@ -45,7 +47,6 @@ export function PullRequestFilesSidebar({
           activeBranch={activeBranch}
           runningAction={runningAction}
           onRefresh={() => {
-            // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
             void dispatch(refreshActiveRepo());
           }}
         />
@@ -82,8 +83,7 @@ export function PullRequestFilesSidebar({
               reviewHeadRef={review.compareHeadRef}
               paneClassName="border-0 bg-transparent"
               headerClassName="hidden"
-              bodyClassName="space-y-0.5 p-0.5"
-              scrollAreaClassName="min-h-0 flex-1 overflow-hidden"
+              reviewThreads={reviewThreads}
             />
           )}
         </div>

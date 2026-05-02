@@ -73,7 +73,6 @@ export function HistoryCommitList() {
                 commit={commit}
                 navIndex={index}
                 onSelect={(commitId) => {
-                  // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
                   void dispatch(selectHistoryCommit(commitId));
                 }}
               />

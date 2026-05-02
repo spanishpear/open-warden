@@ -27,7 +27,6 @@ export function ChangesSidebar() {
           activeBranch={activeBranch}
           runningAction={runningAction}
           onRefresh={() => {
-            // oxlint-disable-next-line typescript-eslint(no-meaningless-void-operator)
             void dispatch(refreshActiveRepo());
           }}
         />

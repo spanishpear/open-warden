@@ -7,6 +7,7 @@ import type {
   DesktopBridge,
   DesktopUpdateActionResult,
   DesktopUpdateState,
+  GitSnapshot,
   WorkspaceSession,
 } from "./contracts";
 import type { DesktopApiMethod } from "./desktopApiMethods";
@@ -48,8 +49,17 @@ async function unsupportedAsync<T>(feature: string): Promise<T> {
   unsupported(feature);
 }
 
-function readBrowserDirectorySelectionError(): Error {
-  return unsupportedInBrowser("Repository selection");
+function promptForRepoPath(): string | null {
+  if (typeof window.prompt !== "function") {
+    console.warn("[browser fallback] window.prompt is not available in this environment.");
+    return null;
+  }
+  const defaultPath = "/Users/ssomaiya/atlassian/atlassian-frontend-monorepo-worktree/master";
+  const path = window.prompt(
+    "Enter a local repository path (browser mode \u2014 no native folder picker)",
+    defaultPath,
+  );
+  return path?.trim() || null;
 }
 
 function readStoredWorkspaceSession(): WorkspaceSession {
@@ -182,7 +192,16 @@ const browserDesktopApiCore = createDesktopApiWithDefaults({
   fallback: (method) => async () => unsupportedAsync(browserUnsupportedFeature(method)),
   overrides: {
     async selectFolder() {
-      throw readBrowserDirectorySelectionError();
+      return promptForRepoPath();
+    },
+    async getGitSnapshot(repoPath: string): Promise<GitSnapshot> {
+      return {
+        repoRoot: repoPath,
+        branch: "main",
+        unstaged: [],
+        staged: [],
+        untracked: [],
+      };
     },
     async loadWorkspaceSession() {
       return readStoredWorkspaceSession();

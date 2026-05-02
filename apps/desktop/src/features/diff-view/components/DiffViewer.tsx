@@ -7,7 +7,7 @@ import {
   useState,
   useEffect,
 } from "react";
-import { FileDiff as PierreFileDiff, Virtualizer } from "@pierre/diffs/react";
+import { FileDiff as PierreFileDiff, Virtualizer, useWorkerPool } from "@pierre/diffs/react";
 import { FileWarning } from "lucide-react";
 import { useTheme } from "next-themes";
 const VIRTUALIZER_CONFIG = {
@@ -176,14 +176,17 @@ export const DiffViewer = forwardRef<DiffViewerHandle, DiffViewerProps>(function
   useEffect(() => {
     // Scroll the Virtualizer's scroll container to top when the active file changes.
     // The Virtualizer renders as the first child of viewportRef with overflow-y-auto.
-    const scrollContainer = viewportRef.current?.firstElementChild as HTMLElement | null;
-    scrollContainer?.scrollTo({ top: 0 });
+    const scrollContainer = viewportRef.current?.firstElementChild;
+    if (scrollContainer instanceof HTMLElement) {
+      scrollContainer.scrollTo({ top: 0 });
+    }
   }, [activePath]);
 
   const [expandUnchanged, setExpandUnchanged] = useState(false);
-  const activeDiffIdentity = `${oldFile?.name}-${newFile?.name}-${expandUnchanged ? "expanded" : "collapsed"}`;
+  const activeDiffIdentity = expandUnchanged ? "expanded" : "collapsed";
+  const activeLargeDiffIdentity = `${activePath}-${oldFile?.name ?? ""}-${oldFile?.contents.length ?? 0}-${newFile?.name ?? ""}-${newFile?.contents.length ?? 0}`;
   const [forceShowLargeDiffIdentity, setForceShowLargeDiffIdentity] = useState<string | null>(null);
-  const forceShowLargeDiff = forceShowLargeDiffIdentity === activeDiffIdentity;
+  const forceShowLargeDiff = forceShowLargeDiffIdentity === activeLargeDiffIdentity;
 
   const onToggleExpandUnchanged = useCallback(() => {
     setExpandUnchanged((prev) => !prev);
@@ -197,6 +200,50 @@ export const DiffViewer = forwardRef<DiffViewerHandle, DiffViewerProps>(function
     allowLargeDiff: forceShowLargeDiff,
   });
   const resolvedFileDiff = fileDiff ?? currentFileDiff;
+
+  // Wait for the Shiki worker pool to highlight the diff before rendering.
+  // Without this gate, PierreFileDiff renders unhighlighted content first,
+  // then re-renders when the worker returns — causing a visible flicker.
+  const workerPool = useWorkerPool();
+  const [highlightReady, setHighlightReady] = useState(false);
+  const highlightDiffRef = useRef(resolvedFileDiff);
+
+  useEffect(() => {
+    if (!resolvedFileDiff || !workerPool) {
+      setHighlightReady(!resolvedFileDiff);
+      return;
+    }
+
+    // If the worker pool already has this diff cached, render immediately.
+    if (workerPool.getDiffResultCache(resolvedFileDiff)) {
+      highlightDiffRef.current = resolvedFileDiff;
+      setHighlightReady(true);
+      return;
+    }
+
+    // Otherwise, pre-submit for highlighting and wait for the callback.
+    setHighlightReady(false);
+    highlightDiffRef.current = resolvedFileDiff;
+    const submittedDiff = resolvedFileDiff;
+    workerPool.highlightDiffAST(
+      {
+        __id: `prewarm-${Date.now()}`,
+        onHighlightSuccess: () => {
+          if (highlightDiffRef.current === submittedDiff) {
+            setHighlightReady(true);
+          }
+        },
+        onHighlightError: () => {
+          if (highlightDiffRef.current === submittedDiff) {
+            setHighlightReady(true);
+          }
+        },
+      },
+      resolvedFileDiff,
+    );
+  }, [resolvedFileDiff, workerPool]);
+
+  const displayFileDiff = highlightReady ? resolvedFileDiff : null;
 
   useDiffLineFocus({
     containerRef: viewportRef,
@@ -243,7 +290,7 @@ export const DiffViewer = forwardRef<DiffViewerHandle, DiffViewerProps>(function
           </EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
-          <Button onClick={() => setForceShowLargeDiffIdentity(activeDiffIdentity)}>
+          <Button onClick={() => setForceShowLargeDiffIdentity(activeLargeDiffIdentity)}>
             Show diff
           </Button>
         </EmptyContent>
@@ -257,14 +304,14 @@ export const DiffViewer = forwardRef<DiffViewerHandle, DiffViewerProps>(function
       key={activeDiffIdentity}
       className="relative min-h-0 min-w-0 flex-1 overflow-hidden"
     >
-      {resolvedFileDiff ? (
+      {displayFileDiff ? (
         <Virtualizer
           config={VIRTUALIZER_CONFIG}
           className="relative h-full min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden"
         >
           <PierreFileDiff
             className="block min-w-0 max-w-full"
-            fileDiff={resolvedFileDiff}
+            fileDiff={displayFileDiff}
             selectedLines={selectedLines}
             lineAnnotations={lineAnnotations}
             renderAnnotation={renderAnnotation}
@@ -276,7 +323,7 @@ export const DiffViewer = forwardRef<DiffViewerHandle, DiffViewerProps>(function
         renderUnrenderableDiffWarning()
       ) : diffRenderGate === "large" && !forceShowLargeDiff ? (
         renderLargeDiffWarning()
-      ) : isParsingDiff ? (
+      ) : isParsingDiff || (resolvedFileDiff && !highlightReady) ? (
         <div className="text-muted-foreground p-3 text-xs">Parsing diff...</div>
       ) : (
         <div className="text-muted-foreground p-3 text-xs">No diff content.</div>

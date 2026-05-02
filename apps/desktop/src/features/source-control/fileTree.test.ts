@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vite-plus/test";
+import { describe, expect, it } from "vitest";
 
 import { buildSourceControlFileTree, collectDirectoryPaths } from "./fileTree";
 
@@ -60,6 +60,31 @@ describe("buildSourceControlFileTree", () => {
         children: [
           { kind: "file", name: "App.tsx", path: "apps/desktop/src/App.tsx" },
           { kind: "file", name: "main.tsx", path: "apps/desktop/src/main.tsx" },
+        ],
+      },
+    ]);
+  });
+
+  it("can keep single-child directory chains unflattened", () => {
+    const tree = buildSourceControlFileTree(
+      [
+        { path: "Staged Changes/apps/desktop/src/App.tsx" },
+        { path: "Staged Changes/apps/desktop/src/main.tsx" },
+      ],
+      { flattenEmptyDirectories: false },
+    );
+
+    expect(tree).toMatchObject([
+      {
+        kind: "directory",
+        name: "Staged Changes",
+        path: "Staged Changes",
+        children: [
+          {
+            kind: "directory",
+            name: "apps",
+            path: "Staged Changes/apps",
+          },
         ],
       },
     ]);

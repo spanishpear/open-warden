@@ -325,8 +325,6 @@ export function ReviewScreen() {
               reviewHeadRef={reviewHeadRef}
               paneClassName="border-0 bg-transparent"
               headerClassName="hidden"
-              bodyClassName="space-y-0.5 p-0.5"
-              scrollAreaClassName="min-h-0 flex-1 overflow-hidden"
               emptyState={
                 !reviewBaseRef || !reviewHeadRef ? (
                   <Empty className="h-auto border-0 p-4">

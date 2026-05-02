@@ -83,12 +83,12 @@ export type FileViewerTarget = {
 
 export type SymbolPeekKind = "definitions" | "references";
 
-type SymbolPeekSourceDocument = {
+export type SymbolPeekSourceDocument = {
   repoPath: string;
   relPath: string;
 };
 
-type SymbolPeekAnchor = {
+export type SymbolPeekAnchor = {
   lineNumber: number;
   lineIndex: string | null;
 };
@@ -147,7 +147,7 @@ export type PullRequestReviewAnchor = {
   pendingDrafts: CommentItem[];
 };
 
-type ComposerAnnotation = {
+export type ComposerAnnotation = {
   type: "composer";
   side: "deletions" | "additions";
   endSide?: "deletions" | "additions";
@@ -155,19 +155,19 @@ type ComposerAnnotation = {
   endLine: number;
 };
 
-type DiagnosticAnnotation = {
+export type DiagnosticAnnotation = {
   type: "diagnostic";
   diagnostic: LspDiagnostic;
 };
 
-type PullRequestThreadAnnotation = {
+export type PullRequestThreadAnnotation = {
   type: "pull-request-thread";
   thread: PullRequestReviewThread;
   repoPath: string;
   pullRequestNumber: number;
 };
 
-type PullRequestAnchorAnnotation = {
+export type PullRequestAnchorAnnotation = {
   type: "pull-request-anchor";
   anchor: PullRequestReviewAnchor;
   repoPath: string;
@@ -194,6 +194,8 @@ export type RunningAction =
   | ""
   | "stage-all"
   | "unstage-all"
+  | "stage-files"
+  | "unstage-files"
   | "discard-changes"
   | "commit"
   | `file:stage:${string}`
