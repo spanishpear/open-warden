@@ -3,9 +3,6 @@ import { skipToken } from "@reduxjs/toolkit/query";
 import { useAppSelector } from "@/app/hooks";
 import { ResizableSidebarLayout } from "@/components/layout/ResizableSidebarLayout";
 import { DiffWorkspace } from "@/features/diff-view/DiffWorkspace";
-import { LspStatusNotice } from "@/features/lsp/components/LspStatusNotice";
-import { useCurrentLspDocument } from "@/features/lsp/hooks/useCurrentLspDocument";
-import { useDiffDiagnostics } from "@/features/lsp/hooks/useDiffDiagnostics";
 import { useGetFileVersionsQuery } from "@/features/source-control/api";
 import { ChangesSidebar } from "@/features/source-control/components/ChangesSidebar";
 import { useChangesKeyboardNav } from "@/features/source-control/hooks/useChangesKeyboardNav";
@@ -65,27 +62,11 @@ function ChangesDiffPane() {
   const newFile = fileVersions?.newFile ?? null;
   const errorMessage = fileVersions ? "" : errorMessageFrom(workingFileVersions.error, "");
   const previewPath = previewSelection?.path ?? "";
-  const lspText = !loadingPatch && newFile ? newFile.contents : null;
-  const lspHoverDocument =
-    activeRepo && previewPath && lspText !== null
-      ? { repoPath: activeRepo, relPath: previewPath }
-      : undefined;
-
-  useCurrentLspDocument(activeRepo, previewPath, lspText);
-
-  const lspDiagnostics = useDiffDiagnostics(activeRepo, previewPath);
-  const focusedLineNumber =
-    diffFocusTarget?.kind === "changes" && diffFocusTarget.path === previewPath
-      ? diffFocusTarget.lineNumber
-      : null;
-  const focusedLineIndex =
-    diffFocusTarget?.kind === "changes" && diffFocusTarget.path === previewPath
-      ? diffFocusTarget.lineIndex
-      : null;
-  const focusedLineKey =
-    diffFocusTarget?.kind === "changes" && diffFocusTarget.path === previewPath
-      ? diffFocusTarget.focusKey
-      : null;
+  const isFocusedPreviewPath =
+    diffFocusTarget?.kind === "changes" && diffFocusTarget.path === previewPath;
+  const focusedLineNumber = isFocusedPreviewPath ? diffFocusTarget.lineNumber : null;
+  const focusedLineIndex = isFocusedPreviewPath ? diffFocusTarget.lineIndex : null;
+  const focusedLineKey = isFocusedPreviewPath ? diffFocusTarget.focusKey : null;
 
   return (
     <div className="grid h-full min-h-0 min-w-0">
@@ -101,17 +82,13 @@ function ChangesDiffPane() {
             <div className="text-muted-foreground p-3 text-sm">No diff content.</div>
           ) : (
             <div className="flex h-full min-h-0 min-w-0 flex-col">
-              <LspStatusNotice repoPath={activeRepo} relPath={previewPath} active />
               <DiffWorkspace
                 oldFile={oldFile}
                 newFile={newFile}
                 activePath={previewPath}
                 commentContext={{ kind: "changes" }}
                 canComment
-                lspDiagnostics={lspDiagnostics}
                 fileViewerRevision={null}
-                lspHoverDocument={lspHoverDocument}
-                lspJumpContextKind="changes"
                 focusedLineNumber={focusedLineNumber}
                 focusedLineIndex={focusedLineIndex}
                 focusedLineKey={focusedLineKey}

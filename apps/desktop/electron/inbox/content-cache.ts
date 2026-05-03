@@ -5,7 +5,7 @@ import path from "node:path";
 import { app } from "electron";
 
 export const CONTENT_CACHE_ROOT = path.join(app.getPath("userData"), "open-warden-content-cache");
-export const DIFF_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+export const DIFF_CACHE_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 
 function resolveCachePath(key: string): string {
   return path.join(CONTENT_CACHE_ROOT, key);

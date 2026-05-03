@@ -23,9 +23,6 @@ describe("appSettings helpers", () => {
       sourceControl: {
         fileTreeRenderMode: "list",
       },
-      lsp: {
-        servers: {},
-      },
       inboxSectionVisibility: {
         NEEDS_REVIEW: true,
         WAITING_FOR_REVIEW: true,

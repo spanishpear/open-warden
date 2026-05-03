@@ -12,7 +12,6 @@ import type {
   HistoryNavTarget,
   RunningAction,
   SelectedFile,
-  SymbolPeekState,
 } from "./types";
 
 type SourceControlState = {
@@ -39,7 +38,6 @@ type SourceControlState = {
   reviewActivePath: string;
   diffFocusTarget: DiffFocusTarget | null;
   fileViewerTarget: FileViewerTarget | null;
-  symbolPeek: SymbolPeekState | null;
 };
 
 const initialState: SourceControlState = {
@@ -66,7 +64,6 @@ const initialState: SourceControlState = {
   reviewActivePath: "",
   diffFocusTarget: null,
   fileViewerTarget: null,
-  symbolPeek: null,
 };
 
 const sourceControlSlice = createSlice({
@@ -178,7 +175,6 @@ const sourceControlSlice = createSlice({
       state.reviewActivePath = "";
       state.diffFocusTarget = null;
       state.fileViewerTarget = null;
-      state.symbolPeek = null;
     },
     clearDiffSelection(state) {
       if (state.activePath !== "") {
@@ -252,41 +248,10 @@ const sourceControlSlice = createSlice({
         action.payload.returnToDiff?.kind === "pull-request" ? "pull-request" : "files";
       state.repoTreeActivePath = action.payload.relPath;
       state.fileViewerTarget = action.payload;
-      state.symbolPeek = null;
     },
     closeFileViewer(state) {
       if (state.fileViewerTarget !== null) {
         state.fileViewerTarget = null;
-      }
-    },
-    openSymbolPeek(state, action: PayloadAction<SymbolPeekState>) {
-      state.symbolPeek = action.payload;
-    },
-    closeSymbolPeek(state) {
-      if (state.symbolPeek !== null) {
-        state.symbolPeek = null;
-      }
-    },
-    setSymbolPeekActiveIndex(state, action: PayloadAction<number>) {
-      if (state.symbolPeek === null) {
-        return;
-      }
-
-      const nextIndex = Math.max(
-        0,
-        Math.min(action.payload, state.symbolPeek.locations.length - 1),
-      );
-      if (state.symbolPeek.activeIndex !== nextIndex) {
-        state.symbolPeek.activeIndex = nextIndex;
-      }
-    },
-    setSymbolPeekQuery(state, action: PayloadAction<string>) {
-      if (state.symbolPeek === null) {
-        return;
-      }
-
-      if (state.symbolPeek.query !== action.payload) {
-        state.symbolPeek.query = action.payload;
       }
     },
   },
@@ -323,10 +288,6 @@ export const {
   setReviewHeadRef,
   setDiffFocusTarget,
   openFileViewer,
-  openSymbolPeek,
-  closeSymbolPeek,
-  setSymbolPeekActiveIndex,
-  setSymbolPeekQuery,
 } = sourceControlSlice.actions;
 
 export const sourceControlReducer = sourceControlSlice.reducer;
@@ -357,4 +318,3 @@ export const selectReviewHeadRef = (state: RootState) => state.sourceControl.rev
 export const selectReviewActivePath = (state: RootState) => state.sourceControl.reviewActivePath;
 export const selectDiffFocusTarget = (state: RootState) => state.sourceControl.diffFocusTarget;
 export const selectFileViewerTarget = (state: RootState) => state.sourceControl.fileViewerTarget;
-export const selectSymbolPeek = (state: RootState) => state.sourceControl.symbolPeek;

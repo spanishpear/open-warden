@@ -36,9 +36,6 @@ describe("electron preload bridge", () => {
       sourceControl: {
         fileTreeRenderMode: "tree",
       },
-      lsp: {
-        servers: {},
-      },
     });
     invoke.mockResolvedValueOnce(["main"]);
 
@@ -75,47 +72,6 @@ describe("electron preload bridge", () => {
     await desktopBridge.getRepoFiles("/tmp/repo");
     expect(invoke).toHaveBeenCalledWith("desktop:invoke", "getRepoFiles", "/tmp/repo");
 
-    await desktopBridge.getLspHover({
-      repoPath: "/tmp/repo",
-      relPath: "src/main.ts",
-      line: 3,
-      character: 7,
-    });
-    expect(invoke).toHaveBeenCalledWith("desktop:invoke", "getLspHover", {
-      repoPath: "/tmp/repo",
-      relPath: "src/main.ts",
-      line: 3,
-      character: 7,
-    });
-
-    await desktopBridge.getLspDefinition({
-      repoPath: "/tmp/repo",
-      relPath: "src/main.ts",
-      line: 3,
-      character: 7,
-    });
-    expect(invoke).toHaveBeenCalledWith("desktop:invoke", "getLspDefinition", {
-      repoPath: "/tmp/repo",
-      relPath: "src/main.ts",
-      line: 3,
-      character: 7,
-    });
-
-    await desktopBridge.getLspReferences({
-      repoPath: "/tmp/repo",
-      relPath: "src/main.ts",
-      line: 3,
-      character: 7,
-      includeDeclaration: false,
-    });
-    expect(invoke).toHaveBeenCalledWith("desktop:invoke", "getLspReferences", {
-      repoPath: "/tmp/repo",
-      relPath: "src/main.ts",
-      line: 3,
-      character: 7,
-      includeDeclaration: false,
-    });
-
     await desktopBridge.getRepoFile({
       repoPath: "/tmp/repo",
       relPath: "src/main.ts",
@@ -132,12 +88,6 @@ describe("electron preload bridge", () => {
 
     unsubscribe();
     expect(removeListener).toHaveBeenCalledWith("desktop:update-state", expect.any(Function));
-
-    const unsubscribeLsp = desktopBridge.onLspDiagnostics(() => {});
-    expect(on).toHaveBeenCalledWith("desktop:lsp-diagnostics", expect.any(Function));
-
-    unsubscribeLsp();
-    expect(removeListener).toHaveBeenCalledWith("desktop:lsp-diagnostics", expect.any(Function));
 
     const unsubscribeSettings = desktopBridge.onAppSettingsChanged(() => {});
     expect(on).toHaveBeenCalledWith("desktop:app-settings-changed", expect.any(Function));

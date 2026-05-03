@@ -233,17 +233,6 @@ const browserDesktopApiCore = createDesktopApiWithDefaults({
     async getRepoFile() {
       return null;
     },
-    async syncLspDocument() {},
-    async closeLspDocument() {},
-    async getLspHover() {
-      return null;
-    },
-    async getLspDefinition() {
-      return [];
-    },
-    async getLspReferences() {
-      return [];
-    },
   } satisfies Partial<DesktopApi>,
 });
 
@@ -268,9 +257,6 @@ export const browserDesktopApi: DesktopBridge = {
     );
   },
   onUpdateState() {
-    return () => {};
-  },
-  onLspDiagnostics() {
     return () => {};
   },
   onAppSettingsChanged(listener) {
@@ -322,11 +308,6 @@ const unavailableDesktopApiCore = createDesktopApiWithDefaults({
     async resolveActivePullRequestForBranch() {
       return null;
     },
-    async syncLspDocument() {},
-    async closeLspDocument() {},
-    async getLspHover() {
-      return null;
-    },
   } satisfies Partial<DesktopApi>,
 });
 
@@ -345,9 +326,6 @@ export const unavailableDesktopApi: DesktopBridge = {
     return createRejectedUpdateActionResult("Automatic updates are unavailable right now.");
   },
   onUpdateState() {
-    return () => {};
-  },
-  onLspDiagnostics() {
     return () => {};
   },
   onAppSettingsChanged() {

@@ -10,7 +10,6 @@ type AnnotationRenderers = {
   "pull-request-thread"?: (
     data: Extract<DiffAnnotationItem, { type: "pull-request-thread" }>,
   ) => React.ReactNode;
-  diagnostic?: (data: Extract<DiffAnnotationItem, { type: "diagnostic" }>) => React.ReactNode;
   annotation?: (data: Extract<DiffAnnotationItem, { type: "annotation" }>) => React.ReactNode;
 };
 
@@ -27,8 +26,6 @@ export function useDiffAnnotationRenderer(renderers: AnnotationRenderers) {
           return renderers["pull-request-anchor"]?.(data) ?? null;
         case "pull-request-thread":
           return renderers["pull-request-thread"]?.(data) ?? null;
-        case "diagnostic":
-          return renderers.diagnostic?.(data) ?? null;
         case "annotation":
           return renderers.annotation?.(data) ?? null;
         default:

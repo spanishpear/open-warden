@@ -52,7 +52,6 @@ vi.mock("@/app/hooks", () => ({
         reviewHeadRef: "feature",
         reviewActivePath: "src/large-file.ts",
         fileViewerTarget: null,
-        symbolPeek: null,
       },
       comments: [],
     }),
@@ -85,9 +84,7 @@ describe("AppCommandPalette", () => {
     render(<AppCommandPalette open={false} onOpenChange={() => {}} />);
 
     expect(mocks.useGetBranchFilesQuery).not.toHaveBeenCalled();
-    expect(
-      screen.queryByPlaceholderText("Search files, commands, or commits..."),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText("Search files, commands, or commits...")).toBeNull();
   });
 
   test("mounts review data subscriptions when opened", () => {
@@ -101,8 +98,6 @@ describe("AppCommandPalette", () => {
     render(<AppCommandPalette open onOpenChange={() => {}} />);
 
     expect(mocks.useGetBranchFilesQuery).toHaveBeenCalledOnce();
-    expect(
-      screen.getByPlaceholderText("Search files, commands, or commits..."),
-    ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Search files, commands, or commits...")).not.toBeNull();
   });
 });

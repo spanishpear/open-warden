@@ -1,4 +1,4 @@
-import type { DesktopApi, LspDiagnosticsEvent } from "../src/platform/desktop/contracts";
+import type { DesktopApi } from "../src/platform/desktop/contracts";
 import { getAppSettingsPath, loadAppSettings, saveAppSettings } from "./appSettings";
 import {
   addPullRequestComment,
@@ -39,14 +39,8 @@ import {
   unstageAll,
   unstageFile,
 } from "./git";
-import { LspSessionManager } from "./lsp/sessionManager";
 import { checkAppExists, confirm, openPath, selectFolder } from "./system";
 import { loadWorkspaceSession, saveWorkspaceSession } from "./workspaceSession";
-
-let lspSessionManager = new LspSessionManager({
-  onDiagnostics: () => {},
-  loadAppSettings,
-});
 
 export const desktopApi: DesktopApi = {
   selectFolder,
@@ -94,22 +88,8 @@ export const desktopApi: DesktopApi = {
   discardAll,
   commitStaged,
   getRepoFile,
-  syncLspDocument: (input) => lspSessionManager.syncDocument(input),
-  closeLspDocument: (input) => lspSessionManager.closeDocument(input),
-  getLspHover: (input) => lspSessionManager.getHover(input),
-  getLspDefinition: (input) => lspSessionManager.getDefinition(input),
-  getLspReferences: (input) => lspSessionManager.getReferences(input),
 };
 
-export function configureDesktopApi(options: { onDiagnostics(event: LspDiagnosticsEvent): void }) {
-  void lspSessionManager.dispose();
-  lspSessionManager = new LspSessionManager({
-    // oxlint-disable-next-line typescript-eslint(unbound-method)
-    onDiagnostics: options.onDiagnostics,
-    loadAppSettings,
-  });
-}
+export function configureDesktopApi() {}
 
-export async function disposeDesktopApi() {
-  await lspSessionManager.dispose();
-}
+export async function disposeDesktopApi() {}

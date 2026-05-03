@@ -48,11 +48,6 @@ export const DESKTOP_API_METHODS = [
   "discardAll",
   "commitStaged",
   "getRepoFile",
-  "syncLspDocument",
-  "closeLspDocument",
-  "getLspHover",
-  "getLspDefinition",
-  "getLspReferences",
 ] as const satisfies readonly DesktopApiMethod[];
 
 type RegisteredDesktopApiMethod = (typeof DESKTOP_API_METHODS)[number];

@@ -15,6 +15,7 @@ import { Virtualizer } from "@pierre/diffs/react";
 import { InboxQuickFilters, type InboxFilter } from "@/features/inbox/components/InboxQuickFilters";
 import { InboxSectionSidebar } from "@/features/inbox/components/InboxSectionSidebar";
 import { useInboxNavigation } from "@/features/inbox/hooks/useInboxNavigation";
+import { useBackgroundInboxPrefetch } from "@/features/inbox/hooks/useBackgroundInboxPrefetch";
 import { errorMessageFrom } from "@/features/source-control/shared-utils/errorMessage";
 import { updateInboxSectionVisibility } from "@/features/settings/actions";
 
@@ -53,6 +54,7 @@ export function InboxScreen() {
   const [refreshInbox, { isLoading: isRefreshing }] = useRefreshInboxPullRequestsMutation();
 
   const { navigateToPreview, prefetchPRDetail } = useInboxNavigation();
+  useBackgroundInboxPrefetch();
 
   const [activeSection, setActiveSection] = useState<string>("NEEDS_REVIEW");
   const [searchText, setSearchText] = useState("");

@@ -132,7 +132,6 @@ export default function PullRequestFileList({
     onSelectPath: (path) => {
       dispatch(setPullRequestPreviewActiveFilePath(path));
     },
-    includeSymbolPeek: false,
   });
 
   const subtitle =

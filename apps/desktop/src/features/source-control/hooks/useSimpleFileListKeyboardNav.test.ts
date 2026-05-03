@@ -72,7 +72,6 @@ describe("useSimpleFileListKeyboardNav", () => {
         regionId: "review-files",
         getAllFilePaths: () => [],
         getActivePath: () => "",
-        includeSymbolPeek: false,
         onSelectPath,
       }),
     );
@@ -93,7 +92,6 @@ describe("useSimpleFileListKeyboardNav", () => {
         regionId: "review-files",
         getAllFilePaths: () => [],
         getActivePath: () => "",
-        includeSymbolPeek: false,
         onSelectPath,
       }),
     );
@@ -117,7 +115,6 @@ describe("useSimpleFileListKeyboardNav", () => {
         regionId: "review-files",
         getAllFilePaths: () => [],
         getActivePath: () => "",
-        includeSymbolPeek: false,
         onSelectPath,
       }),
     );

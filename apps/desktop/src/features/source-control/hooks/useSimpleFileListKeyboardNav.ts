@@ -1,12 +1,9 @@
 import { useStore } from "react-redux";
 
-import { useAppDispatch } from "@/app/hooks";
 import type { RootState } from "@/app/store";
 import { movePierreFileTreeFocusToFile } from "@/features/source-control/pierreFileTreeNavigation";
-import { setSymbolPeekActiveIndex } from "@/features/source-control/sourceControlSlice";
 import { isTypingTarget } from "@/features/source-control/utils";
 import { useVerticalNavigationHotkeys } from "./keyboardNavigation";
-import { getNextSymbolPeekIndex } from "./symbolPeekNavigation";
 
 type UseSimpleFileListKeyboardNavOptions = {
   regionId: string;
@@ -14,16 +11,13 @@ type UseSimpleFileListKeyboardNavOptions = {
   getActivePath: (state: RootState) => string;
   onSelectPath: (path: string) => void;
   enabled?: (state: RootState) => boolean;
-  includeSymbolPeek?: boolean;
 };
 
 export function useSimpleFileListKeyboardNav({
   regionId,
   onSelectPath,
   enabled,
-  includeSymbolPeek = true,
 }: UseSimpleFileListKeyboardNavOptions) {
-  const dispatch = useAppDispatch();
   const store = useStore<RootState>();
 
   useVerticalNavigationHotkeys({
@@ -39,15 +33,6 @@ export function useSimpleFileListKeyboardNav({
     const state = store.getState();
     if (enabled && !enabled(state)) {
       return;
-    }
-
-    if (includeSymbolPeek) {
-      const symbolPeekIndex = getNextSymbolPeekIndex(state, nextKey);
-      if (symbolPeekIndex !== null) {
-        event.preventDefault();
-        dispatch(setSymbolPeekActiveIndex(symbolPeekIndex));
-        return;
-      }
     }
 
     event.preventDefault();

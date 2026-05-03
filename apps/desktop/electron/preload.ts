@@ -5,7 +5,6 @@ import type { DesktopBridge } from "../src/platform/desktop/contracts";
 import {
   APP_SETTINGS_CHANGED_CHANNEL,
   DESKTOP_INVOKE_CHANNEL,
-  LSP_DIAGNOSTICS_CHANNEL,
   UPDATE_CHECK_CHANNEL,
   UPDATE_DOWNLOAD_CHANNEL,
   UPDATE_GET_STATE_CHANNEL,
@@ -36,21 +35,6 @@ const desktopBridge: DesktopBridge = {
     ipcRenderer.on(UPDATE_STATE_CHANNEL, wrappedListener);
     return () => {
       ipcRenderer.removeListener(UPDATE_STATE_CHANNEL, wrappedListener);
-    };
-  },
-  onLspDiagnostics: (listener) => {
-    const wrappedListener = (_event: Electron.IpcRendererEvent, event: unknown) => {
-      if (typeof event !== "object" || event === null) {
-        return;
-      }
-
-      // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
-      listener(event as Parameters<typeof listener>[0]);
-    };
-
-    ipcRenderer.on(LSP_DIAGNOSTICS_CHANNEL, wrappedListener);
-    return () => {
-      ipcRenderer.removeListener(LSP_DIAGNOSTICS_CHANNEL, wrappedListener);
     };
   },
   onAppSettingsChanged: (listener) => {

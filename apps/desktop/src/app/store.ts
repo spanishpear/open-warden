@@ -4,7 +4,6 @@ import { setupListeners } from "@reduxjs/toolkit/query";
 import { commentsClipboardReducer } from "@/features/comments/commentsClipboardSlice";
 import { desktopUpdateReducer } from "@/features/desktop-update/desktopUpdateSlice";
 import { hostedReposApi } from "@/features/hosted-repos/api";
-import { lspReducer } from "@/features/lsp/lspSlice";
 import { commentsReducer } from "@/features/comments/commentsSlice";
 import { pullRequestsReducer } from "@/features/pull-requests/pullRequestsSlice";
 import { settingsReducer } from "@/features/settings/settingsSlice";
@@ -15,7 +14,6 @@ export const store = configureStore({
   reducer: {
     settings: settingsReducer,
     desktopUpdate: desktopUpdateReducer,
-    lsp: lspReducer,
     sourceControl: sourceControlReducer,
     pullRequests: pullRequestsReducer,
     comments: commentsReducer,

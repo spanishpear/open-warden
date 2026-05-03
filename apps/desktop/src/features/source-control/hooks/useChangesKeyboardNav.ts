@@ -21,16 +21,20 @@ import {
   scrollPierreFileTreeBucketedFileIntoView,
 } from "@/features/source-control/pierreFileTreeNavigation";
 import { getUnifiedChangeDirectoryContext } from "@/features/source-control/components/changesUnifiedPierreTree";
-import type { Bucket, BucketedFile, FileItem } from "@/features/source-control/types";
+import type {
+  Bucket,
+  BucketedFile,
+  FileItem,
+  GitSnapshot,
+  SelectedFile,
+} from "@/features/source-control/types";
 import { isTypingTarget } from "@/features/source-control/utils";
 import {
   openFileViewer,
   setRepoTreeActivePath,
-  setSymbolPeekActiveIndex,
 } from "@/features/source-control/sourceControlSlice";
 import { getWrappedNavigationIndex } from "@/lib/keyboard-navigation";
 import { SOURCE_CONTROL_HOTKEY_OPTIONS, useVerticalNavigationHotkeys } from "./keyboardNavigation";
-import { getNextSymbolPeekIndex } from "./symbolPeekNavigation";
 
 function toBucketedFile(file: FileItem, bucket: Bucket) {
   return {
@@ -39,6 +43,45 @@ function toBucketedFile(file: FileItem, bucket: Bucket) {
     status: file.status,
     bucket,
   } satisfies BucketedFile;
+}
+
+function toBucketedFiles(files: FileItem[], bucket: Bucket) {
+  return files.map((file) => toBucketedFile(file, bucket));
+}
+
+function getSnapshotRows(snapshot: GitSnapshot | undefined) {
+  const stagedRows = toBucketedFiles(snapshot?.staged ?? [], "staged");
+  const changedRows = [
+    ...toBucketedFiles(snapshot?.unstaged ?? [], "unstaged"),
+    ...toBucketedFiles(snapshot?.untracked ?? [], "untracked"),
+  ];
+
+  return {
+    stagedRows,
+    changedRows,
+    snapshotRows: [...stagedRows, ...changedRows],
+  };
+}
+
+function getVisibleChangeRows(
+  visibleTreeRows: SelectedFile[],
+  stagedRows: BucketedFile[],
+  changedRows: BucketedFile[],
+  collapseStaged: boolean,
+  collapseUnstaged: boolean,
+) {
+  if (visibleTreeRows.length > 0) {
+    return visibleTreeRows;
+  }
+
+  const fallbackRows: BucketedFile[] = [];
+  if (!collapseStaged) {
+    fallbackRows.push(...stagedRows);
+  }
+  if (!collapseUnstaged) {
+    fallbackRows.push(...changedRows);
+  }
+  return fallbackRows;
 }
 
 export function useChangesKeyboardNav(mode: "changes" | "files") {
@@ -75,13 +118,6 @@ export function useChangesKeyboardNav(mode: "changes" | "files") {
   const navigateChanges = (event: KeyboardEvent, nextKey: boolean, extendSelection: boolean) => {
     if (isTypingTarget(event.target)) return;
 
-    const symbolPeekIndex = getNextSymbolPeekIndex(store.getState(), nextKey);
-    if (symbolPeekIndex !== null) {
-      event.preventDefault();
-      dispatch(setSymbolPeekActiveIndex(symbolPeekIndex));
-      return;
-    }
-
     event.preventDefault();
 
     const { activeBucket, activePath, activeRepo, collapseStaged, collapseUnstaged, snapshot } =
@@ -108,14 +144,7 @@ export function useChangesKeyboardNav(mode: "changes" | "files") {
       return;
     }
 
-    const unstaged = snapshot?.unstaged ?? [];
-    const staged = snapshot?.staged ?? [];
-    const untracked = snapshot?.untracked ?? [];
-    const stagedRows: BucketedFile[] = staged.map((file) => toBucketedFile(file, "staged"));
-    const changedRows: BucketedFile[] = [
-      ...unstaged.map((file) => toBucketedFile(file, "unstaged")),
-      ...untracked.map((file) => toBucketedFile(file, "untracked")),
-    ];
+    const { stagedRows, changedRows } = getSnapshotRows(snapshot);
 
     if (!extendSelection) {
       const targetFile = movePierreFileTreeFocusToFile("changes-files", nextKey);
@@ -131,15 +160,13 @@ export function useChangesKeyboardNav(mode: "changes" | "files") {
     }
 
     const visibleTreeRows = getPierreFileTreeVisibleSelectedFiles("changes-files");
-    const visibleChangeRows =
-      visibleTreeRows.length > 0
-        ? visibleTreeRows
-        : (() => {
-            const fallbackRows: BucketedFile[] = [];
-            if (!collapseStaged) fallbackRows.push(...stagedRows);
-            if (!collapseUnstaged) fallbackRows.push(...changedRows);
-            return fallbackRows;
-          })();
+    const visibleChangeRows = getVisibleChangeRows(
+      visibleTreeRows,
+      stagedRows,
+      changedRows,
+      collapseStaged,
+      collapseUnstaged,
+    );
 
     if (visibleChangeRows.length === 0) return;
 
@@ -172,16 +199,11 @@ export function useChangesKeyboardNav(mode: "changes" | "files") {
     if (mode !== "changes") return;
     if (runningAction) return;
 
+    const { stagedRows, changedRows } = getSnapshotRows(snapshot);
+
     const focusedFile = getPierreFileTreeFocusedSelectedFile("changes-files");
     const focusedPath = getPierreFileTreeFocusedPath("changes-files");
     if (!focusedFile && focusedPath) {
-      const stagedRows: BucketedFile[] = (snapshot?.staged ?? []).map((file) =>
-        toBucketedFile(file, "staged"),
-      );
-      const changedRows: BucketedFile[] = [
-        ...(snapshot?.unstaged ?? []).map((file) => toBucketedFile(file, "unstaged")),
-        ...(snapshot?.untracked ?? []).map((file) => toBucketedFile(file, "untracked")),
-      ];
       const directoryContext = getUnifiedChangeDirectoryContext(
         focusedPath,
         stagedRows,
@@ -218,11 +240,7 @@ export function useChangesKeyboardNav(mode: "changes" | "files") {
           : [];
     if (candidates.length === 0) return;
 
-    const snapshotRows: BucketedFile[] = [
-      ...(snapshot?.staged ?? []).map((file) => toBucketedFile(file, "staged")),
-      ...(snapshot?.unstaged ?? []).map((file) => toBucketedFile(file, "unstaged")),
-      ...(snapshot?.untracked ?? []).map((file) => toBucketedFile(file, "untracked")),
-    ];
+    const { snapshotRows } = getSnapshotRows(snapshot);
     const discardTargets = candidates
       .map((candidate) =>
         snapshotRows.find((row) => row.bucket === candidate.bucket && row.path === candidate.path),

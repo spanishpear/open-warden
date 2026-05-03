@@ -12,10 +12,8 @@ import {
   scrollPierreFileTreePathIntoView,
   scrollPierreFileTreeRealPathIntoView,
 } from "@/features/source-control/pierreFileTreeNavigation";
-import {
-  setHistoryNavTarget,
-  setSymbolPeekActiveIndex,
-} from "@/features/source-control/sourceControlSlice";
+import { setHistoryNavTarget } from "@/features/source-control/sourceControlSlice";
+import type { HistoryCommit } from "@/features/source-control/types";
 import { isTypingTarget } from "@/features/source-control/utils";
 import {
   focusKeyboardNavItem,
@@ -27,7 +25,24 @@ import {
   SOURCE_CONTROL_HOTKEY_OPTIONS,
   useVerticalNavigationHotkeys,
 } from "./keyboardNavigation";
-import { getNextSymbolPeekIndex } from "./symbolPeekNavigation";
+
+function matchesHistoryCommitFilter(commit: HistoryCommit, query: string) {
+  return (
+    commit.summary.toLowerCase().includes(query) ||
+    commit.shortId.toLowerCase().includes(query) ||
+    commit.commitId.toLowerCase().includes(query) ||
+    commit.author.toLowerCase().includes(query)
+  );
+}
+
+function filterHistoryCommits(commits: HistoryCommit[], historyFilter: string) {
+  const query = historyFilter.trim().toLowerCase();
+  if (!query) {
+    return commits;
+  }
+
+  return commits.filter((commit) => matchesHistoryCommitFilter(commit, query));
+}
 
 export function useHistoryKeyboardNav() {
   const dispatch = useAppDispatch();
@@ -56,13 +71,6 @@ export function useHistoryKeyboardNav() {
   const navigateHistory = (event: KeyboardEvent, nextKey: boolean) => {
     if (isTypingTarget(event.target)) return;
 
-    const symbolPeekIndex = getNextSymbolPeekIndex(store.getState(), nextKey);
-    if (symbolPeekIndex !== null) {
-      event.preventDefault();
-      dispatch(setSymbolPeekActiveIndex(symbolPeekIndex));
-      return;
-    }
-
     event.preventDefault();
 
     const { historyCommitId, historyNavTarget, historyFilter, allHistoryCommits } =
@@ -75,17 +83,7 @@ export function useHistoryKeyboardNav() {
       return;
     }
 
-    const query = historyFilter.trim().toLowerCase();
-    const filteredHistoryCommits = !query
-      ? allHistoryCommits
-      : allHistoryCommits.filter((commit) => {
-          return (
-            commit.summary.toLowerCase().includes(query) ||
-            commit.shortId.toLowerCase().includes(query) ||
-            commit.commitId.toLowerCase().includes(query) ||
-            commit.author.toLowerCase().includes(query)
-          );
-        });
+    const filteredHistoryCommits = filterHistoryCommits(allHistoryCommits, historyFilter);
 
     if (filteredHistoryCommits.length === 0) return;
 
@@ -107,17 +105,7 @@ export function useHistoryKeyboardNav() {
 
   const getFilteredHistoryCommits = () => {
     const { historyFilter, allHistoryCommits } = getNavigationData();
-    const query = historyFilter.trim().toLowerCase();
-    return !query
-      ? allHistoryCommits
-      : allHistoryCommits.filter((commit) => {
-          return (
-            commit.summary.toLowerCase().includes(query) ||
-            commit.shortId.toLowerCase().includes(query) ||
-            commit.commitId.toLowerCase().includes(query) ||
-            commit.author.toLowerCase().includes(query)
-          );
-        });
+    return filterHistoryCommits(allHistoryCommits, historyFilter);
   };
 
   const focusHistoryCommitList = () => {

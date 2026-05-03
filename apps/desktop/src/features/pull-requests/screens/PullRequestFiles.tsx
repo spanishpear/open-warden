@@ -420,7 +420,6 @@ function FilesDiffViewer({
           canComment={canComment}
           includeCurrentFileComments={false}
           fileViewerRevision={compareHeadRef || null}
-          lspJumpContextKind="pull-request"
           focusedLineNumber={focusedLineNumber}
           focusedLineIndex={focusedLineIndex}
           focusedLineKey={focusedLineKey}

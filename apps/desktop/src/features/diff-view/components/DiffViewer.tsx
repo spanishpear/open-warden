@@ -85,29 +85,6 @@ pre[data-diff-type='single'] {
   min-width: 0;
 }
 
-[data-lsp-diagnostic-token] {
-  text-decoration-line: underline;
-  text-decoration-style: wavy;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 2px;
-}
-
-[data-lsp-diagnostic-token='error'] {
-  text-decoration-color: rgb(220 38 38 / 0.95);
-}
-
-[data-lsp-diagnostic-token='warning'] {
-  text-decoration-color: rgb(217 119 6 / 0.95);
-}
-
-[data-lsp-diagnostic-token='information'] {
-  text-decoration-color: rgb(2 132 199 / 0.95);
-}
-
-[data-lsp-diagnostic-token='hint'] {
-  text-decoration-color: rgb(5 150 105 / 0.95);
-}
-
 [data-interactive-line-numbers] [data-column-number] {
   padding-left: 2.7ch;
 }

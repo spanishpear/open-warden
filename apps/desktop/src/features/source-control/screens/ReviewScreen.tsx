@@ -180,7 +180,6 @@ function ReviewDiffPane({
               commentContext={context}
               canComment
               fileViewerRevision={reviewHeadRef}
-              lspJumpContextKind="review"
               focusedLineNumber={focusedLineNumber}
               focusedLineIndex={focusedLineIndex}
               focusedLineKey={focusedLineKey}

@@ -7,7 +7,6 @@ import { configureDesktopApi, desktopApi, disposeDesktopApi } from "./desktop-ap
 import {
   APP_SETTINGS_CHANGED_CHANNEL,
   DESKTOP_INVOKE_CHANNEL,
-  LSP_DIAGNOSTICS_CHANNEL,
   UPDATE_CHECK_CHANNEL,
   UPDATE_DOWNLOAD_CHANNEL,
   UPDATE_GET_STATE_CHANNEL,
@@ -28,15 +27,7 @@ if (!gotSingleInstanceLock) {
   app.exit(0);
 }
 
-configureDesktopApi({
-  onDiagnostics(event) {
-    if (!mainWindow || mainWindow.isDestroyed()) {
-      return;
-    }
-
-    mainWindow.webContents.send(LSP_DIAGNOSTICS_CHANNEL, event);
-  },
-});
+configureDesktopApi();
 
 function resolveRendererUrl() {
   return process.env.VITE_DEV_SERVER_URL?.trim() || null;

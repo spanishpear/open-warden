@@ -5,9 +5,6 @@ import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { ResizableSidebarLayout } from "@/components/layout/ResizableSidebarLayout";
 import { DiffWorkspace } from "@/features/diff-view/DiffWorkspace";
 import { useGetPullRequestConversationQuery } from "@/features/hosted-repos/api";
-import { LspStatusNotice } from "@/features/lsp/components/LspStatusNotice";
-import { useCurrentLspDocument } from "@/features/lsp/hooks/useCurrentLspDocument";
-import { useDiffDiagnostics } from "@/features/lsp/hooks/useDiffDiagnostics";
 import ReviewCommentsCopyToolbar from "@/features/pull-requests/components/ReviewCopyBar";
 import { PullRequestFilesSidebar } from "@/features/pull-requests/components/PullRequestFilesSidebar";
 import { usePullRequestMentionCandidates } from "@/features/pull-requests/hooks/usePullRequestMentionCandidates";
@@ -110,14 +107,6 @@ function PullRequestDiffPane({
   const newFile = reviewVersions?.newFile ?? null;
   const loadingPatch = !reviewVersions && branchFileVersionsQuery.isLoading;
   const errorMessage = reviewVersions ? "" : errorMessageFrom(branchFileVersionsQuery.error, "");
-  const lspText = !loadingPatch && newFile ? newFile.contents : null;
-  const lspHoverDocument =
-    activeRepo && previewPath && lspText !== null
-      ? { repoPath: activeRepo, relPath: previewPath }
-      : undefined;
-  const lspDiagnostics = useDiffDiagnostics(activeRepo, previewPath ?? "");
-
-  useCurrentLspDocument(activeRepo, previewPath ?? "", lspText);
 
   const hasContent = oldFile || newFile;
 
@@ -136,7 +125,6 @@ function PullRequestDiffPane({
           <div className="text-muted-foreground p-3 text-sm">Select a file to view diff.</div>
         ) : (
           <div className="relative flex h-full min-h-0 min-w-0 flex-col" key="pr-diff-viewer">
-            <LspStatusNotice repoPath={activeRepo} relPath={previewPath ?? ""} active />
             <DiffWorkspace
               oldFile={oldFile}
               newFile={newFile}
@@ -144,10 +132,7 @@ function PullRequestDiffPane({
               commentContext={{ kind: "review", baseRef: reviewBaseRef, headRef: reviewHeadRef }}
               canComment
               includeCurrentFileComments={false}
-              lspDiagnostics={lspDiagnostics}
               fileViewerRevision={reviewHeadRef}
-              lspHoverDocument={lspHoverDocument}
-              lspJumpContextKind="pull-request"
               focusedLineNumber={focusedLineNumber}
               focusedLineIndex={focusedLineIndex}
               focusedLineKey={focusedLineKey}

@@ -11,9 +11,6 @@ import { DIFF_LINE_FOCUS_CSS, useDiffLineFocus } from "@/features/source-control
 import { selectFileViewerTarget } from "@/features/source-control/sourceControlSlice";
 import { getDiffTheme, getDiffThemeType } from "@/features/diff-view/diffRenderConfig";
 import { useGetRepoFileQuery } from "@/features/source-control/api";
-import { useCurrentLspDocument } from "@/features/lsp/hooks/useCurrentLspDocument";
-import { LspSymbolPeekContainer } from "@/features/lsp/components/LspSymbolPeek";
-import { useLspTokenNavigation } from "@/features/lsp/useLspTokenNavigation";
 import { navigateBackToDiffFromFileViewer } from "@/features/source-control/actions";
 import { errorMessageFrom } from "@/features/source-control/shared-utils/errorMessage";
 import type { DiffReturnTarget, FileViewerTarget } from "@/features/source-control/types";
@@ -89,15 +86,6 @@ export function GeneralFileViewer(props: GeneralFileViewerProps) {
   const errorMessage = file ? "" : errorMessageFrom(repoFileQuery.error, "");
   const selectedLine = target?.line && target.line > 0 ? target.line : null;
   const focusKey = target?.focusKey ?? null;
-  const lspText = file?.contents ?? null;
-  const { onTokenClick } = useLspTokenNavigation(
-    target ? { repoPath: target.repoPath, relPath: target.relPath } : undefined,
-    {
-      getReturnToDiffTarget: () => target?.returnToDiff ?? null,
-    },
-  );
-
-  useCurrentLspDocument(target?.repoPath ?? "", target?.relPath ?? "", lspText);
   useDiffLineFocus({
     containerRef: viewerRef,
     lineNumber: file ? selectedLine : null,
@@ -152,12 +140,7 @@ export function GeneralFileViewer(props: GeneralFileViewerProps) {
               unsafeCSS: FILE_VIEWER_CSS,
               disableLineNumbers: false,
               disableFileHeader: false,
-              onTokenClick,
             }}
-          />
-          <LspSymbolPeekContainer
-            document={target ? { repoPath: target.repoPath, relPath: target.relPath } : undefined}
-            containerRef={viewerRef}
           />
         </Virtualizer>
       </div>

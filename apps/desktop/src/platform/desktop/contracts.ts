@@ -333,86 +333,18 @@ export type WorkspaceSession = {
 
 export type FileTreeRenderMode = "tree" | "list";
 
-type LspServerSettings = {
-  command: string;
-  args: string[];
-  extensions?: string[];
-};
-
-type LspSettings = {
-  servers: Record<string, LspServerSettings>;
-};
-
 export type AppSettings = {
   version: 1;
   sourceControl: {
     fileTreeRenderMode: FileTreeRenderMode;
   };
-  lsp: LspSettings;
   inboxSectionVisibility?: Record<string, boolean>;
-};
-
-export type SyncLspDocumentInput = {
-  repoPath: string;
-  relPath: string;
-  text: string;
-};
-
-export type CloseLspDocumentInput = {
-  repoPath: string;
-  relPath: string;
-};
-
-export type GetLspHoverInput = {
-  repoPath: string;
-  relPath: string;
-  line: number;
-  character: number;
-};
-
-export type GetLspReferencesInput = GetLspHoverInput & {
-  includeDeclaration?: boolean;
 };
 
 type GetRepoFileInput = {
   repoPath: string;
   relPath: string;
   revision?: string | null;
-};
-
-export type LspDiagnosticSeverity = "error" | "warning" | "information" | "hint";
-
-export type LspDiagnostic = {
-  message: string;
-  severity: LspDiagnosticSeverity;
-  source: string | null;
-  code: string | null;
-  startLine: number;
-  startCharacter: number;
-  endLine: number;
-  endCharacter: number;
-};
-
-export type LspDiagnosticsEvent = {
-  repoPath: string;
-  relPath: string;
-  languageId: string | null;
-  diagnostics: LspDiagnostic[];
-  reason: string | null;
-};
-
-export type LspHoverResult = {
-  text: string;
-};
-
-export type LspLocation = {
-  repoPath: string;
-  relPath: string;
-  uri: string;
-  line: number;
-  character: number;
-  endLine: number;
-  endCharacter: number;
 };
 
 export type DesktopApi = {
@@ -480,11 +412,6 @@ export type DesktopApi = {
   discardAll(repoPath: string): Promise<void>;
   commitStaged(repoPath: string, message: string): Promise<string>;
   getRepoFile(input: GetRepoFileInput): Promise<DiffFile | null>;
-  syncLspDocument(input: SyncLspDocumentInput): Promise<void>;
-  closeLspDocument(input: CloseLspDocumentInput): Promise<void>;
-  getLspHover(input: GetLspHoverInput): Promise<LspHoverResult | null>;
-  getLspDefinition(input: GetLspHoverInput): Promise<LspLocation[]>;
-  getLspReferences(input: GetLspReferencesInput): Promise<LspLocation[]>;
 };
 
 type DesktopUpdateStatus =
@@ -527,12 +454,8 @@ type DesktopUpdateApi = {
   onUpdateState(listener: (state: DesktopUpdateState) => void): () => void;
 };
 
-type DesktopLspApi = {
-  onLspDiagnostics(listener: (event: LspDiagnosticsEvent) => void): () => void;
-};
-
 type DesktopSettingsApi = {
   onAppSettingsChanged(listener: (settings: AppSettings) => void): () => void;
 };
 
-export type DesktopBridge = DesktopApi & DesktopUpdateApi & DesktopLspApi & DesktopSettingsApi;
+export type DesktopBridge = DesktopApi & DesktopUpdateApi & DesktopSettingsApi;

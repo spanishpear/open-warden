@@ -34,7 +34,6 @@ export const desktop: DesktopBridge = {
   downloadUpdate: () => resolveDesktopApi().downloadUpdate(),
   installUpdate: () => resolveDesktopApi().installUpdate(),
   onUpdateState: (listener) => resolveDesktopApi().onUpdateState(listener),
-  onLspDiagnostics: (listener) => resolveDesktopApi().onLspDiagnostics(listener),
   onAppSettingsChanged: (listener) => resolveDesktopApi().onAppSettingsChanged(listener),
 };
 
@@ -54,10 +53,7 @@ export type {
   HostedRepoRef,
   InboxPullRequestsResult,
   HistoryCommit,
-  LspDiagnostic,
-  LspDiagnosticsEvent,
   FileTreeRenderMode,
-  LspLocation,
   PreparedPullRequestWorkspace,
   PreparePullRequestWorkspaceInput,
   ProviderConnection,

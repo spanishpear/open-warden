@@ -33,17 +33,11 @@ test("desktop API resolves Electron runtime lazily after import", async () => {
       sourceControl: {
         fileTreeRenderMode: "tree",
       },
-      lsp: {
-        servers: {},
-      },
     }),
     saveAppSettings: vi.fn().mockResolvedValue({
       version: 1,
       sourceControl: {
         fileTreeRenderMode: "tree",
-      },
-      lsp: {
-        servers: {},
       },
     }),
     getAppSettingsPath: vi.fn().mockResolvedValue("/tmp/settings.json"),
@@ -68,36 +62,16 @@ test("desktop API resolves Electron runtime lazily after import", async () => {
     discardAll: vi.fn(),
     commitStaged: vi.fn(),
     getRepoFile: vi.fn(),
-    syncLspDocument: vi.fn(),
-    closeLspDocument: vi.fn(),
-    getLspHover: vi.fn(),
-    getLspDefinition: vi.fn(),
-    getLspReferences: vi.fn(),
     getUpdateState: vi.fn(),
     checkForUpdates: vi.fn(),
     downloadUpdate: vi.fn(),
     installUpdate: vi.fn(),
     onUpdateState: vi.fn(() => () => {}),
-    onLspDiagnostics: vi.fn(() => () => {}),
     onAppSettingsChanged: vi.fn(() => () => {}),
   };
 
   await expect(desktop.selectFolder()).resolves.toEqual("/tmp/repo");
   expect(selectFolder).toHaveBeenCalledTimes(1);
-
-  await desktop.getLspHover({
-    repoPath: "/tmp/repo",
-    relPath: "src/app.ts",
-    line: 5,
-    character: 9,
-  });
-  // @ts-expect-error -- oxlint typescript
-  expect(window.desktopBridge.getLspHover).toHaveBeenCalledWith({
-    repoPath: "/tmp/repo",
-    relPath: "src/app.ts",
-    line: 5,
-    character: 9,
-  });
 
   await desktop.getRepoFile({
     repoPath: "/tmp/repo",
@@ -109,36 +83,6 @@ test("desktop API resolves Electron runtime lazily after import", async () => {
     repoPath: "/tmp/repo",
     relPath: "src/app.ts",
     revision: "HEAD",
-  });
-
-  await desktop.getLspDefinition({
-    repoPath: "/tmp/repo",
-    relPath: "src/app.ts",
-    line: 5,
-    character: 9,
-  });
-  // @ts-expect-error -- oxlint typescript
-  expect(window.desktopBridge.getLspDefinition).toHaveBeenCalledWith({
-    repoPath: "/tmp/repo",
-    relPath: "src/app.ts",
-    line: 5,
-    character: 9,
-  });
-
-  await desktop.getLspReferences({
-    repoPath: "/tmp/repo",
-    relPath: "src/app.ts",
-    line: 5,
-    character: 9,
-    includeDeclaration: false,
-  });
-  // @ts-expect-error -- oxlint typescript
-  expect(window.desktopBridge.getLspReferences).toHaveBeenCalledWith({
-    repoPath: "/tmp/repo",
-    relPath: "src/app.ts",
-    line: 5,
-    character: 9,
-    includeDeclaration: false,
   });
 
   await desktop.getRepoFiles("/tmp/repo");

@@ -1,29 +1,12 @@
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useMemo } from "react";
 
-import { useAppSelector } from "@/app/hooks";
 import type { MentionConfig } from "@/components/markdown/MarkdownEditor";
-import { DiagnosticTokenPopover } from "@/features/diff-view/components/DiagnosticTokenPopover";
 import { DiffHeaderMetadataControls } from "@/features/diff-view/components/DiffHeaderMetadataControls";
 import { PullRequestInlineAnchorAnnotation } from "@/features/pull-requests/components/PullRequestInlineAnchorAnnotation";
 import { PullRequestInlineReviewThread } from "@/features/pull-requests/components/PullRequestInlineReviewThread";
-import {
-  DiffLspHoverPopover,
-  type LspHoverDocument,
-  useDiffLspHover,
-} from "@/features/diff-view/useDiffLspHover";
-import { LspSymbolPeekContainer } from "@/features/lsp/components/LspSymbolPeek";
-import { useLspTokenNavigation } from "@/features/lsp/useLspTokenNavigation";
-import { selectActiveBucket, selectActiveRepo } from "@/features/source-control/sourceControlSlice";
-import type {
-  CommentContext,
-  DiffAnnotationItem,
-  DiffFile,
-  DiffReturnTarget,
-  LspDiagnostic,
-} from "@/features/source-control/types";
-import { DiffViewer, type DiffViewerHandle } from "@/features/diff-view/components/DiffViewer";
+import type { CommentContext, DiffAnnotationItem, DiffFile } from "@/features/source-control/types";
+import { DiffViewer } from "@/features/diff-view/components/DiffViewer";
 import { useDiffCommentAnnotations } from "@/features/diff-view/hooks/useDiffCommentAnnotations";
-import { useDiffDiagnostics } from "@/features/diff-view/hooks/useDiffDiagnostics";
 import { useDiffAnnotationRenderer } from "@/features/diff-view/hooks/useDiffAnnotationRenderer";
 import {
   type DiffLineAnnotation,
@@ -38,10 +21,7 @@ type Props = {
   activePath: string;
   commentContext: CommentContext;
   canComment: boolean;
-  lspDiagnostics?: LspDiagnostic[];
   fileViewerRevision?: string | null;
-  lspHoverDocument?: LspHoverDocument;
-  lspJumpContextKind?: "changes" | "review" | "pull-request";
   focusedLineNumber?: number | null;
   focusedLineIndex?: string | null;
   focusedLineKey?: number | string | null;
@@ -52,54 +32,6 @@ type Props = {
   hideHeaderMetadataControls?: boolean;
 };
 
-function buildReturnToDiffTarget(
-  jumpContextKind: "changes" | "review" | "pull-request",
-  source: { lineNumber: number; lineIndex: string | null },
-  activeRepo: string,
-  activePath: string,
-  commentContext: CommentContext,
-  activeBucket: "staged" | "unstaged" | "untracked",
-): DiffReturnTarget | null {
-  if (!activeRepo || !activePath || source.lineNumber <= 0) {
-    return null;
-  }
-
-  if (jumpContextKind === "pull-request") {
-    return {
-      kind: "pull-request",
-      repoPath: activeRepo,
-      path: activePath,
-      lineNumber: source.lineNumber,
-      lineIndex: source.lineIndex,
-    };
-  }
-
-  if (jumpContextKind === "changes") {
-    return {
-      kind: "changes",
-      repoPath: activeRepo,
-      path: activePath,
-      bucket: activeBucket,
-      lineNumber: source.lineNumber,
-      lineIndex: source.lineIndex,
-    };
-  }
-
-  if (commentContext.kind !== "review") {
-    return null;
-  }
-
-  return {
-    kind: "review",
-    repoPath: activeRepo,
-    path: activePath,
-    baseRef: commentContext.baseRef,
-    headRef: commentContext.headRef,
-    lineNumber: source.lineNumber,
-    lineIndex: source.lineIndex,
-  };
-}
-
 export function DiffWorkspace({
   oldFile,
   newFile,
@@ -107,10 +39,7 @@ export function DiffWorkspace({
   activePath,
   commentContext,
   canComment,
-  lspDiagnostics = [],
   fileViewerRevision,
-  lspHoverDocument,
-  lspJumpContextKind,
   focusedLineNumber = null,
   focusedLineIndex = null,
   focusedLineKey = null,
@@ -120,40 +49,6 @@ export function DiffWorkspace({
   disableFileHeader = false,
   hideHeaderMetadataControls = false,
 }: Props) {
-  const activeRepo = useAppSelector(selectActiveRepo);
-  const activeBucket = useAppSelector(selectActiveBucket);
-  const jumpContext = lspJumpContextKind ?? commentContext.kind;
-  const viewerRef = useRef<DiffViewerHandle | null>(null);
-
-  const getReturnToDiffTarget = useCallback(
-    (source: { lineNumber: number; lineIndex: string | null }) =>
-      buildReturnToDiffTarget(
-        jumpContext,
-        source,
-        activeRepo,
-        activePath,
-        commentContext,
-        activeBucket,
-      ),
-    [activeBucket, activePath, activeRepo, commentContext, jumpContext],
-  );
-
-  const lspResetKey = `${oldFile?.name ?? ""}-${newFile?.name ?? ""}`;
-  const {
-    hoverState,
-    onTokenClick: onHoverTokenClick,
-    popoverRef,
-  } = useDiffLspHover({
-    document: lspHoverDocument,
-    resetKey: lspResetKey,
-  });
-
-  const { onTokenClick: onNavigationTokenClick } = useLspTokenNavigation(lspHoverDocument, {
-    getReturnToDiffTarget,
-  });
-
-  const diagnostics = useDiffDiagnostics(lspDiagnostics);
-
   const comments = useDiffCommentAnnotations({
     activePath,
     commentContext,
@@ -161,19 +56,6 @@ export function DiffWorkspace({
     includeCurrentFileComments,
     commentMentions,
   });
-
-  const handleTokenClick = useCallback<
-    NonNullable<FileDiffOptions<DiffAnnotationItem>["onTokenClick"]>
-  >(
-    (props, event) => {
-      if (onHoverTokenClick(props, event)) {
-        return;
-      }
-
-      onNavigationTokenClick(props, event);
-    },
-    [onHoverTokenClick, onNavigationTokenClick],
-  );
 
   const renderAnnotation = useDiffAnnotationRenderer({
     composer: comments.renderCommentAnnotation,
@@ -209,23 +91,10 @@ export function DiffWorkspace({
       disableFileHeader,
       enableLineSelection: canComment,
       enableGutterUtility: canComment,
-      onTokenClick: handleTokenClick,
-      onTokenEnter: diagnostics.onTokenEnter,
-      onTokenLeave: diagnostics.onTokenLeave,
       onLineSelected: canComment ? comments.onLineSelected : undefined,
       onLineSelectionEnd: canComment ? comments.onLineSelectionEnd : undefined,
-      onPostRender: diagnostics.onPostRender,
     }),
-    [
-      canComment,
-      comments.onLineSelected,
-      comments.onLineSelectionEnd,
-      diagnostics.onPostRender,
-      diagnostics.onTokenEnter,
-      diagnostics.onTokenLeave,
-      disableFileHeader,
-      handleTokenClick,
-    ],
+    [canComment, comments.onLineSelected, comments.onLineSelectionEnd, disableFileHeader],
   );
 
   const renderHeaderMetadata = useCallback(
@@ -250,15 +119,7 @@ export function DiffWorkspace({
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-      <DiagnosticTokenPopover
-        open={diagnostics.popoverState.open}
-        anchorRect={diagnostics.popoverState.anchorRect}
-        diagnostics={diagnostics.popoverState.diagnostics}
-        {...diagnostics.popoverHandlers}
-      />
-      <DiffLspHoverPopover hoverState={hoverState} popoverRef={popoverRef} />
       <DiffViewer
-        ref={viewerRef}
         oldFile={oldFile}
         newFile={newFile}
         fileDiff={fileDiff}
@@ -271,16 +132,7 @@ export function DiffWorkspace({
         focusedLineNumber={focusedLineNumber}
         focusedLineIndex={focusedLineIndex}
         focusedLineKey={focusedLineKey}
-      >
-        <LspSymbolPeekContainer
-          document={lspHoverDocument}
-          containerRef={{
-            get current() {
-              return viewerRef.current?.getViewportElement() ?? null;
-            },
-          }}
-        />
-      </DiffViewer>
+      />
     </div>
   );
 }

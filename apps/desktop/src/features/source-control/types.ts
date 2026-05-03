@@ -7,8 +7,6 @@ import type {
   FileVersions as ContractFileVersions,
   GitSnapshot as ContractGitSnapshot,
   HistoryCommit as ContractHistoryCommit,
-  LspDiagnostic as ContractLspDiagnostic,
-  LspLocation as ContractLspLocation,
   RepoFileItem as ContractRepoFileItem,
   PullRequestReviewThread,
   GitProviderId,
@@ -27,8 +25,6 @@ export type FileBrowserMode = ContractAppSettings["sourceControl"]["fileTreeRend
 export type FileItem = ContractFileItem;
 
 export type RepoFileItem = ContractRepoFileItem;
-
-export type LspLocation = ContractLspLocation;
 
 export type BucketedFile = FileItem & { bucket: Bucket };
 
@@ -81,33 +77,9 @@ export type FileViewerTarget = {
   returnToDiff?: DiffReturnTarget | null;
 };
 
-export type SymbolPeekKind = "definitions" | "references";
-
-export type SymbolPeekSourceDocument = {
-  repoPath: string;
-  relPath: string;
-};
-
-export type SymbolPeekAnchor = {
-  lineNumber: number;
-  lineIndex: string | null;
-};
-
-export type SymbolPeekState = {
-  kind: SymbolPeekKind;
-  locations: LspLocation[];
-  activeIndex: number;
-  query: string;
-  sourceDocument: SymbolPeekSourceDocument;
-  anchor: SymbolPeekAnchor;
-  returnToDiff?: DiffReturnTarget | null;
-};
-
 export type ChangesSidebarMode = "changes" | "files" | "pull-requests" | "pull-request";
 
 export type HistoryCommit = ContractHistoryCommit;
-
-export type LspDiagnostic = ContractLspDiagnostic;
 
 export type SelectionRange = {
   start: number;
@@ -155,11 +127,6 @@ export type ComposerAnnotation = {
   endLine: number;
 };
 
-export type DiagnosticAnnotation = {
-  type: "diagnostic";
-  diagnostic: LspDiagnostic;
-};
-
 export type PullRequestThreadAnnotation = {
   type: "pull-request-thread";
   thread: PullRequestReviewThread;
@@ -180,7 +147,6 @@ export type PullRequestAnchorAnnotation = {
 export type DiffAnnotationItem =
   | CommentItem
   | ComposerAnnotation
-  | DiagnosticAnnotation
   | PullRequestThreadAnnotation
   | PullRequestAnchorAnnotation;
 

@@ -61,7 +61,6 @@ vi.mock("@/platform/desktop", () => ({
     downloadUpdate: vi.fn(),
     installUpdate: vi.fn(),
     onUpdateState: vi.fn(() => () => {}),
-    onLspDiagnostics: vi.fn(() => () => {}),
     onAppSettingsChanged: vi.fn(() => () => {}),
   },
 }));
