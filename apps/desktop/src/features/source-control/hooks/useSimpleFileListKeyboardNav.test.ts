@@ -9,7 +9,14 @@ const mocks = vi.hoisted(() => ({
   store: {
     getState: vi.fn(),
   },
-  useHotkey: vi.fn(),
+  useHotkey:
+    vi.fn<
+      (
+        key: string,
+        handler: (event: KeyboardEvent) => void,
+        options?: Record<string, unknown>,
+      ) => void
+    >(),
 }));
 
 vi.mock("@tanstack/react-hotkeys", () => ({
@@ -30,7 +37,7 @@ vi.mock("@/features/source-control/pierreFileTreeNavigation", () => ({
 
 function getHotkeyHandler(key: string) {
   const hotkeyCall = mocks.useHotkey.mock.calls.find((call) => call[0] === key);
-  return hotkeyCall?.[1] as ((event: KeyboardEvent) => void) | undefined;
+  return hotkeyCall?.[1];
 }
 
 function mockKeyboardEvent(overrides: Partial<KeyboardEvent> = {}): KeyboardEvent {

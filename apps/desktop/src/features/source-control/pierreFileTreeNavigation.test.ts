@@ -13,6 +13,13 @@ import {
   unregisterPierreFileTreeNav,
 } from "./pierreFileTreeNavigation";
 
+// Helper to create a mock PierreFileTreeModel without unsafe type assertions.
+// Object.create(null) returns `any`, so assigning to the declared return type
+// is accepted by TypeScript without an explicit `as` cast.
+function mockFileTreeModel(impl: Record<string, unknown>): PierreFileTreeModel {
+  return Object.assign(Object.create(null), impl);
+}
+
 function createModel(expansionState: Record<string, boolean> = {}) {
   const focusPath = vi.fn<(path: string) => void>();
   const focusNearestPath = vi.fn<(path: string | null) => string | null>(
@@ -29,13 +36,13 @@ function createModel(expansionState: Record<string, boolean> = {}) {
     };
   });
 
-  return {
+  return mockFileTreeModel({
     focusNearestPath,
     focusPath,
     getFocusedPath,
     getItem,
     getFileTreeContainer: () => undefined,
-  } as unknown as PierreFileTreeModel;
+  });
 }
 
 function createKeyboardNavigationModel(options: {
@@ -46,7 +53,10 @@ function createKeyboardNavigationModel(options: {
   let focusedPath = options.initialPath;
   const buttonsByPath = new Map<string, HTMLButtonElement>();
   const shadowRoot = document.createElement("div").attachShadow({ mode: "open" });
-  const host = shadowRoot.host as HTMLElement;
+  const host = shadowRoot.host;
+  if (!(host instanceof HTMLElement))
+    throw new Error("expected shadow root host to be HTMLElement");
+  const hostEl = host;
 
   const allPaths = [options.initialPath, ...options.nextPaths];
   for (const path of allPaths) {
@@ -82,9 +92,9 @@ function createKeyboardNavigationModel(options: {
 
   const directoryPaths = new Set(options.directoryPaths ?? []);
 
-  return {
+  return mockFileTreeModel({
     focusNearestPath: vi.fn((path: string | null) => path ?? options.initialPath),
-    getFileTreeContainer: () => host,
+    getFileTreeContainer: () => hostEl,
     getFocusedPath: () => focusedPath,
     getItem: vi.fn((path: string) =>
       directoryPaths.has(path)
@@ -93,7 +103,7 @@ function createKeyboardNavigationModel(options: {
           }
         : null,
     ),
-  } as unknown as PierreFileTreeModel;
+  });
 }
 
 describe("pierreFileTreeNavigation", () => {
@@ -132,14 +142,23 @@ describe("pierreFileTreeNavigation", () => {
   });
 
   it("focuses the Pierre tree path when scrolling into view", () => {
-    const model = createModel();
+    const focusPathFn = vi.fn<(path: string) => void>();
+    const model = mockFileTreeModel({
+      focusPath: focusPathFn,
+      focusNearestPath: vi.fn<(path: string | null) => string | null>(
+        (path) => path ?? "src/main.ts",
+      ),
+      getFocusedPath: vi.fn<() => string | null>(() => null),
+      getItem: vi.fn(() => null),
+      getFileTreeContainer: () => undefined,
+    });
     const regionId = "repo-files-test-scroll";
 
     registerPierreFileTreeNav(regionId, [{ path: "src/main.ts" }], model);
 
     scrollPierreFileTreePathIntoView(regionId, "src/main.ts");
 
-    expect(model.focusPath).toHaveBeenCalledWith("src/main.ts");
+    expect(focusPathFn).toHaveBeenCalledWith("src/main.ts");
 
     unregisterPierreFileTreeNav(regionId, model);
   });
@@ -151,15 +170,18 @@ describe("pierreFileTreeNavigation", () => {
     focusedButton.dataset.itemFocused = "true";
     const shadowRoot = document.createElement("div").attachShadow({ mode: "open" });
     shadowRoot.append(focusedButton);
-    const host = shadowRoot.host as HTMLElement;
+    const host = shadowRoot.host;
+    if (!(host instanceof HTMLElement))
+      throw new Error("expected shadow root host to be HTMLElement");
+    const hostEl = host;
     const keydownHandler = vi.fn<(event: KeyboardEvent) => void>();
     focusedButton.addEventListener("keydown", keydownHandler);
-    const model = {
+    const model = mockFileTreeModel({
       focusNearestPath: vi.fn(() => "src/main.ts"),
-      getFileTreeContainer: () => host,
+      getFileTreeContainer: () => hostEl,
       getFocusedPath: () => "src/main.ts",
       getItem: () => null,
-    } as unknown as PierreFileTreeModel;
+    });
     const regionId = "repo-files-test-move-focus";
 
     registerPierreFileTreeNav(regionId, [{ path: "src/main.ts" }], model);
@@ -213,18 +235,18 @@ describe("pierreFileTreeNavigation", () => {
   });
 
   it("returns the focused bucketed file from the registered tree", () => {
-    const stagedModel = {
+    const stagedModel = mockFileTreeModel({
       focusNearestPath: vi.fn(() => "staged.ts"),
       getFileTreeContainer: () => undefined,
       getFocusedPath: () => null,
       getItem: () => null,
-    } as unknown as PierreFileTreeModel;
-    const unstagedModel = {
+    });
+    const unstagedModel = mockFileTreeModel({
       focusNearestPath: vi.fn(() => "unstaged.ts"),
       getFileTreeContainer: () => undefined,
       getFocusedPath: () => "unstaged.ts",
       getItem: () => null,
-    } as unknown as PierreFileTreeModel;
+    });
     const regionId = "changes-files-test-focused-bucketed";
 
     registerPierreFileTreeNav(regionId, [{ bucket: "staged", path: "staged.ts" }], stagedModel);
@@ -250,22 +272,26 @@ describe("pierreFileTreeNavigation", () => {
     focusedButton.dataset.itemFocused = "true";
     const shadowRoot = document.createElement("div").attachShadow({ mode: "open" });
     shadowRoot.append(focusedButton);
-    const host = shadowRoot.host as HTMLElement;
+    const host = shadowRoot.host;
+    if (!(host instanceof HTMLElement))
+      throw new Error("expected shadow root host to be HTMLElement");
+    const hostEl = host;
     const keydownHandler = vi.fn<(event: KeyboardEvent) => void>();
     focusedButton.addEventListener("keydown", keydownHandler);
-    const stagedModel = {
+    const stagedModel = mockFileTreeModel({
       focusNearestPath: vi.fn(() => "staged.ts"),
-      getFileTreeContainer: () => host,
+      getFileTreeContainer: () => hostEl,
       getFocusedPath: () => "staged.ts",
       getItem: () => null,
-    } as unknown as PierreFileTreeModel;
-    const unstagedModel = {
-      focusPath: vi.fn<(path: string) => void>(),
+    });
+    const unstagedFocusPath = vi.fn<(path: string) => void>();
+    const unstagedModel = mockFileTreeModel({
+      focusPath: unstagedFocusPath,
       focusNearestPath: vi.fn(() => "unstaged.ts"),
       getFileTreeContainer: () => undefined,
       getFocusedPath: () => null,
       getItem: () => null,
-    } as unknown as PierreFileTreeModel;
+    });
     const regionId = "changes-files-test-cross-tree";
 
     registerPierreFileTreeNav(regionId, [{ bucket: "staged", path: "staged.ts" }], stagedModel);
@@ -277,7 +303,7 @@ describe("pierreFileTreeNavigation", () => {
 
     expect(movePierreFileTreeFocus(regionId, true)).toBe("unstaged.ts");
     expect(keydownHandler).toHaveBeenCalledTimes(1);
-    expect(unstagedModel.focusPath).toHaveBeenCalledWith("unstaged.ts");
+    expect(unstagedFocusPath).toHaveBeenCalledWith("unstaged.ts");
 
     unregisterPierreFileTreeNav(regionId, stagedModel);
     unregisterPierreFileTreeNav(regionId, unstagedModel);
@@ -291,16 +317,19 @@ describe("pierreFileTreeNavigation", () => {
     focusedButton.dataset.itemFocused = "true";
     const shadowRoot = document.createElement("div").attachShadow({ mode: "open" });
     shadowRoot.append(focusedButton);
-    const host = shadowRoot.host as HTMLElement;
+    const host = shadowRoot.host;
+    if (!(host instanceof HTMLElement))
+      throw new Error("expected shadow root host to be HTMLElement");
+    const hostEl = host;
     focusedButton.addEventListener("keydown", () => {
       focusedPath = "CHANGES";
     });
-    const model = {
+    const model = mockFileTreeModel({
       focusNearestPath: vi.fn((path: string | null) => path ?? "STAGED CHANGES/src/main.ts"),
-      getFileTreeContainer: () => host,
+      getFileTreeContainer: () => hostEl,
       getFocusedPath: () => focusedPath,
       getItem: () => null,
-    } as unknown as PierreFileTreeModel;
+    });
     const regionId = "changes-files-test-directory-row-move";
 
     registerPierreFileTreeNav(
@@ -326,16 +355,19 @@ describe("pierreFileTreeNavigation", () => {
     focusedButton.dataset.itemFocused = "true";
     const shadowRoot = document.createElement("div").attachShadow({ mode: "open" });
     shadowRoot.append(focusedButton);
-    const host = shadowRoot.host as HTMLElement;
+    const host = shadowRoot.host;
+    if (!(host instanceof HTMLElement))
+      throw new Error("expected shadow root host to be HTMLElement");
+    const hostEl = host;
     focusedButton.addEventListener("keydown", () => {
       focusedPath = "Trees, from Pierre.md";
     });
-    const stagedModel = {
+    const stagedModel = mockFileTreeModel({
       focusNearestPath: vi.fn((path: string | null) => path ?? "index.html"),
-      getFileTreeContainer: () => host,
+      getFileTreeContainer: () => hostEl,
       getFocusedPath: () => focusedPath,
       getItem: () => null,
-    } as unknown as PierreFileTreeModel;
+    });
     const unstagedModel = createModel();
     const regionId = "changes-files-test-last-row-move";
 
@@ -432,18 +464,18 @@ describe("pierreFileTreeNavigation", () => {
   });
 
   it("returns the bucket from the selected tree when paths overlap", () => {
-    const stagedModel = {
+    const stagedModel = mockFileTreeModel({
       focusNearestPath: vi.fn(() => "same.ts"),
       getFileTreeContainer: () => undefined,
       getFocusedPath: () => "same.ts",
       getItem: () => null,
-    } as unknown as PierreFileTreeModel;
-    const unstagedModel = {
+    });
+    const unstagedModel = mockFileTreeModel({
       focusNearestPath: vi.fn(() => "same.ts"),
       getFileTreeContainer: () => undefined,
       getFocusedPath: () => null,
       getItem: () => null,
-    } as unknown as PierreFileTreeModel;
+    });
     const regionId = "changes-files-test-overlapping-paths";
 
     registerPierreFileTreeNav(regionId, [{ bucket: "staged", path: "same.ts" }], stagedModel);

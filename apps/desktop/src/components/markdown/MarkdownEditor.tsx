@@ -438,16 +438,19 @@ function MentionDropdown({
   useEffect(() => {
     const list = listRef.current;
     if (!list) return;
-    // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
-    const item = list.children[activeIndex] as HTMLElement | undefined;
-    item?.scrollIntoView({ block: "nearest" });
+    const item = list.children[activeIndex];
+    if (item && item instanceof HTMLElement) {
+      item.scrollIntoView({ block: "nearest" });
+    }
   }, [activeIndex]);
 
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
-      // oxlint-disable-next-line typescript-eslint(no-unsafe-type-assertion)
-      if (listRef.current && !listRef.current.contains(event.target as Node)) {
-        onDismiss();
+      const target = event.target;
+      if (listRef.current) {
+        if (!(target instanceof Node) || !listRef.current.contains(target)) {
+          onDismiss();
+        }
       }
     };
     document.addEventListener("mousedown", handleClick);

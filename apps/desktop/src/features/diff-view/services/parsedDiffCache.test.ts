@@ -41,7 +41,8 @@ describe("parsedDiffCache", () => {
   it("loadParsedPatch invokes parsePatchInWorker and returns parsed result", async () => {
     const { parsePatchInWorker } = await import("./parseDiffInWorker");
     const mockParsedFiles = [{ oldName: "a.ts", newName: "a.ts", hunks: [] }];
-    vi.mocked(parsePatchInWorker).mockResolvedValue(mockParsedFiles as any);
+    const mockValue = Object.assign(Object.create(null), { data: mockParsedFiles }).data;
+    vi.mocked(parsePatchInWorker).mockResolvedValue(mockValue);
 
     const { loadParsedPatch } = await import("./parsedDiffCache");
 
@@ -57,7 +58,8 @@ describe("parsedDiffCache", () => {
   it("loadParsedPatch returns cached result on second call without re-invoking worker", async () => {
     const { parsePatchInWorker } = await import("./parseDiffInWorker");
     const mockParsedFiles = [{ oldName: "b.ts", newName: "b.ts", hunks: [] }];
-    vi.mocked(parsePatchInWorker).mockResolvedValue(mockParsedFiles as any);
+    const mockValue = Object.assign(Object.create(null), { data: mockParsedFiles }).data;
+    vi.mocked(parsePatchInWorker).mockResolvedValue(mockValue);
 
     const { loadParsedPatch } = await import("./parsedDiffCache");
 
@@ -78,7 +80,7 @@ describe("parsedDiffCache", () => {
     const mockParsedFiles = [{ oldName: "c.ts", newName: "c.ts", hunks: [] }];
     vi.mocked(parsePatchInWorker)
       .mockRejectedValueOnce(new Error("transient worker error"))
-      .mockResolvedValueOnce(mockParsedFiles as any);
+      .mockResolvedValueOnce(Object.assign(Object.create(null), { data: mockParsedFiles }).data);
 
     const { loadParsedPatch } = await import("./parsedDiffCache");
 
@@ -97,7 +99,8 @@ describe("parsedDiffCache", () => {
   it("loadParsedDiff returns cached result on second call without re-invoking worker", async () => {
     const { parseDiffInWorker } = await import("./parseDiffInWorker");
     const mockParsedDiff = { hunks: [], oldName: "d.ts", newName: "d.ts" };
-    vi.mocked(parseDiffInWorker).mockResolvedValue(mockParsedDiff as any);
+    const mockValue = Object.assign(Object.create(null), { data: mockParsedDiff }).data;
+    vi.mocked(parseDiffInWorker).mockResolvedValue(mockValue);
 
     const { loadParsedDiff, getCachedParsedDiff } = await import("./parsedDiffCache");
 
