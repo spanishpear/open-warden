@@ -15,6 +15,8 @@ const VIRTUALIZER_CONFIG = {
   intersectionObserverMargin: 1200,
 } as const;
 
+const HIGHLIGHT_READY_FALLBACK_MS = 250;
+
 import { useAppSelector } from "@/app/hooks";
 import { selectDiffStyle } from "@/features/source-control/sourceControlSlice";
 import { Button } from "@/components/ui/button";
@@ -34,6 +36,7 @@ import {
 } from "@/features/diff-view/diffRenderConfig";
 import { useParsedDiff } from "@/features/diff-view/hooks/useParsedDiff";
 import { MAX_DIFF_LINE_LENGTH } from "@/features/diff-view/services/diffRenderLimits";
+import { isPlainTextFileDiff } from "@/features/diff-view/utils/isPlainTextFileDiff";
 import { useDiffLineFocus, DIFF_LINE_FOCUS_CSS } from "@/features/source-control/diffLineFocus";
 import {
   type DiffLineAnnotation,
@@ -191,6 +194,12 @@ export const DiffViewer = forwardRef<DiffViewerHandle, DiffViewerProps>(function
       return;
     }
 
+    if (isPlainTextFileDiff(resolvedFileDiff)) {
+      highlightDiffRef.current = resolvedFileDiff;
+      setHighlightReady(true);
+      return;
+    }
+
     // If the worker pool already has this diff cached, render immediately.
     if (workerPool.getDiffResultCache(resolvedFileDiff)) {
       highlightDiffRef.current = resolvedFileDiff;
@@ -202,22 +211,29 @@ export const DiffViewer = forwardRef<DiffViewerHandle, DiffViewerProps>(function
     setHighlightReady(false);
     highlightDiffRef.current = resolvedFileDiff;
     const submittedDiff = resolvedFileDiff;
+    const fallbackTimer = window.setTimeout(() => {
+      if (highlightDiffRef.current === submittedDiff) {
+        setHighlightReady(true);
+      }
+    }, HIGHLIGHT_READY_FALLBACK_MS);
+    const finishHighlight = () => {
+      window.clearTimeout(fallbackTimer);
+      if (highlightDiffRef.current === submittedDiff) {
+        setHighlightReady(true);
+      }
+    };
     workerPool.highlightDiffAST(
       {
         __id: `prewarm-${Date.now()}`,
-        onHighlightSuccess: () => {
-          if (highlightDiffRef.current === submittedDiff) {
-            setHighlightReady(true);
-          }
-        },
-        onHighlightError: () => {
-          if (highlightDiffRef.current === submittedDiff) {
-            setHighlightReady(true);
-          }
-        },
+        onHighlightSuccess: finishHighlight,
+        onHighlightError: finishHighlight,
       },
       resolvedFileDiff,
     );
+
+    return () => {
+      window.clearTimeout(fallbackTimer);
+    };
   }, [resolvedFileDiff, workerPool]);
 
   const displayFileDiff = highlightReady ? resolvedFileDiff : null;

@@ -19,7 +19,6 @@ import {
   useGetBranchFileVersionsQuery,
 } from "@/features/source-control/api";
 import { GeneralFileViewer } from "@/features/source-control/components/GeneralFileViewer";
-import { useThrottledDiffSelection } from "@/features/source-control/hooks/useThrottledDiffSelection";
 import { errorMessageFrom } from "@/features/source-control/shared-utils/errorMessage";
 import type { FileItem } from "@/features/source-control/types";
 import type { GitProviderId, PullRequestConversation } from "@/platform/desktop";
@@ -62,14 +61,12 @@ function PullRequestDiffPane({
 }: PullRequestDiffPaneProps) {
   const reviewActivePath = useAppSelector((state) => state.sourceControl.reviewActivePath);
   const selectedReviewFile = branchFiles.find((file) => file.path === reviewActivePath);
-  const previewSelection = useThrottledDiffSelection(
-    reviewActivePath
-      ? {
-          path: reviewActivePath,
-          previousPath: selectedReviewFile?.previousPath ?? undefined,
-        }
-      : null,
-  );
+  const previewSelection = reviewActivePath
+    ? {
+        path: reviewActivePath,
+        previousPath: selectedReviewFile?.previousPath ?? undefined,
+      }
+    : null;
   const previewPath = previewSelection?.path ?? reviewActivePath;
   const commentMentions = usePullRequestMentionCandidates(conversation);
   const { anchorsByFile } = usePullRequestReviewAnchors({

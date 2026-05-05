@@ -1,3 +1,12 @@
+vi.mock("react", async () => {
+  const actual = await vi.importActual<typeof import("react")>("react");
+
+  return {
+    ...actual,
+    startTransition: mocks.startTransition,
+  };
+});
+
 import { renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 
@@ -6,6 +15,7 @@ import { useSimpleFileListKeyboardNav } from "./useSimpleFileListKeyboardNav";
 const mocks = vi.hoisted(() => ({
   dispatch: vi.fn(),
   movePierreFileTreeFocusToFile: vi.fn(),
+  startTransition: vi.fn((callback: () => void) => callback()),
   store: {
     getState: vi.fn(),
   },
@@ -58,6 +68,7 @@ describe("useSimpleFileListKeyboardNav", () => {
     vi.clearAllMocks();
     mocks.store.getState.mockReturnValue({});
     mocks.movePierreFileTreeFocusToFile.mockReturnValue(null);
+    mocks.startTransition.mockImplementation((callback: () => void) => callback());
   });
 
   it("selects the file real path when j moves to a file", () => {
@@ -80,6 +91,7 @@ describe("useSimpleFileListKeyboardNav", () => {
     getHotkeyHandler("J")?.(mockKeyboardEvent({ preventDefault, target: document.body }));
 
     expect(mocks.movePierreFileTreeFocusToFile).toHaveBeenCalledWith("review-files", true);
+    expect(mocks.startTransition).toHaveBeenCalledOnce();
     expect(preventDefault).toHaveBeenCalledOnce();
     expect(onSelectPath).toHaveBeenCalledWith("src/file.ts");
   });

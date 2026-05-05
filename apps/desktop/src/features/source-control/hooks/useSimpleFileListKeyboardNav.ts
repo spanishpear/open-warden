@@ -1,3 +1,4 @@
+import { startTransition } from "react";
 import { useStore } from "react-redux";
 
 import type { RootState } from "@/app/store";
@@ -42,6 +43,8 @@ export function useSimpleFileListKeyboardNav({
       return;
     }
 
-    onSelectPath(targetFile.realPath ?? targetFile.path);
+    startTransition(() => {
+      onSelectPath(targetFile.realPath ?? targetFile.path);
+    });
   }
 }

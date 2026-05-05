@@ -36,6 +36,7 @@ import FilesSidebar from "@/features/pull-requests/screens/PullRequestFileList";
 import { buildPullRequestAnchorAnnotations } from "@/features/pull-requests/utils/reviewAnchors";
 import { findParsedFileDiff } from "../utils/findParsedFileDiff";
 import { errorMessageFrom } from "@/features/source-control/shared-utils/errorMessage";
+import { isPlainTextFileDiff } from "@/features/diff-view/utils/isPlainTextFileDiff";
 import type {
   GitProviderId,
   PullRequestChangedFile,
@@ -289,6 +290,7 @@ function FilesDiffViewer({
     for (const file of parsedFiles) {
       const key = file.name;
       if (prewarmedRef.current.has(key)) continue;
+      if (isPlainTextFileDiff(file)) continue;
       if (workerPool.getDiffResultCache(file)) continue;
       prewarmedRef.current.add(key);
       workerPool.highlightDiffAST(
