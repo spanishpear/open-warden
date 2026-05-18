@@ -355,4 +355,32 @@ describe("electron git backend", () => {
       process.env.PATH = previousPath;
     }
   });
+
+  test("reads snapshot from a worktree linked to a bare repo", async () => {
+    // Create a bare repo
+    const bareDir = mkdtempSync(path.join(os.tmpdir(), "open-warden-bare-"));
+    tempDirs.push(bareDir);
+    git(bareDir, ["init", "--bare"]);
+
+    // Clone it as a normal repo so we can make a commit
+    const seedDir = mkdtempSync(path.join(os.tmpdir(), "open-warden-seed-"));
+    tempDirs.push(seedDir);
+    git(seedDir, ["clone", bareDir, "."]);
+    git(seedDir, ["config", "user.name", "OpenWarden Test"]);
+    git(seedDir, ["config", "user.email", "test@example.com"]);
+    writeFileSync(path.join(seedDir, "readme.txt"), "hello\n");
+    git(seedDir, ["add", "readme.txt"]);
+    git(seedDir, ["commit", "-m", "init"]);
+    git(seedDir, ["push", "origin", "HEAD"]);
+
+    // Add a worktree from the bare repo
+    const worktreeDir = mkdtempSync(path.join(os.tmpdir(), "open-warden-wt-"));
+    tempDirs.push(worktreeDir);
+    git(bareDir, ["worktree", "add", worktreeDir, "HEAD"]);
+
+    const snapshot = await getGitSnapshot(worktreeDir);
+
+    expect(realpathSync(snapshot.repoRoot)).toEqual(realpathSync(worktreeDir));
+    expect(snapshot.branch).not.toEqual("");
+  });
 });

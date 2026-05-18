@@ -301,8 +301,14 @@ function parseNameStatusOutput(output: Buffer) {
 }
 
 async function resolveRepoRoot(repoPath: string) {
-  const output = await runGit(repoPath, ["rev-parse", "--show-toplevel"]);
-  return decodeUtf8(output, "repository root").trim();
+  try {
+    const output = await runGit(repoPath, ["rev-parse", "--show-toplevel"], { allowFailure: true });
+    return decodeUtf8(output, "repository root").trim();
+  } catch {
+    // Worktrees linked to a bare repo have no traditional toplevel.
+    // The repoPath itself is the working tree root in that case.
+    return repoPath;
+  }
 }
 
 function parseHistoryOutput(output: Buffer) {

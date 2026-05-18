@@ -127,6 +127,7 @@ async function persistWorkspaceSession(getState: () => RootState) {
 }
 
 async function resolveRepoPath(repoPath: string): Promise<string | null> {
+  if (!repoPath.trim()) return null;
   try {
     const snapshot = await desktop.getGitSnapshot(repoPath);
     return snapshot.repoRoot.trim() || repoPath;
