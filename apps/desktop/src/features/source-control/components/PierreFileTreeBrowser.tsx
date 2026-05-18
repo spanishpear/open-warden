@@ -79,7 +79,7 @@ const TREE_HOST_STYLE: CSSProperties = {
   ["--trees-selected-fg-override" as string]: "var(--foreground)",
 };
 
-const TREE_UNSAFE_CSS = `
+export const TREE_UNSAFE_CSS = `
   [data-file-tree-virtualized-scroll='true'] {
     padding-block: 2px;
   }
@@ -88,18 +88,26 @@ const TREE_UNSAFE_CSS = `
     border-radius: 0;
   }
 
+  /*
+   * Decoration column holds the row badge (e.g. comment count "3 M").
+   * It must NOT steal width from the filename column, otherwise the Pierre
+   * middle-truncate widget collapses the filename to ugly ".......x" segments.
+   * Cap the column and let it clip + ellipsis instead.
+   */
   [data-item-section='decoration'] {
-    flex: 1 0 max-content;
-    min-width: max-content;
+    flex: 0 0 auto;
+    min-width: 0;
+    max-width: var(--owarden-tree-decoration-max-width, 96px);
     padding-inline: 4px 2px;
-    overflow: visible;
+    overflow: hidden;
   }
 
   [data-item-section='decoration'] > span {
-    min-width: max-content;
-    max-width: none;
-    overflow: visible;
-    text-overflow: clip;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-variant-numeric: tabular-nums;
   }
 `;
