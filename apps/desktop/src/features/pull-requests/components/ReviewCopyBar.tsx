@@ -1,6 +1,6 @@
 import { skipToken } from "@reduxjs/toolkit/query";
 import { useHotkey } from "@tanstack/react-hotkeys";
-import { Copy, MessageSquarePlus } from "lucide-react";
+import { CheckCircle2, Copy, MessageSquarePlus, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -125,9 +125,7 @@ function ReviewCommentsCopyToolbar({
             <TooltipTrigger asChild>
               <Button
                 size="xs"
-                disabled={
-                  totalPendingCommentCount === 0 || pendingActions.isSubmittingReviewComments
-                }
+                disabled={totalPendingCommentCount === 0 || pendingActions.isSubmittingReview}
                 onClick={() => {
                   void pendingActions.publishAllPendingDrafts();
                 }}
@@ -138,6 +136,58 @@ function ReviewCommentsCopyToolbar({
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">Publish all pending inline comments</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="xs"
+                variant="outline"
+                className="border-green-500/30 text-green-400 hover:bg-green-500/10 hover:text-green-300"
+                disabled={pendingActions.isSubmittingReview}
+                onClick={() => {
+                  void pendingActions.submitReviewDecision("APPROVE");
+                }}
+                aria-label={
+                  totalPendingCommentCount > 0
+                    ? "Approve pull request and publish pending comments"
+                    : "Approve pull request"
+                }
+              >
+                <CheckCircle2 />
+                Approve
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {totalPendingCommentCount > 0
+                ? "Publish pending comments and approve the pull request"
+                : "Approve the pull request"}
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="xs"
+                variant="outline"
+                className="border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                disabled={pendingActions.isSubmittingReview}
+                onClick={() => {
+                  void pendingActions.submitReviewDecision("REQUEST_CHANGES");
+                }}
+                aria-label={
+                  totalPendingCommentCount > 0
+                    ? "Request changes and publish pending comments"
+                    : "Request changes"
+                }
+              >
+                <XCircle />
+                Request changes
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {totalPendingCommentCount > 0
+                ? "Publish pending comments and request changes"
+                : "Request changes on the pull request"}
+            </TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>

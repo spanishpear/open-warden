@@ -21,6 +21,8 @@ import type {
   SetPullRequestThreadResolvedInput,
   SubmitPullRequestReviewCommentsInput,
   SubmitPullRequestReviewCommentsResult,
+  SubmitPullRequestReviewDecisionInput,
+  SubmitPullRequestReviewDecisionResult,
 } from "@/platform/desktop";
 
 export async function listProviderConnections() {
@@ -96,6 +98,13 @@ export async function submitPullRequestReviewComments(input: SubmitPullRequestRe
     input,
     // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
   ) as Promise<SubmitPullRequestReviewCommentsResult>;
+}
+
+export async function submitPullRequestReviewDecision(input: SubmitPullRequestReviewDecisionInput) {
+  return desktop.submitPullRequestReviewDecision(
+    input,
+    // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
+  ) as Promise<SubmitPullRequestReviewDecisionResult>;
 }
 
 export async function setPullRequestThreadResolved(input: SetPullRequestThreadResolvedInput) {

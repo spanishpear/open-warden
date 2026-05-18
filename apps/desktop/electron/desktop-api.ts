@@ -17,6 +17,7 @@ import {
   resolveHostedRepo,
   setPullRequestThreadResolved,
   submitPullRequestReviewComments,
+  submitPullRequestReviewDecision,
 } from "./hostedRepos";
 import { getInboxPullRequests, refreshInboxPullRequests } from "./inbox/orchestrator";
 import {
@@ -67,6 +68,7 @@ export const desktopApi: DesktopApi = {
   addPullRequestComment,
   replyToPullRequestThread,
   submitPullRequestReviewComments,
+  submitPullRequestReviewDecision,
   setPullRequestThreadResolved,
   preparePullRequestCompareRefs,
   preparePullRequestWorkspace,

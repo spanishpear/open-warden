@@ -67,6 +67,7 @@ export type {
   PullRequestOpenMode,
   PullRequestPerson,
   PullRequestReviewComment,
+  PullRequestReviewDecision,
   PullRequestReviewDraftCommentInput,
   PullRequestReviewThread,
   ListPullRequestsInput,
@@ -77,5 +78,7 @@ export type {
   SetPullRequestThreadResolvedInput,
   SubmitPullRequestReviewCommentsInput,
   SubmitPullRequestReviewCommentsResult,
+  SubmitPullRequestReviewDecisionInput,
+  SubmitPullRequestReviewDecisionResult,
   WorkspaceSession,
 } from "./contracts";

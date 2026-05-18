@@ -1,4 +1,5 @@
 import type {
+  PullRequestReviewDecision,
   PullRequestReviewDraftCommentInput,
   SubmitPullRequestReviewCommentsInput,
 } from "@/platform/desktop";
@@ -61,10 +62,12 @@ export function buildSubmitPullRequestReviewCommentsInput(args: {
   repoPath: string;
   pullRequestNumber: number;
   comments: CommentItem[];
+  reviewDecision?: PullRequestReviewDecision | null;
 }): SubmitPullRequestReviewCommentsInput {
   return {
     repoPath: args.repoPath,
     pullRequestNumber: args.pullRequestNumber,
     comments: args.comments.map(toPullRequestReviewDraftCommentInput),
+    ...(args.reviewDecision ? { reviewDecision: args.reviewDecision } : {}),
   };
 }

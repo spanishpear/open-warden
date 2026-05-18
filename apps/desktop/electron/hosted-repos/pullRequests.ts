@@ -1,11 +1,13 @@
 import type {
   AddPullRequestCommentInput,
+  HostedRepoRef,
   ListPullRequestsInput,
   PullRequestChangedFile,
   PullRequestConversation,
   PullRequestIssueComment,
   PullRequestLocatorInput,
   PullRequestPage,
+  PullRequestReviewDecision,
   PullRequestReviewDraftCommentInput,
   PullRequestReviewThread,
   PullRequestSummary,
@@ -14,6 +16,8 @@ import type {
   SetPullRequestThreadResolvedInput,
   SubmitPullRequestReviewCommentsInput,
   SubmitPullRequestReviewCommentsResult,
+  SubmitPullRequestReviewDecisionInput,
+  SubmitPullRequestReviewDecisionResult,
 } from "../../src/platform/desktop/contracts";
 import {
   bitbucketPullRequestPath,
@@ -162,6 +166,69 @@ function toGitHubReviewCommentInput(comment: PullRequestReviewDraftCommentInput)
           start_side: comment.startSide ?? comment.side,
         }),
   };
+}
+
+function toGitHubReviewEvent(decision: PullRequestReviewDecision): "APPROVE" | "REQUEST_CHANGES" {
+  if (decision === "APPROVE") {
+    return "APPROVE";
+  }
+
+  if (decision === "REQUEST_CHANGES") {
+    return "REQUEST_CHANGES";
+  }
+
+  throw new Error("UNAPPROVE is not a valid GitHub review event.");
+}
+
+async function applyGitHubReviewDecision(args: {
+  hostedRepo: HostedRepoRef;
+  token: string;
+  pullRequestNumber: number;
+  decision: PullRequestReviewDecision;
+  body?: string | null;
+}): Promise<void> {
+  if (args.decision === "UNAPPROVE") {
+    throw new Error("GitHub does not support removing a review decision through this action.");
+  }
+
+  await githubJsonRequest(
+    `/repos/${encodeURIComponent(args.hostedRepo.owner)}/${encodeURIComponent(args.hostedRepo.repo)}/pulls/${String(args.pullRequestNumber)}/reviews`,
+    args.token,
+    {
+      method: "POST",
+      body: {
+        event: toGitHubReviewEvent(args.decision),
+        ...(args.body ? { body: args.body } : {}),
+      },
+    },
+  );
+}
+
+async function applyBitbucketReviewDecision(args: {
+  hostedRepo: HostedRepoRef;
+  connection: Parameters<typeof bitbucketRequest>[1];
+  pullRequestNumber: number;
+  decision: PullRequestReviewDecision;
+}): Promise<void> {
+  const approvePath = `${bitbucketPullRequestPath(args.hostedRepo, args.pullRequestNumber)}/approve`;
+  const requestChangesPath = `${bitbucketPullRequestPath(args.hostedRepo, args.pullRequestNumber)}/request-changes`;
+
+  if (args.decision === "APPROVE") {
+    await bitbucketRequest<unknown>(approvePath, args.connection, {
+      method: "POST",
+      responseType: "json",
+    });
+  } else if (args.decision === "REQUEST_CHANGES") {
+    await bitbucketRequest<unknown>(requestChangesPath, args.connection, {
+      method: "POST",
+      responseType: "json",
+    });
+  } else {
+    await bitbucketRequest<unknown>(approvePath, args.connection, {
+      method: "DELETE",
+      responseType: "text",
+    });
+  }
 }
 
 function toBitbucketInline(comment: PullRequestReviewDraftCommentInput) {
@@ -568,16 +635,64 @@ export async function submitPullRequestReviewComments(
   input: SubmitPullRequestReviewCommentsInput,
 ): Promise<SubmitPullRequestReviewCommentsResult> {
   const comments = normalizePullRequestReviewComments(input.comments);
-  if (comments.length === 0) {
+  const reviewDecision = input.reviewDecision ?? null;
+
+  if (comments.length === 0 && !reviewDecision) {
     return {
       submittedDraftIds: [],
       failedDraftId: null,
       failedMessage: null,
+      reviewDecision: null,
+      reviewDecisionError: null,
     };
   }
 
   const { hostedRepo, connection } = await resolvePullRequestContext(input);
+
   if (hostedRepo.providerId === "github") {
+    // GitHub allows combining comments and a decision in a single review submission.
+    const reviewEvent =
+      reviewDecision === null || reviewDecision === "UNAPPROVE"
+        ? "COMMENT"
+        : toGitHubReviewEvent(reviewDecision);
+
+    if (reviewDecision === "UNAPPROVE" && comments.length === 0) {
+      return {
+        submittedDraftIds: [],
+        failedDraftId: null,
+        failedMessage: null,
+        reviewDecision: null,
+        reviewDecisionError:
+          "GitHub does not support removing a review decision through this action.",
+      };
+    }
+
+    if (comments.length === 0) {
+      try {
+        await applyGitHubReviewDecision({
+          hostedRepo,
+          token: connection.token,
+          pullRequestNumber: input.pullRequestNumber,
+          decision: reviewDecision ?? "APPROVE",
+        });
+        return {
+          submittedDraftIds: [],
+          failedDraftId: null,
+          failedMessage: null,
+          reviewDecision,
+          reviewDecisionError: null,
+        };
+      } catch (error) {
+        return {
+          submittedDraftIds: [],
+          failedDraftId: null,
+          failedMessage: null,
+          reviewDecision: null,
+          reviewDecisionError: errorMessageFromUnknown(error),
+        };
+      }
+    }
+
     const review = await githubJsonRequest<GitHubPullRequestReviewResponse>(
       `/repos/${encodeURIComponent(hostedRepo.owner)}/${encodeURIComponent(hostedRepo.repo)}/pulls/${String(input.pullRequestNumber)}/reviews`,
       connection.token,
@@ -599,7 +714,7 @@ export async function submitPullRequestReviewComments(
       {
         method: "POST",
         body: {
-          event: "COMMENT",
+          event: reviewEvent,
         },
       },
     );
@@ -608,6 +723,8 @@ export async function submitPullRequestReviewComments(
       submittedDraftIds: comments.map((comment) => comment.draftId),
       failedDraftId: null,
       failedMessage: null,
+      reviewDecision: reviewEvent === "COMMENT" ? null : reviewDecision,
+      reviewDecisionError: null,
     };
   }
 
@@ -633,19 +750,90 @@ export async function submitPullRequestReviewComments(
           submittedDraftIds,
           failedDraftId: comment.draftId,
           failedMessage: errorMessageFromUnknown(error),
+          reviewDecision: null,
+          reviewDecisionError: reviewDecision
+            ? "Skipped review decision because a comment failed to publish."
+            : null,
         };
       }
     }
 
-    return {
-      submittedDraftIds,
-      failedDraftId: null,
-      failedMessage: null,
-    };
+    if (!reviewDecision) {
+      return {
+        submittedDraftIds,
+        failedDraftId: null,
+        failedMessage: null,
+        reviewDecision: null,
+        reviewDecisionError: null,
+      };
+    }
+
+    try {
+      await applyBitbucketReviewDecision({
+        hostedRepo,
+        connection,
+        pullRequestNumber: input.pullRequestNumber,
+        decision: reviewDecision,
+      });
+      return {
+        submittedDraftIds,
+        failedDraftId: null,
+        failedMessage: null,
+        reviewDecision,
+        reviewDecisionError: null,
+      };
+    } catch (error) {
+      return {
+        submittedDraftIds,
+        failedDraftId: null,
+        failedMessage: null,
+        reviewDecision: null,
+        reviewDecisionError: errorMessageFromUnknown(error),
+      };
+    }
   }
 
   throw new Error(
     `${providerDisplayName(hostedRepo.providerId)} review comment submission is not supported yet.`,
+  );
+}
+
+export async function submitPullRequestReviewDecision(
+  input: SubmitPullRequestReviewDecisionInput,
+): Promise<SubmitPullRequestReviewDecisionResult> {
+  if (
+    input.decision !== "APPROVE" &&
+    input.decision !== "REQUEST_CHANGES" &&
+    input.decision !== "UNAPPROVE"
+  ) {
+    throw new Error(`Unsupported review decision: ${String(input.decision)}`);
+  }
+
+  const { hostedRepo, connection } = await resolvePullRequestContext(input);
+
+  if (hostedRepo.providerId === "github") {
+    await applyGitHubReviewDecision({
+      hostedRepo,
+      token: connection.token,
+      pullRequestNumber: input.pullRequestNumber,
+      decision: input.decision,
+      body: input.body ?? null,
+    });
+    return { decision: input.decision };
+  }
+
+  if (hostedRepo.providerId === "bitbucket") {
+    await applyBitbucketReviewDecision({
+      hostedRepo,
+      connection,
+      pullRequestNumber: input.pullRequestNumber,
+      decision: input.decision,
+    });
+    return { decision: input.decision };
+  }
+
+  throw new Error(
+    `${providerDisplayName(hostedRepo.providerId)} review decisions are not supported yet.`,
   );
 }
 

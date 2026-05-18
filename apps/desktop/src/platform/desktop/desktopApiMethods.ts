@@ -27,6 +27,7 @@ export const DESKTOP_API_METHODS = [
   "addPullRequestComment",
   "replyToPullRequestThread",
   "submitPullRequestReviewComments",
+  "submitPullRequestReviewDecision",
   "setPullRequestThreadResolved",
   "preparePullRequestCompareRefs",
   "preparePullRequestWorkspace",

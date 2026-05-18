@@ -294,14 +294,28 @@ export type PullRequestReviewDraftCommentInput = {
   startSide?: "LEFT" | "RIGHT" | null;
 };
 
+export type PullRequestReviewDecision = "APPROVE" | "REQUEST_CHANGES" | "UNAPPROVE";
+
 export type SubmitPullRequestReviewCommentsInput = PullRequestLocatorInput & {
   comments: PullRequestReviewDraftCommentInput[];
+  reviewDecision?: PullRequestReviewDecision | null;
 };
 
 export type SubmitPullRequestReviewCommentsResult = {
   submittedDraftIds: string[];
   failedDraftId: string | null;
   failedMessage: string | null;
+  reviewDecision: PullRequestReviewDecision | null;
+  reviewDecisionError: string | null;
+};
+
+export type SubmitPullRequestReviewDecisionInput = PullRequestLocatorInput & {
+  decision: PullRequestReviewDecision;
+  body?: string | null;
+};
+
+export type SubmitPullRequestReviewDecisionResult = {
+  decision: PullRequestReviewDecision;
 };
 
 export type SetPullRequestThreadResolvedInput = PullRequestLocatorInput & {
@@ -376,6 +390,9 @@ export type DesktopApi = {
   submitPullRequestReviewComments(
     input: SubmitPullRequestReviewCommentsInput,
   ): Promise<SubmitPullRequestReviewCommentsResult>;
+  submitPullRequestReviewDecision(
+    input: SubmitPullRequestReviewDecisionInput,
+  ): Promise<SubmitPullRequestReviewDecisionResult>;
   setPullRequestThreadResolved(
     input: SetPullRequestThreadResolvedInput,
   ): Promise<PullRequestReviewThread>;

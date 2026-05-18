@@ -105,4 +105,49 @@ describe("pendingReviewComments", () => {
       ],
     });
   });
+
+  it("omits reviewDecision when not provided", () => {
+    const built = buildSubmitPullRequestReviewCommentsInput({
+      repoPath: "/repo/a",
+      pullRequestNumber: 42,
+      comments: [],
+    });
+    expect(built).not.toHaveProperty("reviewDecision");
+  });
+
+  it("omits reviewDecision when explicitly null", () => {
+    const built = buildSubmitPullRequestReviewCommentsInput({
+      repoPath: "/repo/a",
+      pullRequestNumber: 42,
+      comments: [],
+      reviewDecision: null,
+    });
+    expect(built).not.toHaveProperty("reviewDecision");
+  });
+
+  it("includes reviewDecision when provided as APPROVE", () => {
+    const built = buildSubmitPullRequestReviewCommentsInput({
+      repoPath: "/repo/a",
+      pullRequestNumber: 42,
+      comments: [createComment({ id: "c1" })],
+      reviewDecision: "APPROVE",
+    });
+    expect(built.reviewDecision).toBe("APPROVE");
+    expect(built.comments).toHaveLength(1);
+  });
+
+  it("includes reviewDecision when provided as REQUEST_CHANGES with no comments", () => {
+    const built = buildSubmitPullRequestReviewCommentsInput({
+      repoPath: "/repo/a",
+      pullRequestNumber: 42,
+      comments: [],
+      reviewDecision: "REQUEST_CHANGES",
+    });
+    expect(built).toEqual({
+      repoPath: "/repo/a",
+      pullRequestNumber: 42,
+      comments: [],
+      reviewDecision: "REQUEST_CHANGES",
+    });
+  });
 });

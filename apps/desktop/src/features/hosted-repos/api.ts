@@ -18,6 +18,8 @@ import type {
   SetPullRequestThreadResolvedInput,
   SubmitPullRequestReviewCommentsInput,
   SubmitPullRequestReviewCommentsResult,
+  SubmitPullRequestReviewDecisionInput,
+  SubmitPullRequestReviewDecisionResult,
   InboxPullRequestsResult,
 } from "@/platform/desktop";
 import {
@@ -38,6 +40,7 @@ import {
   resolveHostedRepo,
   setPullRequestThreadResolved,
   submitPullRequestReviewComments,
+  submitPullRequestReviewDecision,
 } from "./services/hostedRepos";
 
 type ErrorResult = { message: string };
@@ -251,6 +254,23 @@ export const hostedReposApi = createApi({
       },
       invalidatesTags: (_result, _error, { repoPath, pullRequestNumber }) => [
         { type: "PullRequestConversation", id: `${repoPath}:${String(pullRequestNumber)}` },
+        { type: "InboxPullRequests", id: repoPath },
+      ],
+    }),
+    submitPullRequestReviewDecision: builder.mutation<
+      SubmitPullRequestReviewDecisionResult,
+      SubmitPullRequestReviewDecisionInput
+    >({
+      async queryFn(input) {
+        try {
+          return { data: await submitPullRequestReviewDecision(input) };
+        } catch (error) {
+          return { error: toErrorResult(error) };
+        }
+      },
+      invalidatesTags: (_result, _error, { repoPath, pullRequestNumber }) => [
+        { type: "PullRequestConversation", id: `${repoPath}:${String(pullRequestNumber)}` },
+        { type: "InboxPullRequests", id: repoPath },
       ],
     }),
     setPullRequestThreadResolved: builder.mutation<
@@ -288,4 +308,5 @@ export const {
   useResolveActivePullRequestForBranchQuery,
   useSetPullRequestThreadResolvedMutation,
   useSubmitPullRequestReviewCommentsMutation,
+  useSubmitPullRequestReviewDecisionMutation,
 } = hostedReposApi;
