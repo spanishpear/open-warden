@@ -47,10 +47,12 @@ function ensureRunDir() {
   }
 }
 
-// Resolve a true `false` only when the TCP port is not accepting connections.
-function checkPort(port) {
+// Resolve `false` only when nothing is accepting on the port. Vite binds
+// `localhost`, which can resolve to IPv6 (::1) while Electron/CDP listens on
+// IPv4 (127.0.0.1), so probe both and succeed if either accepts.
+function checkHostPort(host, port) {
   return new Promise((resolve) => {
-    const socket = createConnection({ host: "127.0.0.1", port });
+    const socket = createConnection({ host, port });
     const done = (open) => {
       socket.destroy();
       resolve(open);
@@ -60,6 +62,11 @@ function checkPort(port) {
     socket.once("timeout", () => done(false));
     socket.once("error", () => done(false));
   });
+}
+
+async function checkPort(port) {
+  const results = await Promise.all([checkHostPort("127.0.0.1", port), checkHostPort("::1", port)]);
+  return results.some(Boolean);
 }
 
 function readMeta() {
