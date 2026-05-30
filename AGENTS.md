@@ -1,50 +1,41 @@
 # Agent Engineering Rules
 
+## Running the app for development
+
+**Never run `pnpm dev:electron` or `pnpm dev` directly.** They block the
+foreground; re-running them spawns duplicate stacks that fight the
+single-instance lock (the window keeps popping to the foreground) and drop the
+CDP session `agent-browser` needs.
+
+Use the idempotent orchestrator (`scripts/agent-app.mjs`). It guarantees exactly
+one backgrounded dev stack, tracks it via `.dev/agent-app.pid`, and streams logs
+to `.dev/agent-app.log`:
+
+```bash
+pnpm app:up        # bring the stack up (no-op if already healthy)
+pnpm app:status    # dev-server + CDP health (exit 0 = healthy)
+pnpm app:logs      # recent logs
+pnpm app:restart   # down then up — use after editing electron/ main-process code
+pnpm app:down      # stop and free ports 1420 / 9222
+pnpm app:browser   # renderer-only browser fallback (no Electron)
+```
+
 ## Browser Automation with agent-browser
 
-Two modes are available depending on whether you need native Electron APIs or just the web UI.
+The installed `agent-browser` is **0.26.0**. Two modes:
 
-### Browser Mode (Web UI)
+### Electron Mode (default — full app via CDP)
 
-For UI layout, styling, and component work without Electron.
-
-```bash
-pnpm dev
-```
-
-This starts the Vite renderer at `http://localhost:1420` with `VITE_DESKTOP_FALLBACK=browser`. Native Electron APIs are replaced with browser fallbacks: folder selection uses `window.prompt()`, git operations return mock/empty data.
-
-Connect agent-browser directly:
+`pnpm app:up` runs the full Electron app with `--remote-debugging-port=9222`,
+giving real native dialogs, git operations, and Bitbucket IPC. Connect over CDP
+(the command is `connect`, **not** `cdp connect`):
 
 ```bash
-agent-browser open http://localhost:1420
-agent-browser snapshot -i           # see interactive elements
-agent-browser click @e9             # click an element by ref
-agent-browser screenshot out.png    # capture the result
-```
-
-`window.prompt()` is a blocking native dialog that agent-browser cannot interact with. To automate past it, override prompt before clicking:
-
-```bash
-agent-browser eval 'window.prompt = () => "/tmp/test-repo"'
-agent-browser click @e5  # now the click completes instantly
-```
-
-### Electron Mode (Desktop App via CDP)
-
-For full integration testing with native dialogs, git operations, and file system access.
-
-```bash
-pnpm dev:electron
-```
-
-This launches Electron with `--remote-debugging-port=9222` automatically. Connect agent-browser to the running app:
-
-```bash
-agent-browser cdp connect http://localhost:9222
-
-# Or start a session directly
-agent-browser session new --cdp-url http://localhost:9222
+agent-browser connect http://localhost:9222
+agent-browser snapshot -i           # interactive elements with @refs
+agent-browser click @e9             # click by ref
+agent-browser screenshot out.png    # capture
+agent-browser get url               # confirm current route
 ```
 
 Use the `electron` skill for Electron-specific patterns:
@@ -53,19 +44,37 @@ Use the `electron` skill for Electron-specific patterns:
 agent-browser skills get electron
 ```
 
+### Browser Mode (renderer-only)
+
+For pure UI layout/styling work without Electron, `pnpm app:browser` serves the
+Vite renderer at `http://localhost:1420` with `VITE_DESKTOP_FALLBACK=browser`:
+native APIs are mocked (folder selection uses `window.prompt()`, git ops return
+empty data).
+
+```bash
+agent-browser open http://localhost:1420
+```
+
+`window.prompt()` is a blocking native dialog agent-browser cannot interact with.
+Override it before clicking:
+
+```bash
+agent-browser eval 'window.prompt = () => "/tmp/test-repo"'
+agent-browser click @e5
+```
+
 ### Chrome DevTools (manual inspection)
 
 Open `chrome://inspect` in Chrome, click **"Configure..."**, add `localhost:9222`. The Electron app will appear under **Remote Targets**.
 
 ### Quick Reference
 
-| What        | Browser Mode                               | Electron Mode                                     |
-| ----------- | ------------------------------------------ | ------------------------------------------------- |
-| Start       | `pnpm dev`                                 | `pnpm dev:electron`                               |
-| URL         | `http://localhost:1420`                    | CDP on `http://localhost:9222`                    |
-| Connect     | `agent-browser open http://localhost:1420` | `agent-browser cdp connect http://localhost:9222` |
-| Native APIs | Browser fallbacks (mock data)              | Full Electron APIs                                |
-| Best for    | UI layout, styling, component work         | Full integration, git ops, native dialogs         |
+| What        | Browser Mode (`pnpm app:browser`)          | Electron Mode (`pnpm app:up`)                 |
+| ----------- | ------------------------------------------ | --------------------------------------------- |
+| URL         | `http://localhost:1420`                    | CDP on `http://localhost:9222`                |
+| Connect     | `agent-browser open http://localhost:1420` | `agent-browser connect http://localhost:9222` |
+| Native APIs | Browser fallbacks (mock data)              | Full Electron APIs                            |
+| Best for    | UI layout, styling, component work         | Full integration, git ops, native dialogs     |
 
 - Use `@tanstack/react-hotkeys` for keyboard shortcuts in the desktop app.
 - Do not use React memoization as a render escape hatch (`React.memo`, `useMemo`, `useCallback`) to mask render flow problems.

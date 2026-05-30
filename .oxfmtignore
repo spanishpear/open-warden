@@ -6,6 +6,9 @@ node_modules
 out
 .turbo
 .vite
+.dev
+.agents
+.claude
 playwright-report
 test-results
 *.tsbuildinfo
