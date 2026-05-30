@@ -14,7 +14,7 @@ describe("InboxQuickFilters", () => {
       />,
     );
 
-    const input = screen.getByPlaceholderText("Filter PRs...");
+    const input = screen.getByTestId("inbox-search-input");
     expect(input).toBeInTheDocument();
   });
 
@@ -29,7 +29,7 @@ describe("InboxQuickFilters", () => {
       />,
     );
 
-    const input = screen.getByPlaceholderText("Filter PRs...");
+    const input = screen.getByTestId("inbox-search-input");
     fireEvent.change(input, { target: { value: "bug" } });
     expect(onSearchChange).toHaveBeenCalledWith("bug");
   });

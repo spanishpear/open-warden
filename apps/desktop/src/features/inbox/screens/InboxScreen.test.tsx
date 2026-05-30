@@ -28,6 +28,7 @@ vi.mock("@/app/hooks", () => ({
     selector: (state: {
       sourceControl: { activeRepo: string | null };
       settings: { appSettings: { inboxSectionVisibility?: Record<string, boolean> } };
+      inbox: { selectedPRId: string | null };
     }) => unknown,
   ) =>
     selector({
@@ -38,6 +39,9 @@ vi.mock("@/app/hooks", () => ({
         appSettings: {
           inboxSectionVisibility: undefined,
         },
+      },
+      inbox: {
+        selectedPRId: null,
       },
     }),
   useAppDispatch: () => vi.fn(),
@@ -69,6 +73,13 @@ vi.mock("@/features/inbox/hooks/useInboxNavigation", () => ({
     launchReviewer: vi.fn(),
     prefetchPRDetail: mocks.prefetchPRDetail,
   }),
+}));
+
+// The keyboard-nav hook reads the store imperatively and binds hotkeys; neither
+// matters for these render-focused tests, so stub them out.
+vi.mock("@tanstack/react-hotkeys", () => ({ useHotkey: vi.fn() }));
+vi.mock("react-redux", () => ({
+  useStore: () => ({ getState: () => ({ inbox: { selectedPRId: null } }) }),
 }));
 
 function createPullRequest(overrides: Partial<PullRequestSummary> = {}): PullRequestSummary {

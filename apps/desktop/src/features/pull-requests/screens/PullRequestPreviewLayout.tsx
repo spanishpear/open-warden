@@ -1,6 +1,9 @@
 import { FileCode2, GitPullRequest, MessagesSquare, ShieldCheck } from "lucide-react";
+import { useState } from "react";
 import { Outlet, useLocation, useNavigate, useParams } from "react-router";
+import { usePullRequestReviewHotkeys } from "@/features/pull-requests/hooks/usePullRequestReviewHotkeys";
 import { buildPullRequestPreviewPath } from "@/features/pull-requests/utils";
+import { ShortcutsHelpOverlay } from "@/features/shortcuts/ShortcutsHelpOverlay";
 import type { GitProviderId } from "@/platform/desktop";
 
 export type PreviewTab = "overview" | "conversation" | "files" | "checks";
@@ -43,6 +46,8 @@ export function PullRequestPreviewLayout() {
     parsedPullRequestNumber > 0,
   );
 
+  const [helpOpen, setHelpOpen] = useState(false);
+
   const handleTabChange = (tab: PreviewTab) => {
     if (!hasValidRoute || !providerId || !owner || !repo) {
       return;
@@ -61,12 +66,21 @@ export function PullRequestPreviewLayout() {
     navigate(nextPath);
   };
 
+  usePullRequestReviewHotkeys({
+    onBack: () => {
+      // oxlint-disable-next-line typescript-eslint(no-floating-promises)
+      navigate("/inbox");
+    },
+    onToggleHelp: () => setHelpOpen((open) => !open),
+  });
+
   return (
     <div className="flex h-full min-h-0">
       <PullRequestPreviewModeRail onTabChange={handleTabChange} />
       <div className="min-w-0 flex-1 h-full">
         <Outlet />
       </div>
+      <ShortcutsHelpOverlay open={helpOpen} onOpenChange={setHelpOpen} />
     </div>
   );
 }

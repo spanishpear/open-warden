@@ -12,13 +12,23 @@ import {
 } from "@/features/hosted-repos/api";
 import { InboxPRRow } from "@/features/inbox/components/InboxPRRow";
 import { Virtualizer } from "@pierre/diffs/react";
-import { InboxQuickFilters, type InboxFilter } from "@/features/inbox/components/InboxQuickFilters";
+import {
+  INBOX_SEARCH_INPUT_ID,
+  InboxQuickFilters,
+  type InboxFilter,
+} from "@/features/inbox/components/InboxQuickFilters";
 import { InboxSectionSidebar } from "@/features/inbox/components/InboxSectionSidebar";
 import { useInboxNavigation } from "@/features/inbox/hooks/useInboxNavigation";
+import { useInboxKeyboardNav } from "@/features/inbox/hooks/useInboxKeyboardNav";
 import { useBackgroundInboxPrefetch } from "@/features/inbox/hooks/useBackgroundInboxPrefetch";
+import { ShortcutsHelpOverlay } from "@/features/shortcuts/ShortcutsHelpOverlay";
 import { errorMessageFrom } from "@/features/source-control/shared-utils/errorMessage";
 import { updateInboxSectionVisibility } from "@/features/settings/actions";
-import type { InboxBackgroundWorkMetadata, InboxCacheScopeMetadata } from "@/platform/desktop";
+import type {
+  InboxBackgroundWorkMetadata,
+  InboxCacheScopeMetadata,
+  PullRequestSummary,
+} from "@/platform/desktop";
 
 const ORDERED_SECTIONS = [
   "NEEDS_REVIEW",
@@ -242,21 +252,55 @@ export function InboxScreen() {
             </div>
           ) : null}
 
-          <Virtualizer
-            config={{ overscrollSize: 400, intersectionObserverMargin: 800 }}
-            className="flex-1 overflow-y-auto px-2 py-2"
-          >
-            {filteredPRs.map((pr) => (
-              <InboxPRRow
-                key={pr.id}
-                pr={pr}
-                onClick={navigateToPreview}
-                onMouseEnter={prefetchPRDetail}
-              />
-            ))}
-          </Virtualizer>
+          <InboxList
+            prs={filteredPRs}
+            searchText={searchText}
+            onClearSearch={() => setSearchText("")}
+            onOpen={navigateToPreview}
+            onMouseEnter={prefetchPRDetail}
+          />
         </div>
       }
     />
+  );
+}
+
+type InboxListProps = {
+  prs: PullRequestSummary[];
+  searchText: string;
+  onClearSearch: () => void;
+  onOpen: (pr: PullRequestSummary) => void;
+  onMouseEnter: (pr: PullRequestSummary) => void;
+};
+
+function InboxList({ prs, searchText, onClearSearch, onOpen, onMouseEnter }: InboxListProps) {
+  const [helpOpen, setHelpOpen] = useState(false);
+
+  useInboxKeyboardNav({
+    orderedIds: prs.map((pr) => pr.id),
+    onOpen: (prId) => {
+      const pr = prs.find((candidate) => candidate.id === prId);
+      if (pr) {
+        onOpen(pr);
+      }
+    },
+    searchInputId: INBOX_SEARCH_INPUT_ID,
+    onClearSearch,
+    hasSearchText: searchText.length > 0,
+    onToggleHelp: () => setHelpOpen((open) => !open),
+  });
+
+  return (
+    <>
+      <Virtualizer
+        config={{ overscrollSize: 400, intersectionObserverMargin: 800 }}
+        className="flex-1 overflow-y-auto px-2 py-2"
+      >
+        {prs.map((pr) => (
+          <InboxPRRow key={pr.id} pr={pr} onClick={onOpen} onMouseEnter={onMouseEnter} />
+        ))}
+      </Virtualizer>
+      <ShortcutsHelpOverlay open={helpOpen} onOpenChange={setHelpOpen} />
+    </>
   );
 }

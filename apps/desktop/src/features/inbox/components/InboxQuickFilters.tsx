@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 
 export type InboxFilter = "all" | "open" | "draft" | "merged" | "mine";
 
+export const INBOX_SEARCH_INPUT_ID = "inbox-search-input";
+
 type InboxQuickFiltersProps = {
   searchText: string;
   onSearchChange: (text: string) => void;
@@ -33,9 +35,10 @@ export function InboxQuickFilters({
           <Search className="size-4" />
         </div>
         <Input
+          id={INBOX_SEARCH_INPUT_ID}
           value={searchText}
           onChange={(e) => onSearchChange((e.target as HTMLInputElement).value)}
-          placeholder="Filter PRs..."
+          placeholder="Filter PRs... ( / )"
           className="pl-8 h-8 text-sm"
           data-testid="inbox-search-input"
         />

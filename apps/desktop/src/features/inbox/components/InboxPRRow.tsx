@@ -6,12 +6,14 @@ import {
   MessageSquare,
   XCircle,
 } from "lucide-react";
+import { useEffect, useRef } from "react";
 
+import { useAppDispatch, useAppSelector } from "@/app/hooks";
+import { selectIsInboxRowSelected, setInboxSelectedPRId } from "@/features/inbox/inboxSlice";
 import type { PullRequestSummary } from "@/platform/desktop";
 
 type InboxPRRowProps = {
   pr: PullRequestSummary;
-  isSelected?: boolean;
   onClick: (pr: PullRequestSummary) => void;
   onMouseEnter?: (pr: PullRequestSummary) => void;
 };
@@ -41,7 +43,19 @@ function formatRelativeTime(dateString: string) {
   return `${diffInYears}y ago`;
 }
 
-export function InboxPRRow({ pr, isSelected, onClick, onMouseEnter }: InboxPRRowProps) {
+export function InboxPRRow({ pr, onClick, onMouseEnter }: InboxPRRowProps) {
+  const dispatch = useAppDispatch();
+  // Narrow subscription: this row re-renders only when ITS own selection state
+  // flips, so moving the keyboard cursor never re-renders the whole list.
+  const isSelected = useAppSelector(selectIsInboxRowSelected(pr.id));
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (isSelected && typeof buttonRef.current?.scrollIntoView === "function") {
+      buttonRef.current.scrollIntoView({ block: "nearest" });
+    }
+  }, [isSelected]);
+
   const hasFailedBuild = pr.buildStatuses?.some((b) => b.state === "failed");
   const hasInProgressBuild = pr.buildStatuses?.some((b) => b.state === "inprogress");
   const hasSuccessfulBuild = pr.buildStatuses?.some((b) => b.state === "successful");
@@ -49,11 +63,15 @@ export function InboxPRRow({ pr, isSelected, onClick, onMouseEnter }: InboxPRRow
 
   return (
     <button
+      ref={buttonRef}
       type="button"
+      aria-selected={isSelected}
+      data-selected={isSelected ? "true" : undefined}
       className={`hover:bg-surface-1 block w-full rounded-lg px-3 py-2.5 text-left transition-colors ${
-        isSelected ? "bg-surface-1" : ""
+        isSelected ? "bg-surface-1 ring-primary ring-2 ring-inset" : ""
       }`}
       onClick={() => {
+        dispatch(setInboxSelectedPRId(pr.id));
         onClick(pr);
       }}
       onMouseEnter={() => {
