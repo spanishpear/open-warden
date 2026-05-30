@@ -6,11 +6,14 @@ export {
 export { resolveHostedRepo } from "./hosted-repos/repository";
 export {
   addPullRequestComment,
+  getPullRequestBuildStatuses,
   getPullRequestConversation,
   getPullRequestFiles,
   getPullRequestPatch,
   getPullRequestDiffCached,
+  likePullRequestComment,
   listPullRequests,
+  mergePullRequest,
   resolveActivePullRequestForBranch,
   replyToPullRequestThread,
   setPullRequestThreadResolved,

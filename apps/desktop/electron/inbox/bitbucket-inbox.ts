@@ -2,7 +2,7 @@ import type { BuildStatus, HostedRepoRef } from "../../src/platform/desktop/cont
 import { summarizePullRequestFiles } from "../../src/platform/desktop/pullRequestChangeStats";
 import {
   bitbucketAuthorLogin,
-  bitbucketRequest,
+  fetchBitbucketCommitStatuses,
   fetchBitbucketPullRequestFiles,
   isBitbucketRateLimitError,
   fetchBitbucketPaginatedValues,
@@ -202,47 +202,6 @@ function toBitbucketInboxPullRequest(
   };
 }
 
-type BitbucketCommitStatusResponse = {
-  state: string;
-  name?: string;
-  url?: string;
-  key: string;
-};
-
-type BitbucketCommitStatusesResponse = {
-  values: BitbucketCommitStatusResponse[];
-  next?: string;
-};
-
-function mapBuildStatusState(state: string): BuildStatus["state"] {
-  const lower = state.toLowerCase();
-  if (
-    lower === "successful" ||
-    lower === "failed" ||
-    lower === "inprogress" ||
-    lower === "stopped"
-  ) {
-    return lower;
-  }
-  return "stopped";
-}
-
-async function fetchBuildStatusesForCommit(
-  hostedRepo: HostedRepoRef,
-  connection: ProviderConnectionSecret,
-  commitHash: string,
-): Promise<BuildStatus[]> {
-  const path = `/repositories/${encodeURIComponent(hostedRepo.owner)}/${encodeURIComponent(hostedRepo.repo)}/commit/${encodeURIComponent(commitHash)}/statuses`;
-  const { data } = await bitbucketRequest<BitbucketCommitStatusesResponse>(path, connection);
-  const values = Array.isArray(data.values) ? data.values : [];
-  return values.map((status) => ({
-    state: mapBuildStatusState(status.state),
-    name: status.name ?? "",
-    url: status.url ?? "",
-    key: status.key,
-  }));
-}
-
 function buildBitbucketPullRequestPath(hostedRepo: HostedRepoRef, query: string) {
   const params = new URLSearchParams({
     pagelen: String(BITBUCKET_INBOX_PAGE_LENGTH),
@@ -283,7 +242,7 @@ async function fetchBitbucketPullRequests(
           return Promise.resolve([] as BuildStatus[]);
         }
 
-        return fetchBuildStatusesForCommit(hostedRepo, connection, commitHash);
+        return fetchBitbucketCommitStatuses(hostedRepo, connection, commitHash);
       },
     );
     const changeStatsResults = await allSettledWithConcurrency(

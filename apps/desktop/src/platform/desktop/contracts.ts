@@ -116,6 +116,7 @@ export type BuildStatus = {
   name: string;
   url: string;
   key: string;
+  description?: string;
 };
 
 export type PullRequestChangeStats = {
@@ -228,6 +229,8 @@ export type PullRequestIssueComment = {
   updatedAt: string;
   author: PullRequestPerson | null;
   url: string | null;
+  likeCount?: number;
+  viewerHasLiked?: boolean;
 };
 
 export type PullRequestReviewComment = {
@@ -241,6 +244,8 @@ export type PullRequestReviewComment = {
   line: number | null;
   startLine: number | null;
   url: string | null;
+  likeCount?: number;
+  viewerHasLiked?: boolean;
 };
 
 export type PullRequestReviewThread = {
@@ -356,6 +361,30 @@ export type SetPullRequestThreadResolvedInput = PullRequestLocatorInput & {
   resolved: boolean;
 };
 
+export type LikePullRequestCommentInput = PullRequestLocatorInput & {
+  commentId: number;
+  liked: boolean;
+};
+
+export type LikePullRequestCommentResult = {
+  commentId: number;
+  liked: boolean;
+  likeCount: number;
+};
+
+export type PullRequestMergeStrategy = "merge_commit" | "squash" | "fast_forward";
+
+export type MergePullRequestInput = PullRequestLocatorInput & {
+  mergeStrategy: PullRequestMergeStrategy;
+  closeSourceBranch: boolean;
+  message?: string;
+};
+
+export type MergePullRequestResult = {
+  state: PullRequestState;
+  url: string | null;
+};
+
 export type PreparedPullRequestWorkspace = {
   providerId: GitProviderId;
   repoPath: string;
@@ -415,6 +444,7 @@ export type DesktopApi = {
     input: ResolveActivePullRequestForBranchInput,
   ): Promise<PullRequestSummary | null>;
   getPullRequestConversation(input: PullRequestLocatorInput): Promise<PullRequestConversation>;
+  getPullRequestBuildStatuses(input: PullRequestLocatorInput): Promise<BuildStatus[]>;
   getPullRequestFiles(input: PullRequestLocatorInput): Promise<PullRequestChangedFile[]>;
   getPullRequestPatch(input: PullRequestLocatorInput): Promise<string>;
   getPullRequestDiffCached(input: PullRequestLocatorInput): Promise<PullRequestDiffResult>;
@@ -429,6 +459,10 @@ export type DesktopApi = {
   setPullRequestThreadResolved(
     input: SetPullRequestThreadResolvedInput,
   ): Promise<PullRequestReviewThread>;
+  likePullRequestComment(
+    input: LikePullRequestCommentInput,
+  ): Promise<LikePullRequestCommentResult>;
+  mergePullRequest(input: MergePullRequestInput): Promise<MergePullRequestResult>;
   preparePullRequestCompareRefs(input: PullRequestLocatorInput): Promise<PullRequestCompareRefs>;
   preparePullRequestWorkspace(
     input: PreparePullRequestWorkspaceInput,

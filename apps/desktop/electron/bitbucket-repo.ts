@@ -1,4 +1,5 @@
 import type {
+  BuildStatus,
   HostedRepoRef,
   PullRequestChangedFile,
   PullRequestConversation,
@@ -744,6 +745,61 @@ function toBitbucketConversation(
     ),
     reviewThreads,
   };
+}
+
+type BitbucketCommitStatusResponse = {
+  state?: string;
+  name?: string;
+  url?: string;
+  key?: string;
+  description?: string;
+};
+
+export function mapBitbucketBuildStatusState(state: string | undefined): BuildStatus["state"] {
+  switch ((state ?? "").toLowerCase()) {
+    case "successful":
+      return "successful";
+    case "failed":
+      return "failed";
+    case "inprogress":
+      return "inprogress";
+    default:
+      return "stopped";
+  }
+}
+
+export function toBitbucketBuildStatus(status: BitbucketCommitStatusResponse): BuildStatus {
+  return {
+    state: mapBitbucketBuildStatusState(status.state),
+    name: status.name ?? status.key ?? "",
+    url: status.url ?? "",
+    key: status.key ?? "",
+    description: status.description?.trim() ? status.description.trim() : undefined,
+  };
+}
+
+export function bitbucketCommitStatusesPath(hostedRepo: HostedRepoRef, commitHash: string) {
+  return `/repositories/${encodeURIComponent(hostedRepo.owner)}/${encodeURIComponent(
+    hostedRepo.repo,
+  )}/commit/${encodeURIComponent(commitHash)}/statuses`;
+}
+
+export async function fetchBitbucketCommitStatuses(
+  hostedRepo: HostedRepoRef,
+  connection: ProviderConnectionSecret,
+  commitHash: string,
+): Promise<BuildStatus[]> {
+  if (!commitHash) {
+    return [];
+  }
+
+  const values = await fetchBitbucketPaginatedValues<BitbucketCommitStatusResponse>(
+    `${bitbucketCommitStatusesPath(hostedRepo, commitHash)}?pagelen=100`,
+    connection,
+    { maxPages: 5 },
+  );
+
+  return values.map(toBitbucketBuildStatus);
 }
 
 export function bitbucketPullRequestPath(hostedRepo: HostedRepoRef, pullRequestNumber: number) {

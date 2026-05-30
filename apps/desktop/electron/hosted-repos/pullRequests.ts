@@ -1,7 +1,12 @@
 import type {
   AddPullRequestCommentInput,
+  BuildStatus,
   HostedRepoRef,
+  LikePullRequestCommentInput,
+  LikePullRequestCommentResult,
   ListPullRequestsInput,
+  MergePullRequestInput,
+  MergePullRequestResult,
   PullRequestChangedFile,
   PullRequestConversation,
   PullRequestDiffResult,
@@ -24,6 +29,7 @@ import {
   bitbucketPullRequestPath,
   bitbucketRequest,
   bitbucketThreadRootDatabaseId,
+  fetchBitbucketCommitStatuses,
   fetchBitbucketConversation,
   fetchBitbucketPullRequest,
   fetchBitbucketPullRequestFiles,
@@ -33,6 +39,7 @@ import {
   toBitbucketIssueComment,
   toBitbucketPullRequestSummary,
   type BitbucketCommentResponse,
+  type BitbucketPullRequestResponse,
 } from "../bitbucket-repo";
 import {
   fetchGitHubIssueComments,
@@ -392,6 +399,35 @@ export async function getPullRequestConversation(
 
   throw new Error(
     `${providerDisplayName(hostedRepo.providerId)} pull request conversation is not supported yet.`,
+  );
+}
+
+export async function getPullRequestBuildStatuses(
+  input: PullRequestLocatorInput,
+): Promise<BuildStatus[]> {
+  const { hostedRepo, connection } = await resolvePullRequestContext(input);
+
+  if (hostedRepo.providerId === "bitbucket") {
+    const pullRequest = await fetchBitbucketPullRequest(
+      hostedRepo,
+      connection,
+      input.pullRequestNumber,
+    );
+    const headSha = pullRequest.source?.commit?.hash ?? "";
+    if (!headSha) {
+      return [];
+    }
+
+    return fetchBitbucketCommitStatuses(hostedRepo, connection, headSha);
+  }
+
+  if (hostedRepo.providerId === "github") {
+    // GitHub status/checks are not surfaced in this Bitbucket-focused build yet.
+    return [];
+  }
+
+  throw new Error(
+    `${providerDisplayName(hostedRepo.providerId)} build statuses are not supported yet.`,
   );
 }
 
@@ -973,5 +1009,87 @@ export async function setPullRequestThreadResolved(
 
   throw new Error(
     `${providerDisplayName(hostedRepo.providerId)} thread resolution is not supported yet.`,
+  );
+}
+
+type BitbucketCommentLikesResponse = {
+  size?: number;
+  values?: unknown[];
+};
+
+export async function likePullRequestComment(
+  input: LikePullRequestCommentInput,
+): Promise<LikePullRequestCommentResult> {
+  const { hostedRepo, connection } = await resolvePullRequestContext(input);
+
+  if (hostedRepo.providerId === "bitbucket") {
+    const likesPath = `${bitbucketPullRequestPath(
+      hostedRepo,
+      input.pullRequestNumber,
+    )}/comments/${String(input.commentId)}/likes`;
+
+    // Bitbucket follows the empty PUT / DELETE toggle convention used by other
+    // "like"-style endpoints (e.g. issue votes). Liking is idempotent.
+    await bitbucketRequest<unknown>(likesPath, connection, {
+      method: input.liked ? "PUT" : "DELETE",
+      responseType: "text",
+    });
+
+    let likeCount = 0;
+    try {
+      const { data } = await bitbucketRequest<BitbucketCommentLikesResponse>(likesPath, connection);
+      likeCount =
+        typeof data.size === "number"
+          ? data.size
+          : Array.isArray(data.values)
+            ? data.values.length
+            : 0;
+    } catch {
+      // Fall back to the optimistic count if the like list cannot be read back.
+      likeCount = input.liked ? 1 : 0;
+    }
+
+    return {
+      commentId: input.commentId,
+      liked: input.liked,
+      likeCount,
+    };
+  }
+
+  throw new Error(
+    `${providerDisplayName(hostedRepo.providerId)} comment likes are not supported yet.`,
+  );
+}
+
+export async function mergePullRequest(
+  input: MergePullRequestInput,
+): Promise<MergePullRequestResult> {
+  const { hostedRepo, connection } = await resolvePullRequestContext(input);
+
+  if (hostedRepo.providerId === "bitbucket") {
+    const trimmedMessage = input.message?.trim();
+    const { data } = await bitbucketRequest<BitbucketPullRequestResponse>(
+      `${bitbucketPullRequestPath(hostedRepo, input.pullRequestNumber)}/merge`,
+      connection,
+      {
+        method: "POST",
+        body: {
+          type: "pullrequest_merge_parameters",
+          merge_strategy: input.mergeStrategy,
+          close_source_branch: input.closeSourceBranch,
+          ...(trimmedMessage ? { message: trimmedMessage } : {}),
+        },
+      },
+    );
+
+    const state = data.state === "MERGED" ? "merged" : data.state === "OPEN" ? "open" : "closed";
+    return {
+      state,
+      url: data.links?.html?.href ?? null,
+    };
+  }
+
+  throw new Error(
+    `${providerDisplayName(hostedRepo.providerId)} pull request merge is not supported yet.`,
   );
 }

@@ -2,9 +2,14 @@ import { desktop } from "@/platform/desktop";
 
 import type {
   AddPullRequestCommentInput,
+  BuildStatus,
   ConnectProviderInput,
   HostedRepoRef,
   InboxPullRequestsResult,
+  LikePullRequestCommentInput,
+  LikePullRequestCommentResult,
+  MergePullRequestInput,
+  MergePullRequestResult,
   PreparedPullRequestWorkspace,
   PreparePullRequestWorkspaceInput,
   ProviderConnection,
@@ -69,6 +74,11 @@ export async function getPullRequestConversation(input: PullRequestLocatorInput)
   return desktop.getPullRequestConversation(input) as Promise<PullRequestConversation>;
 }
 
+export async function getPullRequestBuildStatuses(input: PullRequestLocatorInput) {
+  // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
+  return desktop.getPullRequestBuildStatuses(input) as Promise<BuildStatus[]>;
+}
+
 export async function getPullRequestFiles(input: PullRequestLocatorInput) {
   // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
   return desktop.getPullRequestFiles(input) as Promise<PullRequestChangedFile[]>;
@@ -111,6 +121,16 @@ export async function submitPullRequestReviewDecision(input: SubmitPullRequestRe
 export async function setPullRequestThreadResolved(input: SetPullRequestThreadResolvedInput) {
   // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
   return desktop.setPullRequestThreadResolved(input) as Promise<PullRequestReviewThread>;
+}
+
+export async function likePullRequestComment(input: LikePullRequestCommentInput) {
+  // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
+  return desktop.likePullRequestComment(input) as Promise<LikePullRequestCommentResult>;
+}
+
+export async function mergePullRequest(input: MergePullRequestInput) {
+  // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
+  return desktop.mergePullRequest(input) as Promise<MergePullRequestResult>;
 }
 
 export async function preparePullRequestCompareRefs(input: PullRequestLocatorInput) {

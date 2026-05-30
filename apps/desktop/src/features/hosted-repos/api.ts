@@ -2,9 +2,14 @@ import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
 
 import type {
   AddPullRequestCommentInput,
+  BuildStatus,
   ConnectProviderInput,
   HostedRepoRef,
+  LikePullRequestCommentInput,
+  LikePullRequestCommentResult,
   ListPullRequestsInput,
+  MergePullRequestInput,
+  MergePullRequestResult,
   ProviderConnection,
   PullRequestChangedFile,
   PullRequestCompareRefs,
@@ -27,14 +32,17 @@ import {
   addPullRequestComment,
   connectProvider,
   disconnectProvider,
+  getPullRequestBuildStatuses,
   getPullRequestConversation,
   getPullRequestFiles,
   getPullRequestPatch,
   getPullRequestDiffCached,
   getInboxPullRequests,
+  likePullRequestComment,
   refreshInboxPullRequests,
   listProviderConnections,
   listPullRequests,
+  mergePullRequest,
   resolveActivePullRequestForBranch,
   preparePullRequestCompareRefs,
   replyToPullRequestThread,
@@ -59,6 +67,7 @@ export const hostedReposApi = createApi({
     "PullRequests",
     "InboxPullRequests",
     "PullRequestConversation",
+    "PullRequestBuildStatuses",
     "PullRequestFiles",
     "PullRequestPatch",
     "PullRequestCompareRefs",
@@ -161,6 +170,19 @@ export const hostedReposApi = createApi({
         { type: "PullRequestConversation", id: `${repoPath}:${String(pullRequestNumber)}` },
       ],
       keepUnusedDataFor: 300,
+    }),
+    getPullRequestBuildStatuses: builder.query<BuildStatus[], PullRequestLocatorInput>({
+      async queryFn(input) {
+        try {
+          return { data: await getPullRequestBuildStatuses(input) };
+        } catch (error) {
+          return { error: toErrorResult(error) };
+        }
+      },
+      providesTags: (_result, _error, { repoPath, pullRequestNumber }) => [
+        { type: "PullRequestBuildStatuses", id: `${repoPath}:${String(pullRequestNumber)}` },
+      ],
+      keepUnusedDataFor: 60,
     }),
     getPullRequestFiles: builder.query<PullRequestChangedFile[], PullRequestLocatorInput>({
       async queryFn(input) {
@@ -289,17 +311,111 @@ export const hostedReposApi = createApi({
         { type: "PullRequestConversation", id: `${repoPath}:${String(pullRequestNumber)}` },
       ],
     }),
+    likePullRequestComment: builder.mutation<
+      LikePullRequestCommentResult,
+      LikePullRequestCommentInput
+    >({
+      async queryFn(input) {
+        try {
+          return { data: await likePullRequestComment(input) };
+        } catch (error) {
+          return { error: toErrorResult(error) };
+        }
+      },
+      async onQueryStarted(
+        { repoPath, pullRequestNumber, commentId, liked },
+        { dispatch, queryFulfilled },
+      ) {
+        const patch = dispatch(
+          hostedReposApi.util.updateQueryData(
+            "getPullRequestConversation",
+            { repoPath, pullRequestNumber },
+            (draft) => {
+              applyCommentLike(draft, commentId, liked, null);
+            },
+          ),
+        );
+
+        try {
+          const { data } = await queryFulfilled;
+          dispatch(
+            hostedReposApi.util.updateQueryData(
+              "getPullRequestConversation",
+              { repoPath, pullRequestNumber },
+              (draft) => {
+                applyCommentLike(draft, commentId, data.liked, data.likeCount);
+              },
+            ),
+          );
+        } catch {
+          patch.undo();
+        }
+      },
+    }),
+    mergePullRequest: builder.mutation<MergePullRequestResult, MergePullRequestInput>({
+      async queryFn(input) {
+        try {
+          return { data: await mergePullRequest(input) };
+        } catch (error) {
+          return { error: toErrorResult(error) };
+        }
+      },
+      invalidatesTags: (_result, _error, { repoPath, pullRequestNumber }) => [
+        { type: "PullRequestConversation", id: `${repoPath}:${String(pullRequestNumber)}` },
+        { type: "InboxPullRequests", id: repoPath },
+      ],
+    }),
   }),
 });
+
+function applyCommentLike(
+  draft: PullRequestConversation,
+  commentId: number,
+  liked: boolean,
+  likeCount: number | null,
+) {
+  const updateComment = (comment: {
+    databaseId: number;
+    likeCount?: number;
+    viewerHasLiked?: boolean;
+  }) => {
+    if (comment.databaseId !== commentId) {
+      return;
+    }
+
+    const previousCount = comment.likeCount ?? 0;
+    const previouslyLiked = comment.viewerHasLiked ?? false;
+    comment.viewerHasLiked = liked;
+    if (likeCount !== null) {
+      comment.likeCount = likeCount;
+    } else if (liked && !previouslyLiked) {
+      comment.likeCount = previousCount + 1;
+    } else if (!liked && previouslyLiked) {
+      comment.likeCount = Math.max(0, previousCount - 1);
+    }
+  };
+
+  for (const comment of draft.issueComments) {
+    updateComment(comment);
+  }
+  for (const thread of draft.reviewThreads) {
+    for (const comment of thread.comments) {
+      updateComment(comment);
+    }
+  }
+}
 
 export const {
   useConnectProviderMutation,
   useAddPullRequestCommentMutation,
   useDisconnectProviderMutation,
+  useGetPullRequestBuildStatusesQuery,
   useGetPullRequestConversationQuery,
   useGetPullRequestFilesQuery,
   useGetPullRequestDiffCachedQuery,
   useGetInboxPullRequestsQuery,
+  useLikePullRequestCommentMutation,
+  useMergePullRequestMutation,
   useRefreshInboxPullRequestsMutation,
   useListProviderConnectionsQuery,
   useListPullRequestsQuery,
