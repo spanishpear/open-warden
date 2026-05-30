@@ -24,6 +24,7 @@ import {
   appendQuotedBody,
   authorLabel,
   CommentBody,
+  CommentLikeButton,
   copyToClipboard,
 } from "@/features/pull-requests/components/pullRequestCommentParts";
 import { setActiveConversationThreadId } from "@/features/pull-requests/pullRequestsSlice";
@@ -290,6 +291,13 @@ export function PullRequestInlineReviewThread({
                           <Copy className="h-3 w-3" />
                           Copy
                         </button>
+                        <CommentLikeButton
+                          repoPath={repoPath}
+                          pullRequestNumber={pullRequestNumber}
+                          providerId={activeProviderId}
+                          comment={comment}
+                          size="xs"
+                        />
                       </div>
                     </div>
                   </div>

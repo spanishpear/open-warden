@@ -1,7 +1,11 @@
+import { ThumbsUp } from "lucide-react";
 import { toast } from "sonner";
 
 import { Markdown } from "@/components/markdown/Markdown";
+import { useLikePullRequestCommentMutation } from "@/features/hosted-repos/api";
+import { errorMessageFrom } from "@/features/source-control/shared-utils/errorMessage";
 import type {
+  GitProviderId,
   PullRequestConversation,
   PullRequestIssueComment,
   PullRequestReviewComment,
@@ -118,6 +122,64 @@ export function Avatar({ login, avatarUrl }: { login: string | null; avatarUrl: 
     <div className="bg-background text-muted-foreground flex h-7 w-7 items-center justify-center rounded-full border border-white/10 text-[10px] font-semibold uppercase">
       {(login ?? "?").slice(0, 2)}
     </div>
+  );
+}
+
+type CommentLikeButtonProps = {
+  repoPath: string;
+  pullRequestNumber: number;
+  comment: Pick<PullRequestIssueComment, "databaseId" | "likeCount" | "viewerHasLiked">;
+  providerId?: GitProviderId | null;
+  size?: "sm" | "xs";
+};
+
+// Bitbucket Cloud is the only provider with a comment like toggle in this build.
+export function CommentLikeButton({
+  repoPath,
+  pullRequestNumber,
+  comment,
+  providerId,
+  size = "sm",
+}: CommentLikeButtonProps) {
+  const [likeComment, { isLoading }] = useLikePullRequestCommentMutation();
+
+  if (providerId && providerId !== "bitbucket") {
+    return null;
+  }
+
+  const liked = comment.viewerHasLiked ?? false;
+  const count = comment.likeCount ?? 0;
+  const textSize = size === "xs" ? "text-[11px]" : "text-xs";
+  const iconSize = size === "xs" ? "h-3 w-3" : "h-3.5 w-3.5";
+
+  return (
+    <button
+      type="button"
+      disabled={isLoading || !repoPath || !Number.isFinite(pullRequestNumber)}
+      aria-pressed={liked}
+      onClick={() => {
+        void (async () => {
+          try {
+            await likeComment({
+              repoPath,
+              pullRequestNumber,
+              commentId: comment.databaseId,
+              liked: !liked,
+            }).unwrap();
+          } catch (error) {
+            toast.error(errorMessageFrom(error, "Failed to update like"));
+          }
+        })();
+      }}
+      className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 transition-colors ${textSize} ${
+        liked
+          ? "text-primary hover:text-primary"
+          : "text-muted-foreground hover:text-foreground"
+      }`}
+    >
+      <ThumbsUp className={`${iconSize} ${liked ? "fill-current" : ""}`} />
+      {count > 0 ? <span>{count}</span> : <span>Like</span>}
+    </button>
   );
 }
 

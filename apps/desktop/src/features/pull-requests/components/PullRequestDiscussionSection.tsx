@@ -2,14 +2,21 @@ import {
   authorLabel,
   Avatar,
   CommentBody,
+  CommentLikeButton,
   toDisplayDate,
 } from "@/features/pull-requests/components/pullRequestCommentParts";
-import type { PullRequestConversation } from "@/platform/desktop";
+import type { GitProviderId, PullRequestConversation } from "@/platform/desktop";
 
 export function PullRequestDiscussionSection({
   conversation,
+  repoPath,
+  pullRequestNumber,
+  providerId,
 }: {
   conversation: PullRequestConversation;
+  repoPath?: string;
+  pullRequestNumber?: number;
+  providerId?: GitProviderId;
 }) {
   const hasDescription = conversation.detail.body.trim().length > 0;
   const hasComments = conversation.issueComments.length > 0;
@@ -70,6 +77,14 @@ export function PullRequestDiscussionSection({
               </div>
               <div className="mt-2">
                 <CommentBody body={comment.body} />
+              </div>
+              <div className="mt-2">
+                <CommentLikeButton
+                  repoPath={repoPath ?? ""}
+                  pullRequestNumber={pullRequestNumber ?? Number.NaN}
+                  providerId={providerId}
+                  comment={comment}
+                />
               </div>
             </div>
           </div>
