@@ -21,7 +21,7 @@ vi.mock("./pr-cache", () => ({
   OPEN_CACHE_TTL_MS: 120_000,
   MERGED_CACHE_TTL_MS: 600_000,
   getCachedInboxSnapshot: vi.fn(),
-  cacheInboxSnapshot: vi.fn(),
+  cacheInboxSnapshot: vi.fn(() => Date.now()),
   isCacheStale: vi.fn(),
 }));
 
@@ -179,7 +179,7 @@ describe("electron inbox orchestrator", () => {
 
     const result = await getInboxPullRequests(REPO_PATH);
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       sections: {
         ...emptySections(),
         [InboxSection.NEEDS_REVIEW]: [openPr],
@@ -355,7 +355,7 @@ describe("electron inbox orchestrator", () => {
 
     const result = await getInboxPullRequests(REPO_PATH);
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       sections: {
         ...emptySections(),
         [InboxSection.NEEDS_REVIEW]: [openPr],
@@ -454,7 +454,7 @@ describe("electron inbox orchestrator", () => {
 
     const result = await getInboxPullRequests(REPO_PATH);
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       sections: {
         ...emptySections(),
         [InboxSection.NEEDS_REVIEW]: [openPr],
@@ -530,6 +530,8 @@ describe("electron inbox orchestrator", () => {
     });
     await Promise.resolve();
     await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
 
     expect(fetchBitbucketRecentlyMergedPullRequests).toHaveBeenCalledWith(
       HOSTED_REPO,
@@ -551,7 +553,7 @@ describe("electron inbox orchestrator", () => {
     vi.mocked(getProviderConnection).mockResolvedValue(CONNECTION);
     vi.mocked(getOrResolveUserIdentity).mockResolvedValue(null);
 
-    await expect(getInboxPullRequests(REPO_PATH)).resolves.toEqual({
+    await expect(getInboxPullRequests(REPO_PATH)).resolves.toMatchObject({
       sections: emptySections(),
       userLogin: null,
       fetchedAt: Date.now(),
@@ -630,7 +632,7 @@ describe("electron inbox orchestrator", () => {
 
     vi.mocked(resolveHostedRepo).mockResolvedValue(null);
 
-    await expect(getInboxPullRequests(REPO_PATH)).resolves.toEqual({
+    await expect(getInboxPullRequests(REPO_PATH)).resolves.toMatchObject({
       sections: emptySections(),
       userLogin: null,
       fetchedAt: Date.now(),

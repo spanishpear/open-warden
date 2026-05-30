@@ -18,6 +18,7 @@ import { useInboxNavigation } from "@/features/inbox/hooks/useInboxNavigation";
 import { useBackgroundInboxPrefetch } from "@/features/inbox/hooks/useBackgroundInboxPrefetch";
 import { errorMessageFrom } from "@/features/source-control/shared-utils/errorMessage";
 import { updateInboxSectionVisibility } from "@/features/settings/actions";
+import type { InboxBackgroundWorkMetadata, InboxCacheScopeMetadata } from "@/platform/desktop";
 
 const ORDERED_SECTIONS = [
   "NEEDS_REVIEW",
@@ -27,6 +28,58 @@ const ORDERED_SECTIONS = [
   "DRAFTS",
   "MERGING_AND_MERGED",
 ];
+
+function formatCacheAge(fetchedAt: number | null) {
+  if (fetchedAt === null) {
+    return "not cached";
+  }
+
+  const elapsedMs = Math.max(0, Date.now() - fetchedAt);
+  const elapsedMinutes = Math.floor(elapsedMs / 60_000);
+  if (elapsedMinutes < 1) {
+    return "just now";
+  }
+
+  if (elapsedMinutes < 60) {
+    return `${String(elapsedMinutes)}m ago`;
+  }
+
+  const elapsedHours = Math.floor(elapsedMinutes / 60);
+  if (elapsedHours < 24) {
+    return `${String(elapsedHours)}h ago`;
+  }
+
+  return `${String(Math.floor(elapsedHours / 24))}d ago`;
+}
+
+function formatCacheScope(label: string, cache: InboxCacheScopeMetadata) {
+  if (cache.source === "empty") {
+    return `${label}: not cached`;
+  }
+
+  const source = cache.source === "live" ? "live" : "cached";
+  const qualifiers = [cache.isStale ? "stale" : null, cache.isPartial ? "partial" : null].filter(
+    Boolean,
+  );
+  const suffix = qualifiers.length > 0 ? ` (${qualifiers.join(", ")})` : "";
+  return `${label}: ${source} ${formatCacheAge(cache.fetchedAt)}${suffix}`;
+}
+
+function formatBackgroundWork(background: InboxBackgroundWorkMetadata) {
+  if (background.openRefresh && background.mergedRefresh) {
+    return "Refreshing open and merged PRs in the background";
+  }
+
+  if (background.openRefresh) {
+    return "Refreshing open PRs in the background";
+  }
+
+  if (background.mergedRefresh) {
+    return "Warming merged PR cache in the background";
+  }
+
+  return null;
+}
 
 export function InboxScreen() {
   const activeRepo = useAppSelector(selectActiveRepo);
@@ -120,6 +173,7 @@ export function InboxScreen() {
   }));
 
   const rawPRs = inboxData?.sections[activeSection] ?? [];
+  const backgroundWorkLabel = inboxData ? formatBackgroundWork(inboxData.background) : null;
   const filteredPRs = rawPRs.filter((pr) => {
     if (searchText) {
       const q = searchText.toLowerCase();
@@ -169,6 +223,13 @@ export function InboxScreen() {
               activeFilter={activeFilter}
               onFilterChange={setActiveFilter}
             />
+            {inboxData ? (
+              <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                <span>{formatCacheScope("Open", inboxData.cache.open)}</span>
+                <span>{formatCacheScope("Merged", inboxData.cache.merged)}</span>
+                {backgroundWorkLabel ? <span>{backgroundWorkLabel}</span> : null}
+              </div>
+            ) : null}
           </div>
 
           {activeSection === "MERGING_AND_MERGED" && inboxData?.isStale ? (

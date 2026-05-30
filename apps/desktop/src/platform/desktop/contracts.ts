@@ -170,11 +170,30 @@ export type PullRequestPage = {
   hasNextPage: boolean;
 };
 
+export type InboxCacheDataSource = "empty" | "cache" | "live";
+
+export type InboxCacheScopeMetadata = {
+  source: InboxCacheDataSource;
+  fetchedAt: number | null;
+  isStale: boolean;
+  isPartial: boolean;
+};
+
+export type InboxBackgroundWorkMetadata = {
+  openRefresh: boolean;
+  mergedRefresh: boolean;
+};
+
 export type InboxPullRequestsResult = {
   sections: Record<string, PullRequestSummary[]>;
   userLogin: string | null;
   fetchedAt: number;
   isStale: boolean;
+  cache: {
+    open: InboxCacheScopeMetadata;
+    merged: InboxCacheScopeMetadata;
+  };
+  background: InboxBackgroundWorkMetadata;
 };
 
 export type PullRequestPerson = {

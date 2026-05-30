@@ -141,14 +141,16 @@ export function cacheInboxSnapshot(
   scope: CacheScope,
   prs: InboxPullRequest[],
   isPartial: boolean,
-): void {
+): number {
+  const fetchedAt = Date.now();
   setInboxSnapshot({
     repoPath,
     scope,
     dataJson: JSON.stringify(prs.map(serializePullRequest)),
-    fetchedAt: Date.now(),
+    fetchedAt,
     isPartial,
   });
+  return fetchedAt;
 }
 
 export function getCachedInboxSnapshot(

@@ -138,6 +138,24 @@ function createInboxData(
     userLogin: overrides.userLogin ?? "me",
     fetchedAt: overrides.fetchedAt ?? 1710000000000,
     isStale: overrides.isStale ?? false,
+    cache: overrides.cache ?? {
+      open: {
+        source: "cache",
+        fetchedAt: overrides.fetchedAt ?? 1710000000000,
+        isStale: overrides.isStale ?? false,
+        isPartial: false,
+      },
+      merged: {
+        source: "cache",
+        fetchedAt: overrides.fetchedAt ?? 1710000000000,
+        isStale: false,
+        isPartial: false,
+      },
+    },
+    background: overrides.background ?? {
+      openRefresh: false,
+      mergedRefresh: false,
+    },
   };
 }
 
@@ -260,6 +278,42 @@ describe("InboxScreen", () => {
 
     expect(within(needsReviewButton).getByText("2")).toBeInTheDocument();
     expect(within(waitingButton).getByText("1")).toBeInTheDocument();
+  });
+
+  it("shows cache source and background refresh status", () => {
+    mocks.useGetInboxPullRequestsQuery.mockReturnValue({
+      data: createInboxData({
+        cache: {
+          open: {
+            source: "cache",
+            fetchedAt: Date.now() - 90_000,
+            isStale: true,
+            isPartial: false,
+          },
+          merged: {
+            source: "empty",
+            fetchedAt: null,
+            isStale: false,
+            isPartial: false,
+          },
+        },
+        background: {
+          openRefresh: true,
+          mergedRefresh: true,
+        },
+      }),
+      error: undefined,
+      isLoading: false,
+      isFetching: false,
+    });
+
+    renderScreen();
+
+    expect(screen.getByText(/Open: cached 1m ago \(stale\)/)).toBeInTheDocument();
+    expect(screen.getByText("Merged: not cached")).toBeInTheDocument();
+    expect(
+      screen.getByText("Refreshing open and merged PRs in the background"),
+    ).toBeInTheDocument();
   });
 
   it("renders inbox pull request rows for the active section", () => {

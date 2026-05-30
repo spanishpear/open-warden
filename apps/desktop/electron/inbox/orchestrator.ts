@@ -1,5 +1,7 @@
 import type {
   HostedRepoRef,
+  InboxBackgroundWorkMetadata,
+  InboxCacheScopeMetadata,
   InboxPullRequestsResult,
   PullRequestSummary,
 } from "../../src/platform/desktop/contracts";
@@ -14,9 +16,9 @@ import {
 import { getOrResolveUserIdentity } from "./identity";
 import {
   cacheInboxSnapshot,
-  clearInboxCache,
   getCachedInboxSnapshot,
   isCacheStale,
+  MERGED_CACHE_TTL_MS,
   OPEN_CACHE_TTL_MS,
 } from "./pr-cache";
 import { classifyPullRequests } from "./sections";
@@ -45,12 +47,33 @@ function emptySections(): Record<string, PullRequestSummary[]> {
   };
 }
 
+function emptyCacheScope(): InboxCacheScopeMetadata {
+  return {
+    source: "empty",
+    fetchedAt: null,
+    isStale: false,
+    isPartial: false,
+  };
+}
+
+function emptyBackgroundWork(): InboxBackgroundWorkMetadata {
+  return {
+    openRefresh: false,
+    mergedRefresh: false,
+  };
+}
+
 function emptyResult(fetchedAt = Date.now()): InboxPullRequestsResult {
   return {
     sections: emptySections(),
     userLogin: null,
     fetchedAt,
     isStale: false,
+    cache: {
+      open: emptyCacheScope(),
+      merged: emptyCacheScope(),
+    },
+    background: emptyBackgroundWork(),
   };
 }
 
@@ -72,35 +95,93 @@ type BitbucketUserIdentity = {
   uuid: string | null;
 };
 
-async function fetchAndCacheMerged(
-  repoPath: string,
-  hostedRepo: HostedRepoRef,
-  connection: ProviderConnectionSecret,
-  userIdentity: BitbucketUserIdentity,
-): Promise<void> {
-  const mergedResult = await fetchBitbucketRecentlyMergedPullRequests(
-    hostedRepo,
-    connection,
-    userIdentity,
-  );
-  cacheInboxSnapshot(repoPath, "merged", mergedResult.prs, mergedResult.isPartial);
+type BitbucketInboxContext = {
+  hostedRepo: HostedRepoRef;
+  connection: ProviderConnectionSecret;
+  userLogin: string;
+  userIdentity: BitbucketUserIdentity;
+};
+
+type CachedInboxScope = NonNullable<ReturnType<typeof getCachedInboxSnapshot>>;
+
+type LiveInboxScope = {
+  prs: InboxPullRequest[];
+  fetchedAt: number;
+  isPartial: boolean;
+};
+
+type BackgroundWorkScope = "inbox-refresh" | "merged-refresh";
+
+const backgroundWorkKeys = new Set<string>();
+
+function backgroundWorkKey(repoPath: string, scope: BackgroundWorkScope) {
+  return `${repoPath}:${scope}`;
 }
 
-async function refreshBitbucketInbox(
-  repoPath: string,
-  hostedRepo: HostedRepoRef,
-  connection: ProviderConnectionSecret,
-  userIdentity: BitbucketUserIdentity,
-): Promise<void> {
-  const openResult = await fetchBitbucketInboxPullRequests(hostedRepo, connection, userIdentity);
-  cacheInboxSnapshot(repoPath, "open", openResult.prs, openResult.isPartial);
-  await fetchAndCacheMerged(repoPath, hostedRepo, connection, userIdentity);
+function currentBackgroundWork(repoPath: string): InboxBackgroundWorkMetadata {
+  const inboxRefreshActive = backgroundWorkKeys.has(backgroundWorkKey(repoPath, "inbox-refresh"));
+  return {
+    openRefresh: inboxRefreshActive,
+    mergedRefresh:
+      inboxRefreshActive || backgroundWorkKeys.has(backgroundWorkKey(repoPath, "merged-refresh")),
+  };
 }
 
-export async function getInboxPullRequests(repoPath: string): Promise<InboxPullRequestsResult> {
+function startBackgroundWork(
+  repoPath: string,
+  scope: BackgroundWorkScope,
+  work: () => Promise<void>,
+  options: { defer?: boolean } = {},
+): boolean {
+  const key = backgroundWorkKey(repoPath, scope);
+  if (backgroundWorkKeys.has(key)) {
+    return false;
+  }
+
+  backgroundWorkKeys.add(key);
+  const run = () => {
+    void work()
+      .catch((error) => {
+        console.warn(`[inbox] Background ${scope} failed`, error);
+      })
+      .finally(() => {
+        backgroundWorkKeys.delete(key);
+      });
+  };
+
+  if (options.defer) {
+    setTimeout(run, 0);
+  } else {
+    run();
+  }
+
+  return true;
+}
+
+function cachedScopeMetadata(snapshot: CachedInboxScope, ttlMs: number): InboxCacheScopeMetadata {
+  return {
+    source: "cache",
+    fetchedAt: snapshot.fetchedAt,
+    isStale: isCacheStale(snapshot.fetchedAt, ttlMs),
+    isPartial: snapshot.isPartial,
+  };
+}
+
+function liveScopeMetadata(scope: LiveInboxScope): InboxCacheScopeMetadata {
+  return {
+    source: "live",
+    fetchedAt: scope.fetchedAt,
+    isStale: false,
+    isPartial: scope.isPartial,
+  };
+}
+
+async function resolveBitbucketInboxContext(
+  repoPath: string,
+): Promise<BitbucketInboxContext | null> {
   const hostedRepo = await resolveHostedRepo(repoPath);
   if (!hostedRepo) {
-    return emptyResult();
+    return null;
   }
 
   if (hostedRepo.providerId !== "bitbucket") {
@@ -116,61 +197,173 @@ export async function getInboxPullRequests(repoPath: string): Promise<InboxPullR
 
   const userIdentity = await getOrResolveUserIdentity(hostedRepo.providerId, connection);
   if ((!userIdentity?.accountId && !userIdentity?.uuid) || !userIdentity.login) {
-    return emptyResult();
+    return null;
   }
-
-  const bitbucketUserIdentity: BitbucketUserIdentity = {
-    accountId: userIdentity.accountId,
-    uuid: userIdentity.uuid,
-  };
-
-  const cachedOpenSnapshot = getCachedInboxSnapshot(repoPath, "open");
-  if (cachedOpenSnapshot) {
-    const stale = isCacheStale(cachedOpenSnapshot.fetchedAt, OPEN_CACHE_TTL_MS);
-    if (stale) {
-      setTimeout(() => {
-        void refreshBitbucketInbox(repoPath, hostedRepo, connection, bitbucketUserIdentity).catch(
-          () => undefined,
-        );
-      }, 0);
-    }
-
-    return {
-      sections: toResultSections(
-        classifyPullRequests(
-          dedupePullRequests([
-            ...cachedOpenSnapshot.prs,
-            ...(getCachedInboxSnapshot(repoPath, "merged")?.prs ?? []),
-          ]),
-          bitbucketUserIdentity,
-        ),
-      ),
-      userLogin: userIdentity.login,
-      fetchedAt: cachedOpenSnapshot.fetchedAt,
-      isStale: stale,
-    };
-  }
-
-  const openResult = await fetchBitbucketInboxPullRequests(
-    hostedRepo,
-    connection,
-    bitbucketUserIdentity,
-  );
-  cacheInboxSnapshot(repoPath, "open", openResult.prs, openResult.isPartial);
-
-  void fetchAndCacheMerged(repoPath, hostedRepo, connection, bitbucketUserIdentity).catch(
-    () => undefined,
-  );
 
   return {
-    sections: toResultSections(classifyPullRequests(openResult.prs, bitbucketUserIdentity)),
+    hostedRepo,
+    connection,
     userLogin: userIdentity.login,
-    fetchedAt: Date.now(),
-    isStale: false,
+    userIdentity: {
+      accountId: userIdentity.accountId,
+      uuid: userIdentity.uuid,
+    },
   };
 }
 
+async function fetchAndCacheOpen(
+  repoPath: string,
+  hostedRepo: HostedRepoRef,
+  connection: ProviderConnectionSecret,
+  userIdentity: BitbucketUserIdentity,
+): Promise<LiveInboxScope> {
+  const openResult = await fetchBitbucketInboxPullRequests(hostedRepo, connection, userIdentity);
+  const fetchedAt = cacheInboxSnapshot(repoPath, "open", openResult.prs, openResult.isPartial);
+  return {
+    prs: openResult.prs,
+    fetchedAt,
+    isPartial: openResult.isPartial,
+  };
+}
+
+async function fetchAndCacheMerged(
+  repoPath: string,
+  hostedRepo: HostedRepoRef,
+  connection: ProviderConnectionSecret,
+  userIdentity: BitbucketUserIdentity,
+): Promise<LiveInboxScope> {
+  const mergedResult = await fetchBitbucketRecentlyMergedPullRequests(
+    hostedRepo,
+    connection,
+    userIdentity,
+  );
+  const fetchedAt = cacheInboxSnapshot(
+    repoPath,
+    "merged",
+    mergedResult.prs,
+    mergedResult.isPartial,
+  );
+  return {
+    prs: mergedResult.prs,
+    fetchedAt,
+    isPartial: mergedResult.isPartial,
+  };
+}
+
+async function refreshBitbucketInbox(
+  repoPath: string,
+  hostedRepo: HostedRepoRef,
+  connection: ProviderConnectionSecret,
+  userIdentity: BitbucketUserIdentity,
+): Promise<{ open: LiveInboxScope; merged: LiveInboxScope }> {
+  const open = await fetchAndCacheOpen(repoPath, hostedRepo, connection, userIdentity);
+  const merged = await fetchAndCacheMerged(repoPath, hostedRepo, connection, userIdentity);
+  return { open, merged };
+}
+
+function buildResult(args: {
+  pullRequests: InboxPullRequest[];
+  userLogin: string;
+  fetchedAt: number;
+  openCache: InboxCacheScopeMetadata;
+  mergedCache: InboxCacheScopeMetadata;
+  background: InboxBackgroundWorkMetadata;
+  userIdentity: BitbucketUserIdentity;
+}): InboxPullRequestsResult {
+  return {
+    sections: toResultSections(
+      classifyPullRequests(dedupePullRequests(args.pullRequests), args.userIdentity),
+    ),
+    userLogin: args.userLogin,
+    fetchedAt: args.fetchedAt,
+    isStale: args.openCache.isStale || args.mergedCache.isStale,
+    cache: {
+      open: args.openCache,
+      merged: args.mergedCache,
+    },
+    background: args.background,
+  };
+}
+
+export async function getInboxPullRequests(repoPath: string): Promise<InboxPullRequestsResult> {
+  const context = await resolveBitbucketInboxContext(repoPath);
+  if (!context) {
+    return emptyResult();
+  }
+
+  const { hostedRepo, connection, userIdentity, userLogin } = context;
+  const cachedOpenSnapshot = getCachedInboxSnapshot(repoPath, "open");
+  if (cachedOpenSnapshot) {
+    const cachedMergedSnapshot = getCachedInboxSnapshot(repoPath, "merged");
+    const openCache = cachedScopeMetadata(cachedOpenSnapshot, OPEN_CACHE_TTL_MS);
+    const mergedCache = cachedMergedSnapshot
+      ? cachedScopeMetadata(cachedMergedSnapshot, MERGED_CACHE_TTL_MS)
+      : emptyCacheScope();
+
+    if (openCache.isStale) {
+      startBackgroundWork(
+        repoPath,
+        "inbox-refresh",
+        () =>
+          refreshBitbucketInbox(repoPath, hostedRepo, connection, userIdentity).then(
+            () => undefined,
+          ),
+        { defer: true },
+      );
+    } else if (!cachedMergedSnapshot || mergedCache.isStale) {
+      startBackgroundWork(repoPath, "merged-refresh", () =>
+        fetchAndCacheMerged(repoPath, hostedRepo, connection, userIdentity).then(() => undefined),
+      );
+    }
+
+    return buildResult({
+      pullRequests: [...cachedOpenSnapshot.prs, ...(cachedMergedSnapshot?.prs ?? [])],
+      userLogin,
+      fetchedAt: cachedOpenSnapshot.fetchedAt,
+      openCache,
+      mergedCache,
+      background: currentBackgroundWork(repoPath),
+      userIdentity,
+    });
+  }
+
+  const open = await fetchAndCacheOpen(repoPath, hostedRepo, connection, userIdentity);
+  startBackgroundWork(repoPath, "merged-refresh", () =>
+    fetchAndCacheMerged(repoPath, hostedRepo, connection, userIdentity).then(() => undefined),
+  );
+
+  return buildResult({
+    pullRequests: open.prs,
+    userLogin,
+    fetchedAt: open.fetchedAt,
+    openCache: liveScopeMetadata(open),
+    mergedCache: emptyCacheScope(),
+    background: currentBackgroundWork(repoPath),
+    userIdentity,
+  });
+}
+
 export async function refreshInboxPullRequests(repoPath: string): Promise<InboxPullRequestsResult> {
-  clearInboxCache(repoPath);
-  return getInboxPullRequests(repoPath);
+  const context = await resolveBitbucketInboxContext(repoPath);
+  if (!context) {
+    return emptyResult();
+  }
+
+  const { hostedRepo, connection, userIdentity, userLogin } = context;
+  const { open, merged } = await refreshBitbucketInbox(
+    repoPath,
+    hostedRepo,
+    connection,
+    userIdentity,
+  );
+
+  return buildResult({
+    pullRequests: [...open.prs, ...merged.prs],
+    userLogin,
+    fetchedAt: open.fetchedAt,
+    openCache: liveScopeMetadata(open),
+    mergedCache: liveScopeMetadata(merged),
+    background: currentBackgroundWork(repoPath),
+    userIdentity,
+  });
 }
