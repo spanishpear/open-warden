@@ -201,7 +201,8 @@ describe("electron inbox orchestrator", () => {
     expect(classifyPullRequests).toHaveBeenCalledWith([openPr], USER_IDENTITY);
     expect(cacheInboxSnapshot).toHaveBeenCalledWith(REPO_PATH, "open", [openPr], false);
 
-    mergedFetch.reject(new Error("ignore unfinished background fetch"));
+    mergedFetch.resolve({ prs: [], isPartial: false, totalFetched: 0 });
+    await Promise.resolve();
   });
 
   it("does not block the cold-cache response on the merged fetch", async () => {
@@ -246,7 +247,8 @@ describe("electron inbox orchestrator", () => {
       isStale: false,
     });
 
-    mergedFetch.reject(new Error("ignore unfinished background fetch"));
+    mergedFetch.resolve({ prs: [], isPartial: false, totalFetched: 0 });
+    await Promise.resolve();
   });
 
   it("updates the merged cache in the background after a cold-cache fetch", async () => {

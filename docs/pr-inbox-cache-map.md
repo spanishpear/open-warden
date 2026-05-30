@@ -137,20 +137,20 @@ For a selected PR, the files screen issues three RTK Query requests:
 
 ## Existing tests and useful commands
 
-Targeted commands from `apps/desktop`:
+Reliable commands from the repo root:
 
 ```bash
-pnpm test -- electron/inbox
-pnpm test -- electron/bitbucket-repo.test.ts
-pnpm test -- electron/inbox/orchestrator.test.ts
-pnpm test -- electron/inbox/bitbucket-inbox.test.ts
-pnpm test -- electron/inbox/pr-cache.test.ts
-pnpm test -- electron/inbox/content-cache.test.ts
-pnpm test -- electron/inbox/identity.test.ts
-pnpm test -- src/features/inbox/screens/InboxScreen.test.tsx
-pnpm test -- src/features/inbox/hooks/useInboxNavigation.test.ts
-pnpm test -- src/features/diff-view/services/parsedDiffCache.test.ts
-pnpm test -- electron/hosted-repos/pullRequests.test.ts
+pnpm check:pr-inbox
+pnpm test:pr-inbox
+pnpm --filter desktop typecheck
+```
+
+For a single targeted test file, avoid `pnpm test -- <file>` because the extra separator can run the full configured suite in this repo. Use `vp test run` directly:
+
+```bash
+pnpm --dir apps/desktop exec vp test run --config vitest.config.ts electron/bitbucket-repo.test.ts
+pnpm --dir apps/desktop exec vp test run --config vitest.config.ts electron/inbox/orchestrator.test.ts
+pnpm --dir apps/desktop exec vp test run --config vitest.config.ts electron/hosted-repos/pullRequests.test.ts
 ```
 
 Coverage notes:

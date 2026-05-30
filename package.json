@@ -14,6 +14,8 @@
     "lint": "vp lint --report-unused-disable-directives",
     "typecheck": "pnpm --filter desktop typecheck",
     "test": "vp run --filter desktop test",
+    "test:pr-inbox": "pnpm --dir apps/desktop exec vp test run --config vitest.config.ts electron/bitbucket-repo.test.ts electron/inbox/orchestrator.test.ts electron/inbox/bitbucket-inbox.test.ts electron/inbox/pr-cache.test.ts electron/inbox/content-cache.test.ts electron/inbox/identity.test.ts electron/hosted-repos/pullRequests.test.ts electron/preload.test.ts src/features/inbox/screens/InboxScreen.test.tsx src/features/inbox/hooks/useInboxNavigation.test.ts src/features/diff-view/services/parsedDiffCache.test.ts",
+    "check:pr-inbox": "pnpm --filter desktop typecheck && pnpm test:pr-inbox",
     "test:e2e": "pnpm --filter desktop test:e2e",
     "test:e2e:install": "pnpm --filter desktop test:e2e:install",
     "fmt": "vp fmt --ignore-path .oxfmtignore",
