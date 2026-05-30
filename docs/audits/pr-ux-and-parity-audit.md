@@ -1,5 +1,20 @@
 # PR UX & Parity Audit
 
+> **Editor's note (2026-05-30, reconciliation):** this audit was generated from a
+> stale base (`fb0ac4e`) that predated several merged commits. Cross-check before
+> acting. Already addressed since:
+>
+> - **Inbox keyboard navigation** — _shipped_ in `b82ef36` (`j/k`/arrows, `Enter`/`o`,
+>   `/`, `?` help; `InboxPRRow` selection wired). The P0 "no inbox keyboard nav"
+>   finding is **stale**.
+> - **Bitbucket build/CI checks**, **merge control**, and a **comment like toggle**
+>   shipped in `e3ccfce`/`d3e2a8b`/`450a330`. (Note: comment likes are **not in the
+>   public Bitbucket API** — see ADR 0002.)
+>
+> Still valid and high-value: **mark-file-as-viewed / review progress**, the stray
+> **"Debug Inbox"** surface, **buried split/unified + whitespace diff controls**,
+> **word-level diff emphasis**, and the command-palette PR arm.
+
 OpenWarden (Bitbucket-focused fork of `ShpetimA/open-warden`). Audit of frontend
 design quality and feature parity across PR review, inbox, diff viewing, and
 comments. Comparison axes: upstream (`upstream/master`), `nkzw-tech/codiff`, and
@@ -51,20 +66,20 @@ code changed.
 
 `upstream` = `ShpetimA/open-warden` `upstream/master`. `ours` = this fork.
 
-| Feature | Upstream | Ours | Severity | File refs |
-| --- | --- | --- | --- | --- |
-| PR-list keyboard nav (↑/↓, j/k, Enter) | Full, with focus ring + `aria-current` | **Absent** on both Inbox and `/pull-requests` | **High** | `upstream:PullRequestsScreen.tsx:459-479`; ours `InboxScreen.tsx`, `PullRequestsScreen.tsx:51-99` |
-| PR-list inline preview pane | Split pane: description, state, reviewers, conversation, "open in browser" inline (`PreviewDetail`, `CommentBody`) | None — list only; preview is a separate route | Medium | `upstream:PullRequestsScreen.tsx:72-294` |
-| Inbox sectioning (Needs review / Waiting / Returned / Approved / Drafts / Merged) | — (upstream has no inbox) | **We add this** (good) | Ours ahead | `InboxScreen.tsx:22-29`, `InboxSectionSidebar.tsx:7-14` |
-| Build/CI status on PR rows | — | **We add** failed/inprogress/success icons + comment count | Ours ahead | `InboxPRRow.tsx:44-119` |
-| Conversation: reply to thread, resolve/unresolve, mentions | Read-mostly | **We add** reply + resolve + mention candidates | Ours ahead | `PullRequestConversationTab.tsx:16-31` |
-| LSP diagnostics / symbol-peek navigation in diffs | Present (`lsp/`, `symbolPeekNavigation.ts`, `hunkOperations.ts`) | **Removed** | Medium (deliberate?) | upstream `features/lsp/*`, `source-control/hooks/symbolPeekNavigation.ts` |
-| Merge-conflict viewer | `MergeConflictViewer.tsx` (401 lines) | **Removed** | Low (out of PR scope) | upstream `source-control/components/MergeConflictViewer.tsx` |
-| Mark-file-viewed / review progress | Absent | Absent | High (both behind codiff) | n/a |
-| Approve / request-changes / merge actions | Absent | Absent | Medium | n/a |
-| Diff style toggle surfaced in review chrome | Absent (palette only) | Absent (palette only) | Medium | `AppCommandPalette.tsx:408-425` |
-| "Open in browser" / copy PR link / copy branch | Inline on list + preview | On preview header only (`PullRequestPreviewHeader`) | Low | `PullRequestPreviewHeader.tsx:158-176` |
-| Background prefetch on hover/idle | Hover prefetch | **We add** hover + background idle prefetch | Ours ahead | `PullRequestsScreen.tsx:232-265`, `useBackgroundInboxPrefetch.ts` |
+| Feature                                                                           | Upstream                                                                                                           | Ours                                                       | Severity                  | File refs                                                                                         |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------- |
+| PR-list keyboard nav (↑/↓, j/k, Enter)                                            | Full, with focus ring + `aria-current`                                                                             | **Absent** on both Inbox and `/pull-requests`              | **High**                  | `upstream:PullRequestsScreen.tsx:459-479`; ours `InboxScreen.tsx`, `PullRequestsScreen.tsx:51-99` |
+| PR-list inline preview pane                                                       | Split pane: description, state, reviewers, conversation, "open in browser" inline (`PreviewDetail`, `CommentBody`) | None — list only; preview is a separate route              | Medium                    | `upstream:PullRequestsScreen.tsx:72-294`                                                          |
+| Inbox sectioning (Needs review / Waiting / Returned / Approved / Drafts / Merged) | — (upstream has no inbox)                                                                                          | **We add this** (good)                                     | Ours ahead                | `InboxScreen.tsx:22-29`, `InboxSectionSidebar.tsx:7-14`                                           |
+| Build/CI status on PR rows                                                        | —                                                                                                                  | **We add** failed/inprogress/success icons + comment count | Ours ahead                | `InboxPRRow.tsx:44-119`                                                                           |
+| Conversation: reply to thread, resolve/unresolve, mentions                        | Read-mostly                                                                                                        | **We add** reply + resolve + mention candidates            | Ours ahead                | `PullRequestConversationTab.tsx:16-31`                                                            |
+| LSP diagnostics / symbol-peek navigation in diffs                                 | Present (`lsp/`, `symbolPeekNavigation.ts`, `hunkOperations.ts`)                                                   | **Removed**                                                | Medium (deliberate?)      | upstream `features/lsp/*`, `source-control/hooks/symbolPeekNavigation.ts`                         |
+| Merge-conflict viewer                                                             | `MergeConflictViewer.tsx` (401 lines)                                                                              | **Removed**                                                | Low (out of PR scope)     | upstream `source-control/components/MergeConflictViewer.tsx`                                      |
+| Mark-file-viewed / review progress                                                | Absent                                                                                                             | Absent                                                     | High (both behind codiff) | n/a                                                                                               |
+| Approve / request-changes / merge actions                                         | Absent                                                                                                             | Absent                                                     | Medium                    | n/a                                                                                               |
+| Diff style toggle surfaced in review chrome                                       | Absent (palette only)                                                                                              | Absent (palette only)                                      | Medium                    | `AppCommandPalette.tsx:408-425`                                                                   |
+| "Open in browser" / copy PR link / copy branch                                    | Inline on list + preview                                                                                           | On preview header only (`PullRequestPreviewHeader`)        | Low                       | `PullRequestPreviewHeader.tsx:158-176`                                                            |
+| Background prefetch on hover/idle                                                 | Hover prefetch                                                                                                     | **We add** hover + background idle prefetch                | Ours ahead                | `PullRequestsScreen.tsx:232-265`, `useBackgroundInboxPrefetch.ts`                                 |
 
 Net: our fork is **ahead** on inbox sectioning, build status, conversation
 write-actions, and prefetching; **behind** on list keyboard nav and the inline
@@ -91,8 +106,8 @@ Principles and how our `diff-view/` measures up:
   `MAX_DIFF_BUFFER_SIZE` (70 MB), a derived "large" threshold, and a per-line
   length scan (`diffRenderLimits.ts:3-65`) with graceful "Diff too large / show
   anyway" states (`DiffViewer.tsx:113-125,272-292`). Solid.
-- **Gap vs essay:** the essay calls out *no horizontal virtualization for long
-  lines* as an open problem; we cap at `MAX_DIFF_LINE_LENGTH = 5000`
+- **Gap vs essay:** the essay calls out _no horizontal virtualization for long
+  lines_ as an open problem; we cap at `MAX_DIFF_LINE_LENGTH = 5000`
   (`diffRenderLimits.ts:7`) and force "large" mode, which is a reasonable
   mitigation but produces an all-or-nothing wall. Consider a soft-wrap/truncate
   affordance per long line instead of gating the whole file. **P2.**
@@ -160,7 +175,7 @@ Principles and how our `diff-view/` measures up:
   uses a hollow bordered pill (`:80-84`) while `InboxPRRow` uses filled colored
   pills with state variants (`InboxPRRow.tsx:73-89`). Pick one badge system.
 - **Pagination** uses Previous/Next with a page counter (`:290-331`) — fine, but
-  the empty-on-page-N path renders three pulse skeletons *plus* pagination
+  the empty-on-page-N path renders three pulse skeletons _plus_ pagination
   (`:410-424`), which reads as "loading" when it actually means "empty page";
   confusing. **Recommendation:** show an explicit "No results on this page" with
   a "back to page 1" action.
@@ -187,7 +202,7 @@ Principles and how our `diff-view/` measures up:
 ### Comment composer (`diff-view/components/CommentComposer.tsx`)
 
 - **Keyboard ergonomics are good:** `Mod+Enter` submits, `Esc` cancels, autofocus
-  with caret-to-end (`:56-82`). 
+  with caret-to-end (`:56-82`).
 - **Submit disabled only on empty trim** (`:102`) but there is no pending/saving
   state on the button — a slow network leaves the user unsure whether the comment
   posted. **Recommendation:** disable + spinner during the async `addComment`
@@ -228,7 +243,7 @@ dispatchable.
 - **[M] Inbox keyboard navigation.** Add `j/k`/`↑↓` row selection + `Enter` to
   open + `o` open-in-browser to `InboxScreen`/`InboxPRRow`; wire `isSelected`;
   scroll-selected-into-view inside the `Virtualizer`. Reuse the pattern in
-  `source-control/hooks/useSimpleFileListKeyboardNav.ts`. *Rationale:* primary
+  `source-control/hooks/useSimpleFileListKeyboardNav.ts`. _Rationale:_ primary
   surface is mouse-only and regressed vs upstream; highest daily-use leverage.
   Files: `inbox/screens/InboxScreen.tsx`, `inbox/components/InboxPRRow.tsx`, new
   `inbox/hooks/useInboxKeyboardNav.ts`.
@@ -236,7 +251,7 @@ dispatchable.
 - **[M] Per-file "Viewed" toggle + sidebar check-off + persistence.** Add a
   viewed flag keyed by `pr-${repoPath}:${pullRequestNumber}:${path}`, a checkbox/
   check icon in `PullRequestFileList` rows, auto-collapse-or-dim viewed files, and
-  a "N/M viewed" counter. *Rationale:* the defining multi-file review primitive;
+  a "N/M viewed" counter. _Rationale:_ the defining multi-file review primitive;
   codiff has it, we have nothing. Files: `pull-requests/screens/PullRequestFileList.tsx`,
   `FileList`, a new slice or settings-backed store.
 
@@ -244,12 +259,12 @@ dispatchable.
 
 - **[S] Remove the "Debug Inbox" button and decide the canonical PR list.**
   Either delete `/pull-requests` or restore keyboard-first list semantics; stop
-  shipping a debug control in header chrome. *Rationale:* two diverging surfaces
-  + visible debug affordance. File: `pull-requests/screens/PullRequestsScreen.tsx:470-477`.
+  shipping a debug control in header chrome. _Rationale:_ two diverging surfaces
+  - visible debug affordance. File: `pull-requests/screens/PullRequestsScreen.tsx:470-477`.
 
 - **[M] Surface split/unified + whitespace toggles in the review toolbar.** Add
   controls to `ReviewCommentsCopyToolbar`/`DiffHeaderMetadataControls` driven by
-  the existing `selectDiffStyle`/`setDiffStyleValue`. *Rationale:* core diff-view
+  the existing `selectDiffStyle`/`setDiffStyleValue`. _Rationale:_ core diff-view
   affordance currently buried in the palette; codiff/Pierre parity. Files:
   `pull-requests/components/ReviewCopyBar.tsx`, `diff-view/components/DiffHeaderMetadataControls.tsx`.
 
@@ -297,5 +312,5 @@ dispatchable.
 - Our diff-rendering layer is the strongest part of the app and already follows
   the Pierre essay closely; most leverage is in list-surface ergonomics and
   review-progress tracking, not in the renderer.
-</content>
-</invoke>
+  </content>
+  </invoke>
