@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test"
 const mocks = vi.hoisted(() => ({
   resolveHostedRepo: vi.fn(),
   getProviderConnection: vi.fn(),
+  cacheContent: vi.fn(),
+  getCachedContent: vi.fn((): string | null => null),
 }));
 
 vi.mock("./repository", () => ({
@@ -14,13 +16,17 @@ vi.mock("../providerConnections", () => ({
 }));
 
 vi.mock("../inbox/content-cache", () => ({
-  cacheContent: vi.fn(),
-  getCachedContent: vi.fn(() => null),
+  cacheContent: mocks.cacheContent,
+  getCachedContent: mocks.getCachedContent,
   prDiffKey: () => "key",
 }));
 
 // Import after mocks
-import { submitPullRequestReviewComments, submitPullRequestReviewDecision } from "./pullRequests";
+import {
+  getPullRequestDiffCached,
+  submitPullRequestReviewComments,
+  submitPullRequestReviewDecision,
+} from "./pullRequests";
 
 type FetchCall = {
   url: string;
@@ -41,7 +47,9 @@ function bodyAsString(body: BodyInit | null | undefined): string {
   return "";
 }
 
-function setupFetch(responses: Array<{ status: number; body: unknown }>): FetchCall[] {
+function setupFetch(
+  responses: Array<{ status: number; body: unknown; raw?: boolean; contentType?: string }>,
+): FetchCall[] {
   const calls: FetchCall[] = [];
   let index = 0;
   const fetchMock: typeof fetch = async (input, init) => {
@@ -51,10 +59,15 @@ function setupFetch(responses: Array<{ status: number; body: unknown }>): FetchC
       body: bodyAsString(init?.body),
     });
     const response = responses[index++] ?? { status: 200, body: {} };
-    return new Response(JSON.stringify(response.body), {
-      status: response.status,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      response.raw && typeof response.body === "string"
+        ? response.body
+        : JSON.stringify(response.body),
+      {
+        status: response.status,
+        headers: { "Content-Type": response.contentType ?? "application/json" },
+      },
+    );
   };
   globalThis.fetch = vi.fn(fetchMock);
   return calls;
@@ -96,6 +109,85 @@ const GITHUB_CONNECTION = {
   scopes: [],
   connectedAt: "2024-01-01",
 };
+
+const BITBUCKET_PR_DETAIL = {
+  id: 7,
+  title: "Improve cache visibility",
+  state: "OPEN",
+  source: {
+    branch: { name: "feature/cache" },
+    commit: { hash: "head1234567890" },
+  },
+  destination: {
+    branch: { name: "main" },
+    commit: { hash: "base1234567890" },
+  },
+};
+
+describe("getPullRequestDiffCached", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.getCachedContent.mockReturnValue(null);
+  });
+
+  afterEach(() => {
+    restoreFetch();
+  });
+
+  it("returns Bitbucket diff cache metadata on a disk cache hit", async () => {
+    mocks.resolveHostedRepo.mockResolvedValue(BITBUCKET_REPO);
+    mocks.getProviderConnection.mockResolvedValue(BITBUCKET_CONNECTION);
+    mocks.getCachedContent.mockReturnValue("cached patch");
+    const calls = setupFetch([{ status: 200, body: BITBUCKET_PR_DETAIL }]);
+
+    const result = await getPullRequestDiffCached({
+      repoPath: "/repo/a",
+      pullRequestNumber: 7,
+    });
+
+    expect(result).toEqual({
+      patch: "cached patch",
+      cache: {
+        source: "cache",
+        key: "key",
+        providerId: "bitbucket",
+        pullRequestNumber: 7,
+        baseSha: "base1234567890",
+        headSha: "head1234567890",
+      },
+    });
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.url).toContain("/repositories/octo/demo/pullrequests/7");
+    expect(mocks.cacheContent).not.toHaveBeenCalled();
+  });
+
+  it("returns live Bitbucket diff metadata and stores cache misses", async () => {
+    mocks.resolveHostedRepo.mockResolvedValue(BITBUCKET_REPO);
+    mocks.getProviderConnection.mockResolvedValue(BITBUCKET_CONNECTION);
+    const calls = setupFetch([
+      { status: 200, body: BITBUCKET_PR_DETAIL },
+      { status: 200, body: "diff --git a/file.ts b/file.ts", raw: true, contentType: "text/plain" },
+    ]);
+
+    const result = await getPullRequestDiffCached({
+      repoPath: "/repo/a",
+      pullRequestNumber: 7,
+    });
+
+    expect(result.patch).toBe("diff --git a/file.ts b/file.ts");
+    expect(result.cache).toEqual({
+      source: "live",
+      key: "key",
+      providerId: "bitbucket",
+      pullRequestNumber: 7,
+      baseSha: "base1234567890",
+      headSha: "head1234567890",
+    });
+    expect(calls).toHaveLength(2);
+    expect(calls[1]?.url).toContain("/repositories/octo/demo/pullrequests/7/diff");
+    expect(mocks.cacheContent).toHaveBeenCalledWith("key", "diff --git a/file.ts b/file.ts");
+  });
+});
 
 describe("submitPullRequestReviewDecision", () => {
   beforeEach(() => {

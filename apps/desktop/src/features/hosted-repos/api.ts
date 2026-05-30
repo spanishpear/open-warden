@@ -9,6 +9,7 @@ import type {
   PullRequestChangedFile,
   PullRequestCompareRefs,
   PullRequestConversation,
+  PullRequestDiffResult,
   PullRequestLocatorInput,
   PullRequestPage,
   PullRequestReviewThread,
@@ -187,7 +188,7 @@ export const hostedReposApi = createApi({
       ],
       keepUnusedDataFor: 300,
     }),
-    getPullRequestDiffCached: builder.query<string, PullRequestLocatorInput>({
+    getPullRequestDiffCached: builder.query<PullRequestDiffResult, PullRequestLocatorInput>({
       async queryFn(input) {
         try {
           return { data: await getPullRequestDiffCached(input) };

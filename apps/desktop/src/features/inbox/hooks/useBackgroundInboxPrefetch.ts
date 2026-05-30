@@ -9,7 +9,8 @@ import {
 import { prefetchPullRequestDetail } from "@/features/inbox/hooks/useInboxNavigation";
 import { selectActiveRepo } from "@/features/source-control/sourceControlSlice";
 
-const BACKGROUND_PREFETCH_DELAY_MS = 150;
+const BACKGROUND_PREFETCH_DELAY_MS = 1_500;
+const BACKGROUND_PREFETCH_MAX_PULL_REQUESTS = 10;
 
 export function useBackgroundInboxPrefetch() {
   const dispatch = useAppDispatch();
@@ -48,6 +49,10 @@ export function useBackgroundInboxPrefetch() {
       return clearPrefetchTimer;
     }
 
+    if (inboxData.background.openRefresh || inboxData.background.mergedRefresh) {
+      return clearPrefetchTimer;
+    }
+
     const prefetchRunKey = `${activeRepo}:${String(inboxData.fetchedAt)}`;
     if (lastPrefetchRunRef.current === prefetchRunKey) {
       return clearPrefetchTimer;
@@ -64,7 +69,8 @@ export function useBackgroundInboxPrefetch() {
         seenIds.add(pr.id);
         return true;
       })
-      .toSorted((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+      .toSorted((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+      .slice(0, BACKGROUND_PREFETCH_MAX_PULL_REQUESTS);
 
     if (prefetchQueue.length === 0) {
       lastPrefetchRunRef.current = prefetchRunKey;

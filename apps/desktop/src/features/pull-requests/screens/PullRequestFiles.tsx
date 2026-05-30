@@ -41,11 +41,21 @@ import type {
   GitProviderId,
   PullRequestChangedFile,
   PullRequestConversation,
+  PullRequestDiffCacheMetadata,
   PullRequestReviewThread,
 } from "@/platform/desktop";
 
 function flattenParsedPatchFiles(parsedPatch: ParsedPatch | null): FileDiffMetadata[] {
   return parsedPatch?.flatMap((patch) => patch.files) ?? [];
+}
+
+function shortSha(value: string) {
+  return value ? value.slice(0, 12) : "unknown";
+}
+
+function diffCacheLabel(cache: PullRequestDiffCacheMetadata) {
+  const source = cache.source === "cache" ? "disk cache" : "provider API";
+  return `Diff from ${source} · ${shortSha(cache.baseSha)} → ${shortSha(cache.headSha)}`;
 }
 
 export const PullRequestFiles = () => {
@@ -84,13 +94,17 @@ export const PullRequestFiles = () => {
       ? { repoPath: activeRepo, pullRequestNumber: parsedPullRequestNumber }
       : skipToken;
 
-  const { patchText, diffError, isLoadingDiff } = useGetPullRequestDiffCachedQuery(queryArg, {
-    selectFromResult: ({ data, error, isLoading, isFetching }) => ({
-      patchText: data ?? null,
-      diffError: data ? "" : errorMessageFrom(error, ""),
-      isLoadingDiff: isLoading || isFetching,
-    }),
-  });
+  const { patchText, diffCache, diffError, isLoadingDiff } = useGetPullRequestDiffCachedQuery(
+    queryArg,
+    {
+      selectFromResult: ({ data, error, isLoading, isFetching }) => ({
+        patchText: data?.patch ?? null,
+        diffCache: data?.cache ?? null,
+        diffError: data ? "" : errorMessageFrom(error, ""),
+        isLoadingDiff: isLoading || isFetching,
+      }),
+    },
+  );
 
   const { files, filesError, isLoadingFiles } = useGetPullRequestFilesQuery(queryArg, {
     selectFromResult: ({ data, error, isLoading, isFetching }) => ({
@@ -150,6 +164,7 @@ export const PullRequestFiles = () => {
               compareBaseRef={compareBaseRef}
               compareHeadRef={compareHeadRef}
               patchText={patchText}
+              diffCache={diffCache}
               diffError={diffError}
               isLoadingDiff={isLoadingDiff}
               files={files}
@@ -194,6 +209,7 @@ function FilesDiffViewer({
   compareBaseRef,
   compareHeadRef,
   patchText,
+  diffCache,
   diffError,
   isLoadingDiff,
   files,
@@ -206,6 +222,7 @@ function FilesDiffViewer({
   compareBaseRef: string;
   compareHeadRef: string;
   patchText: string | null;
+  diffCache: PullRequestDiffCacheMetadata | null;
   diffError: string;
   isLoadingDiff: boolean;
   files: PullRequestChangedFile[];
@@ -405,6 +422,11 @@ function FilesDiffViewer({
   return (
     <div className="grid h-full min-h-0 min-w-0">
       <div className="flex h-full min-h-0 min-w-0 flex-col">
+        {diffCache ? (
+          <div className="border-border/70 border-b px-3 py-1 text-[11px] text-muted-foreground">
+            {diffCacheLabel(diffCache)}
+          </div>
+        ) : null}
         <ReviewCommentsCopyToolbar
           repoPath={repoPath}
           pullRequestNumber={pullRequestNumber}

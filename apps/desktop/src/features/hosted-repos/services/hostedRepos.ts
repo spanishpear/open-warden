@@ -13,6 +13,7 @@ import type {
   PullRequestChangedFile,
   PullRequestCompareRefs,
   PullRequestConversation,
+  PullRequestDiffResult,
   PullRequestIssueComment,
   PullRequestLocatorInput,
   PullRequestPage,
@@ -80,7 +81,7 @@ export async function getPullRequestPatch(input: PullRequestLocatorInput) {
 
 export async function getPullRequestDiffCached(input: PullRequestLocatorInput) {
   // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
-  return desktop.getPullRequestDiffCached(input) as Promise<string>;
+  return desktop.getPullRequestDiffCached(input) as Promise<PullRequestDiffResult>;
 }
 
 export async function addPullRequestComment(input: AddPullRequestCommentInput) {

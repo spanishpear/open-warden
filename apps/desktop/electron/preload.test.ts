@@ -25,6 +25,29 @@ describe("electron preload bridge", () => {
     vi.resetModules();
   });
 
+  test("rejects desktop invokes that exceed the bridge timeout", async () => {
+    vi.useFakeTimers();
+    invoke.mockReturnValueOnce(new Promise(() => {}));
+
+    try {
+      await import("./preload");
+      const desktopBridgeCall = exposeInMainWorld.mock.calls.find(
+        ([name]) => name === "desktopBridge",
+      );
+      const [, desktopBridge] = desktopBridgeCall ?? [];
+
+      const branchesPromise = desktopBridge.getBranches("/tmp/repo");
+      const timeoutExpectation = expect(branchesPromise).rejects.toThrow(
+        "Desktop method getBranches timed out after 120s.",
+      );
+      await vi.advanceTimersByTimeAsync(120_000);
+
+      await timeoutExpectation;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   test("exposes the desktop API through window.openWarden", async () => {
     invoke.mockResolvedValueOnce({
       openRepos: ["/tmp/repo"],

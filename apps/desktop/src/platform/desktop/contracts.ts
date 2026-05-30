@@ -269,6 +269,20 @@ export type PullRequestChangedFile = {
   deletions: number;
 };
 
+export type PullRequestDiffCacheMetadata = {
+  source: "cache" | "live";
+  key: string;
+  providerId: GitProviderId;
+  pullRequestNumber: number;
+  baseSha: string;
+  headSha: string;
+};
+
+export type PullRequestDiffResult = {
+  patch: string;
+  cache: PullRequestDiffCacheMetadata;
+};
+
 export type PullRequestOpenMode = "branch" | "worktree";
 
 export type PullRequestCompareRefs = {
@@ -403,7 +417,7 @@ export type DesktopApi = {
   getPullRequestConversation(input: PullRequestLocatorInput): Promise<PullRequestConversation>;
   getPullRequestFiles(input: PullRequestLocatorInput): Promise<PullRequestChangedFile[]>;
   getPullRequestPatch(input: PullRequestLocatorInput): Promise<string>;
-  getPullRequestDiffCached(input: PullRequestLocatorInput): Promise<string>;
+  getPullRequestDiffCached(input: PullRequestLocatorInput): Promise<PullRequestDiffResult>;
   addPullRequestComment(input: AddPullRequestCommentInput): Promise<PullRequestIssueComment>;
   replyToPullRequestThread(input: ReplyToPullRequestThreadInput): Promise<PullRequestReviewThread>;
   submitPullRequestReviewComments(

@@ -399,7 +399,7 @@ describe("bitbucket inbox queries", () => {
     });
   });
 
-  it("returns an empty merged inbox result when a later Bitbucket page fails", async () => {
+  it("preserves Bitbucket rate-limit errors from a later page", async () => {
     fetchMock
       .mockResolvedValueOnce(
         jsonResponse({
@@ -411,11 +411,7 @@ describe("bitbucket inbox queries", () => {
 
     await expect(
       fetchBitbucketRecentlyMergedPullRequests(hostedRepo, connection, USER_IDENTITY),
-    ).resolves.toEqual({
-      prs: [],
-      isPartial: false,
-      totalFetched: 0,
-    });
+    ).rejects.toThrow("rate limited");
   });
 
   it("maps comment_count to commentCount on returned PR summary", async () => {

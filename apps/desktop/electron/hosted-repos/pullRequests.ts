@@ -4,6 +4,7 @@ import type {
   ListPullRequestsInput,
   PullRequestChangedFile,
   PullRequestConversation,
+  PullRequestDiffResult,
   PullRequestIssueComment,
   PullRequestLocatorInput,
   PullRequestPage,
@@ -428,7 +429,31 @@ export async function getPullRequestPatch(input: PullRequestLocatorInput): Promi
   );
 }
 
-export async function getPullRequestDiffCached(input: PullRequestLocatorInput): Promise<string> {
+function buildPullRequestDiffResult(args: {
+  patch: string;
+  source: PullRequestDiffResult["cache"]["source"];
+  key: string;
+  hostedRepo: HostedRepoRef;
+  pullRequestNumber: number;
+  baseSha: string;
+  headSha: string;
+}): PullRequestDiffResult {
+  return {
+    patch: args.patch,
+    cache: {
+      source: args.source,
+      key: args.key,
+      providerId: args.hostedRepo.providerId,
+      pullRequestNumber: args.pullRequestNumber,
+      baseSha: args.baseSha,
+      headSha: args.headSha,
+    },
+  };
+}
+
+export async function getPullRequestDiffCached(
+  input: PullRequestLocatorInput,
+): Promise<PullRequestDiffResult> {
   const { hostedRepo, connection } = await resolvePullRequestContext(input);
 
   if (hostedRepo.providerId === "github") {
@@ -437,18 +462,28 @@ export async function getPullRequestDiffCached(input: PullRequestLocatorInput): 
       connection.token,
       input.pullRequestNumber,
     );
+    const baseSha = pullRequest.base.sha;
+    const headSha = pullRequest.head.sha;
     const key = prDiffKey(
       hostedRepo.providerId,
       hostedRepo.owner,
       hostedRepo.repo,
       input.pullRequestNumber,
-      pullRequest.base.sha,
-      pullRequest.head.sha,
+      baseSha,
+      headSha,
     );
     const cached = getCachedContent(key);
     if (cached !== null) {
       console.log("[diff-cache] HIT github pr#" + String(input.pullRequestNumber), key);
-      return cached;
+      return buildPullRequestDiffResult({
+        patch: cached,
+        source: "cache",
+        key,
+        hostedRepo,
+        pullRequestNumber: input.pullRequestNumber,
+        baseSha,
+        headSha,
+      });
     }
     console.log(
       "[diff-cache] MISS github pr#" + String(input.pullRequestNumber) + " — fetching from API",
@@ -461,7 +496,15 @@ export async function getPullRequestDiffCached(input: PullRequestLocatorInput): 
     );
     cacheContent(key, patch);
     console.log("[diff-cache] STORED github pr#" + String(input.pullRequestNumber), key);
-    return patch;
+    return buildPullRequestDiffResult({
+      patch,
+      source: "live",
+      key,
+      hostedRepo,
+      pullRequestNumber: input.pullRequestNumber,
+      baseSha,
+      headSha,
+    });
   }
 
   if (hostedRepo.providerId === "bitbucket") {
@@ -470,18 +513,28 @@ export async function getPullRequestDiffCached(input: PullRequestLocatorInput): 
       connection,
       input.pullRequestNumber,
     );
+    const baseSha = pullRequest.destination?.commit?.hash ?? "";
+    const headSha = pullRequest.source?.commit?.hash ?? "";
     const key = prDiffKey(
       hostedRepo.providerId,
       hostedRepo.owner,
       hostedRepo.repo,
       input.pullRequestNumber,
-      pullRequest.destination?.commit?.hash ?? "",
-      pullRequest.source?.commit?.hash ?? "",
+      baseSha,
+      headSha,
     );
     const cached = getCachedContent(key);
     if (cached !== null) {
       console.log("[diff-cache] HIT bitbucket pr#" + String(input.pullRequestNumber), key);
-      return cached;
+      return buildPullRequestDiffResult({
+        patch: cached,
+        source: "cache",
+        key,
+        hostedRepo,
+        pullRequestNumber: input.pullRequestNumber,
+        baseSha,
+        headSha,
+      });
     }
     console.log(
       "[diff-cache] MISS bitbucket pr#" + String(input.pullRequestNumber) + " — fetching from API",
@@ -494,7 +547,15 @@ export async function getPullRequestDiffCached(input: PullRequestLocatorInput): 
     );
     cacheContent(key, patch);
     console.log("[diff-cache] STORED bitbucket pr#" + String(input.pullRequestNumber), key);
-    return patch;
+    return buildPullRequestDiffResult({
+      patch,
+      source: "live",
+      key,
+      hostedRepo,
+      pullRequestNumber: input.pullRequestNumber,
+      baseSha,
+      headSha,
+    });
   }
 
   throw new Error(

@@ -4,6 +4,7 @@ import {
   bitbucketAuthorLogin,
   bitbucketRequest,
   fetchBitbucketPullRequestFiles,
+  isBitbucketRateLimitError,
   fetchBitbucketPaginatedValues,
   toBitbucketPullRequestSummary,
   type BitbucketPullRequestResponse,
@@ -18,6 +19,7 @@ const BITBUCKET_INBOX_FIELDS =
 const BITBUCKET_INBOX_PAGE_LENGTH = 20;
 const BITBUCKET_INBOX_MAX_PAGES = 25;
 const BITBUCKET_INBOX_MAX_RESULTS = BITBUCKET_INBOX_PAGE_LENGTH * BITBUCKET_INBOX_MAX_PAGES;
+const BITBUCKET_INBOX_ENRICHMENT_CONCURRENCY = 4;
 
 type BitbucketInboxFetchResult = {
   prs: InboxPullRequest[];
@@ -48,6 +50,33 @@ function emptyResult(): BitbucketInboxFetchResult {
     isPartial: false,
     totalFetched: 0,
   };
+}
+
+async function allSettledWithConcurrency<T, R>(
+  items: readonly T[],
+  concurrency: number,
+  task: (item: T, index: number) => Promise<R>,
+): Promise<PromiseSettledResult<R>[]> {
+  const results: PromiseSettledResult<R>[] = [];
+  const workerCount = Math.min(Math.max(1, concurrency), items.length);
+  let nextIndex = 0;
+
+  async function worker() {
+    while (nextIndex < items.length) {
+      const index = nextIndex;
+      nextIndex += 1;
+      const item = items[index];
+
+      try {
+        results[index] = { status: "fulfilled", value: await task(item, index) };
+      } catch (reason) {
+        results[index] = { status: "rejected", reason };
+      }
+    }
+  }
+
+  await Promise.all(Array.from({ length: workerCount }, () => worker()));
+  return results;
 }
 
 function isBitbucketUserResponse(
@@ -243,27 +272,28 @@ async function fetchBitbucketPullRequests(
         .toSorted((left, right) => right.updatedAt.localeCompare(left.updatedAt)),
     );
 
-    const [statusResults, changeStatsResults] = await Promise.all([
-      Promise.allSettled(
-        prs.map((pr) => {
-          const commitHash = pullRequests.find(
-            (raw) => `${hostedRepo.providerId}:${String(raw.id)}` === pr.id,
-          )?.source?.commit?.hash;
-          if (!commitHash) {
-            return Promise.resolve([] as BuildStatus[]);
-          }
+    const statusResults = await allSettledWithConcurrency(
+      prs,
+      BITBUCKET_INBOX_ENRICHMENT_CONCURRENCY,
+      (pr) => {
+        const commitHash = pullRequests.find(
+          (raw) => `${hostedRepo.providerId}:${String(raw.id)}` === pr.id,
+        )?.source?.commit?.hash;
+        if (!commitHash) {
+          return Promise.resolve([] as BuildStatus[]);
+        }
 
-          return fetchBuildStatusesForCommit(hostedRepo, connection, commitHash);
-        }),
-      ),
-      Promise.allSettled(
-        prs.map(async (pr) =>
-          summarizePullRequestFiles(
-            await fetchBitbucketPullRequestFiles(hostedRepo, connection, pr.number),
-          ),
+        return fetchBuildStatusesForCommit(hostedRepo, connection, commitHash);
+      },
+    );
+    const changeStatsResults = await allSettledWithConcurrency(
+      prs,
+      BITBUCKET_INBOX_ENRICHMENT_CONCURRENCY,
+      async (pr) =>
+        summarizePullRequestFiles(
+          await fetchBitbucketPullRequestFiles(hostedRepo, connection, pr.number),
         ),
-      ),
-    ]);
+    );
 
     for (let i = 0; i < prs.length; i += 1) {
       const statusResult = statusResults[i];
@@ -280,7 +310,11 @@ async function fetchBitbucketPullRequests(
       isPartial: prs.length >= BITBUCKET_INBOX_MAX_RESULTS,
       totalFetched: prs.length,
     };
-  } catch {
+  } catch (error) {
+    if (isBitbucketRateLimitError(error)) {
+      throw error;
+    }
+
     return emptyResult();
   }
 }

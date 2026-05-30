@@ -65,6 +65,8 @@ export type {
   PullRequestCompareRefs,
   PullRequestConversation,
   PullRequestDetail,
+  PullRequestDiffCacheMetadata,
+  PullRequestDiffResult,
   PullRequestIssueComment,
   PullRequestLocatorInput,
   PullRequestOpenMode,

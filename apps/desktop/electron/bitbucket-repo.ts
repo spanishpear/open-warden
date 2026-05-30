@@ -240,6 +240,70 @@ function bitbucketUserAgent() {
 
 type BitbucketAuth = Pick<ProviderConnectionSecret, "authType" | "identifier" | "token">;
 
+export class BitbucketRateLimitError extends Error {
+  readonly status = 429;
+  readonly retryAfterMs: number | null;
+  readonly retryAt: number | null;
+
+  constructor(message: string, retryAfterMs: number | null) {
+    super(message);
+    this.name = "BitbucketRateLimitError";
+    this.retryAfterMs = retryAfterMs;
+    this.retryAt = retryAfterMs === null ? null : Date.now() + retryAfterMs;
+  }
+}
+
+export function isBitbucketRateLimitError(error: unknown): error is BitbucketRateLimitError {
+  return error instanceof BitbucketRateLimitError;
+}
+
+function parseRetryAfterMs(value: string | null): number | null {
+  if (!value) {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const seconds = Number.parseInt(trimmed, 10);
+  if (Number.isFinite(seconds) && String(seconds) === trimmed && seconds >= 0) {
+    return seconds * 1_000;
+  }
+
+  const retryAt = Date.parse(trimmed);
+  if (!Number.isFinite(retryAt)) {
+    return null;
+  }
+
+  return Math.max(0, retryAt - Date.now());
+}
+
+function formatRetryAfter(retryAfterMs: number) {
+  const seconds = Math.max(1, Math.ceil(retryAfterMs / 1_000));
+  if (seconds < 60) {
+    return `${String(seconds)}s`;
+  }
+
+  const minutes = Math.ceil(seconds / 60);
+  if (minutes < 60) {
+    return `${String(minutes)}m`;
+  }
+
+  return `${String(Math.ceil(minutes / 60))}h`;
+}
+
+function createRateLimitMessage(message: string, retryAfterMs: number | null) {
+  const normalizedMessage = message.trim() || "Bitbucket rate limit exceeded.";
+  if (retryAfterMs === null) {
+    return normalizedMessage;
+  }
+
+  const separator = /[.!?]$/.test(normalizedMessage) ? "" : ".";
+  return `${normalizedMessage}${separator} Try again in ${formatRetryAfter(retryAfterMs)}.`;
+}
+
 function bitbucketAuthorizationValue(connection: BitbucketAuth) {
   if (connection.authType === "basic") {
     if (!connection.identifier) {
@@ -300,8 +364,16 @@ export async function bitbucketRequest<T>(
   });
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(parseBitbucketErrorMessage(message, response.status));
+    const message = parseBitbucketErrorMessage(await response.text(), response.status);
+    if (response.status === 429) {
+      const retryAfterMs = parseRetryAfterMs(response.headers.get("retry-after"));
+      throw new BitbucketRateLimitError(
+        createRateLimitMessage(message, retryAfterMs),
+        retryAfterMs,
+      );
+    }
+
+    throw new Error(message);
   }
 
   if (init?.responseType === "text") {
