@@ -20,6 +20,7 @@ import {
   copyToClipboard,
 } from "@/features/pull-requests/components/pullRequestCommentParts";
 import { PullRequestDiscussionSection } from "@/features/pull-requests/components/PullRequestDiscussionSection";
+import { PullRequestMergeControl } from "@/features/pull-requests/components/PullRequestMergeControl";
 import { PullRequestOverviewAnchorCard } from "@/features/pull-requests/components/PullRequestOverviewAnchorCard";
 import { PullRequestPreviewHeader } from "@/features/pull-requests/components/PullRequestPreviewHeader";
 import { usePullRequestMentionCandidates } from "@/features/pull-requests/hooks/usePullRequestMentionCandidates";
@@ -278,6 +279,13 @@ function PullRequestOverviewDetailsSidebar({
 
   return (
     <aside className="flex flex-col gap-4 xl:sticky xl:top-4">
+      <PullRequestMergeControl
+        repoPath={activeRepo}
+        pullRequestNumber={pullRequestNumber}
+        detail={detail}
+        // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
+        providerId={detail.providerId as GitProviderId}
+      />
       <section className="rounded-lg border bg-surface-0 p-4">
         <div className="text-muted-foreground text-xs font-semibold tracking-[0.12em] uppercase">
           Details
@@ -552,7 +560,13 @@ export const PullRequestOverview = () => {
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start">
             <div className="flex min-w-0 flex-col gap-6">
               <PullRequestSummarySection body={detail.body} />
-              <PullRequestDiscussionSection conversation={conversation} />
+              <PullRequestDiscussionSection
+                conversation={conversation}
+                repoPath={activeRepo ?? ""}
+                pullRequestNumber={parsedPullRequestNumber}
+                // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
+                providerId={detail.providerId as GitProviderId}
+              />
               <PullRequestOverviewReviewSections
                 activeRepo={activeRepo ?? ""}
                 pullRequestNumber={parsedPullRequestNumber}
