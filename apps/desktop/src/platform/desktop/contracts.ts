@@ -385,6 +385,33 @@ export type MergePullRequestResult = {
   url: string | null;
 };
 
+// Some repos can only land via a merge queue triggered from a local CLI
+// (e.g. `ag land`). The land command runs locally instead of the merge API.
+export type LandCommandContext = {
+  number: number;
+  workspace: string;
+  repo: string;
+  sourceBranch: string;
+  targetBranch: string;
+  url: string;
+};
+
+export type RunLandCommandInput = {
+  /** Command template with {number}/{workspace}/{repo}/{sourceBranch}/{targetBranch}/{url} placeholders. */
+  command: string;
+  /** Working directory to run in (the project's local checkout, if known). */
+  cwd?: string | null;
+  context: LandCommandContext;
+};
+
+export type LandCommandResult = {
+  ranCommand: string;
+  exitCode: number;
+  stdout: string;
+  stderr: string;
+  ok: boolean;
+};
+
 export type PreparedPullRequestWorkspace = {
   providerId: GitProviderId;
   repoPath: string;
@@ -409,12 +436,24 @@ export type WorkspaceSession = {
 
 export type FileTreeRenderMode = "tree" | "list";
 
+export type RepoLandCommandSettings = {
+  command: string;
+};
+
+export type MergeSettings = {
+  /** Global default land command template; per-repo entries override it. */
+  landCommand?: string;
+  /** Per-repo land command keyed by `workspace/repo` (lowercased). */
+  repos?: Record<string, RepoLandCommandSettings>;
+};
+
 export type AppSettings = {
   version: 1;
   sourceControl: {
     fileTreeRenderMode: FileTreeRenderMode;
   };
   inboxSectionVisibility?: Record<string, boolean>;
+  merge?: MergeSettings;
 };
 
 type GetRepoFileInput = {
@@ -461,6 +500,7 @@ export type DesktopApi = {
   ): Promise<PullRequestReviewThread>;
   likePullRequestComment(input: LikePullRequestCommentInput): Promise<LikePullRequestCommentResult>;
   mergePullRequest(input: MergePullRequestInput): Promise<MergePullRequestResult>;
+  runLandCommand(input: RunLandCommandInput): Promise<LandCommandResult>;
   preparePullRequestCompareRefs(input: PullRequestLocatorInput): Promise<PullRequestCompareRefs>;
   preparePullRequestWorkspace(
     input: PreparePullRequestWorkspaceInput,

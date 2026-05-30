@@ -68,4 +68,26 @@ describe("appSettings helpers", () => {
     });
     expect(result.inboxSectionVisibility).not.toHaveProperty("UNKNOWN_SECTION");
   });
+
+  it("omits merge settings when none are valid", () => {
+    expect(createAppSettings({ merge: {} })).not.toHaveProperty("merge");
+    expect(createAppSettings({ merge: { landCommand: "   " } })).not.toHaveProperty("merge");
+  });
+
+  it("normalizes a global land command and lowercases per-repo keys", () => {
+    const result = createAppSettings({
+      merge: {
+        landCommand: "ag land {number}",
+        repos: {
+          "Acme/Web": { command: "ag land --queue {number}" },
+          "bad/repo": { command: "  " },
+          "no-command": {},
+        },
+      },
+    });
+    expect(result.merge).toEqual({
+      landCommand: "ag land {number}",
+      repos: { "acme/web": { command: "ag land --queue {number}" } },
+    });
+  });
 });

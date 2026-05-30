@@ -22,6 +22,7 @@ import {
   submitPullRequestReviewComments,
   submitPullRequestReviewDecision,
 } from "./hostedRepos";
+import { runLandCommand } from "./landCommand";
 import { getInboxPullRequests, refreshInboxPullRequests } from "./inbox/orchestrator";
 import {
   commitStaged,
@@ -76,6 +77,7 @@ export const desktopApi: DesktopApi = {
   setPullRequestThreadResolved,
   likePullRequestComment,
   mergePullRequest,
+  runLandCommand,
   preparePullRequestCompareRefs,
   preparePullRequestWorkspace,
   getGitSnapshot,

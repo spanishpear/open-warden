@@ -270,6 +270,7 @@ function PullRequestOverviewDetailsSidebar({
   compareBaseRef,
   compareHeadRef,
 }: PullRequestOverviewDetailsSidebarProps) {
+  const { owner, repo } = useParams();
   const pendingActions = usePullRequestPendingReviewActions({
     repoPath: activeRepo,
     pullRequestNumber,
@@ -285,6 +286,8 @@ function PullRequestOverviewDetailsSidebar({
         detail={detail}
         // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
         providerId={detail.providerId as GitProviderId}
+        owner={owner}
+        repo={repo}
       />
       <section className="rounded-lg border bg-surface-0 p-4">
         <div className="text-muted-foreground text-xs font-semibold tracking-[0.12em] uppercase">

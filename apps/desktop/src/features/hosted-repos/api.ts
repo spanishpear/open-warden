@@ -5,11 +5,13 @@ import type {
   BuildStatus,
   ConnectProviderInput,
   HostedRepoRef,
+  LandCommandResult,
   LikePullRequestCommentInput,
   LikePullRequestCommentResult,
   ListPullRequestsInput,
   MergePullRequestInput,
   MergePullRequestResult,
+  RunLandCommandInput,
   ProviderConnection,
   PullRequestChangedFile,
   PullRequestCompareRefs,
@@ -43,6 +45,7 @@ import {
   listProviderConnections,
   listPullRequests,
   mergePullRequest,
+  runLandCommand,
   resolveActivePullRequestForBranch,
   preparePullRequestCompareRefs,
   replyToPullRequestThread,
@@ -365,6 +368,15 @@ export const hostedReposApi = createApi({
         { type: "InboxPullRequests", id: repoPath },
       ],
     }),
+    runLandCommand: builder.mutation<LandCommandResult, RunLandCommandInput>({
+      async queryFn(input) {
+        try {
+          return { data: await runLandCommand(input) };
+        } catch (error) {
+          return { error: toErrorResult(error) };
+        }
+      },
+    }),
   }),
 });
 
@@ -416,6 +428,7 @@ export const {
   useGetInboxPullRequestsQuery,
   useLikePullRequestCommentMutation,
   useMergePullRequestMutation,
+  useRunLandCommandMutation,
   useRefreshInboxPullRequestsMutation,
   useListProviderConnectionsQuery,
   useListPullRequestsQuery,

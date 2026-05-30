@@ -32,6 +32,7 @@ export const DESKTOP_API_METHODS = [
   "setPullRequestThreadResolved",
   "likePullRequestComment",
   "mergePullRequest",
+  "runLandCommand",
   "preparePullRequestCompareRefs",
   "preparePullRequestWorkspace",
   "getGitSnapshot",

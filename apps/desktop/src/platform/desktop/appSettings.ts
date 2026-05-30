@@ -1,4 +1,4 @@
-import type { AppSettings, FileTreeRenderMode } from "./contracts";
+import type { AppSettings, FileTreeRenderMode, MergeSettings } from "./contracts";
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -48,6 +48,32 @@ function resolveInboxSectionVisibility(value: unknown): Record<string, boolean> 
   return result;
 }
 
+function resolveMergeSettings(value: unknown): MergeSettings | undefined {
+  if (!isObject(value)) {
+    return undefined;
+  }
+
+  const merge: MergeSettings = {};
+
+  if (typeof value.landCommand === "string" && value.landCommand.trim()) {
+    merge.landCommand = value.landCommand;
+  }
+
+  if (isObject(value.repos)) {
+    const repos: NonNullable<MergeSettings["repos"]> = {};
+    for (const [key, entry] of Object.entries(value.repos)) {
+      if (isObject(entry) && typeof entry.command === "string" && entry.command.trim()) {
+        repos[key.toLowerCase()] = { command: entry.command };
+      }
+    }
+    if (Object.keys(repos).length > 0) {
+      merge.repos = repos;
+    }
+  }
+
+  return merge.landCommand || merge.repos ? merge : undefined;
+}
+
 export function createAppSettings(settings?: unknown): AppSettings {
   if (!isObject(settings)) {
     return DEFAULT_APP_SETTINGS;
@@ -55,11 +81,18 @@ export function createAppSettings(settings?: unknown): AppSettings {
 
   const sourceControl = isObject(settings.sourceControl) ? settings.sourceControl : {};
 
-  return {
+  const result: AppSettings = {
     version: 1,
     sourceControl: {
       fileTreeRenderMode: resolveFileTreeRenderMode(sourceControl.fileTreeRenderMode),
     },
     inboxSectionVisibility: resolveInboxSectionVisibility(settings.inboxSectionVisibility),
   };
+
+  const merge = resolveMergeSettings(settings.merge);
+  if (merge) {
+    result.merge = merge;
+  }
+
+  return result;
 }

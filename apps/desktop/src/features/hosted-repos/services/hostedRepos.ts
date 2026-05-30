@@ -6,10 +6,12 @@ import type {
   ConnectProviderInput,
   HostedRepoRef,
   InboxPullRequestsResult,
+  LandCommandResult,
   LikePullRequestCommentInput,
   LikePullRequestCommentResult,
   MergePullRequestInput,
   MergePullRequestResult,
+  RunLandCommandInput,
   PreparedPullRequestWorkspace,
   PreparePullRequestWorkspaceInput,
   ProviderConnection,
@@ -131,6 +133,11 @@ export async function likePullRequestComment(input: LikePullRequestCommentInput)
 export async function mergePullRequest(input: MergePullRequestInput) {
   // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
   return desktop.mergePullRequest(input) as Promise<MergePullRequestResult>;
+}
+
+export async function runLandCommand(input: RunLandCommandInput) {
+  // oxlint-disable-next-line typescript-eslint(no-unnecessary-type-assertion)
+  return desktop.runLandCommand(input) as Promise<LandCommandResult>;
 }
 
 export async function preparePullRequestCompareRefs(input: PullRequestLocatorInput) {
