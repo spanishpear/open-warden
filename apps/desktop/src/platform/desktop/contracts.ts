@@ -459,9 +459,7 @@ export type DesktopApi = {
   setPullRequestThreadResolved(
     input: SetPullRequestThreadResolvedInput,
   ): Promise<PullRequestReviewThread>;
-  likePullRequestComment(
-    input: LikePullRequestCommentInput,
-  ): Promise<LikePullRequestCommentResult>;
+  likePullRequestComment(input: LikePullRequestCommentInput): Promise<LikePullRequestCommentResult>;
   mergePullRequest(input: MergePullRequestInput): Promise<MergePullRequestResult>;
   preparePullRequestCompareRefs(input: PullRequestLocatorInput): Promise<PullRequestCompareRefs>;
   preparePullRequestWorkspace(

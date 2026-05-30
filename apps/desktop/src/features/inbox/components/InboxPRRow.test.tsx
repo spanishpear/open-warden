@@ -5,7 +5,7 @@ import type { ReactElement } from "react";
 import { Provider } from "react-redux";
 import { describe, it, expect, vi } from "vite-plus/test";
 import { InboxPRRow } from "./InboxPRRow";
-import { inboxReducer, setInboxSelectedPRId } from "@/features/inbox/inboxSlice";
+import { inboxReducer, setInboxSelectedPRId } from "../inboxSlice";
 // @ts-expect-error -- oxlint typescript
 import type { PullRequestSummary } from "@/platform/desktop";
 

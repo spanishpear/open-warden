@@ -77,16 +77,20 @@ export const PullRequestChecks = () => {
 
   const routeMatchesActiveRepo = Boolean(
     hostedRepo &&
-      providerId &&
-      owner &&
-      repo &&
-      hostedRepo.providerId === providerId &&
-      hostedRepo.owner === owner &&
-      hostedRepo.repo === repo,
+    providerId &&
+    owner &&
+    repo &&
+    hostedRepo.providerId === providerId &&
+    hostedRepo.owner === owner &&
+    hostedRepo.repo === repo,
   );
 
   const hasValidRoute = Boolean(
-    providerId && owner && repo && Number.isFinite(parsedPullRequestNumber) && parsedPullRequestNumber > 0,
+    providerId &&
+    owner &&
+    repo &&
+    Number.isFinite(parsedPullRequestNumber) &&
+    parsedPullRequestNumber > 0,
   );
 
   const { statuses, isLoading, isError } = useGetPullRequestBuildStatusesQuery(

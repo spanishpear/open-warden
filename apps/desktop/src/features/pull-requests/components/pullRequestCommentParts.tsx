@@ -172,9 +172,7 @@ export function CommentLikeButton({
         })();
       }}
       className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 transition-colors ${textSize} ${
-        liked
-          ? "text-primary hover:text-primary"
-          : "text-muted-foreground hover:text-foreground"
+        liked ? "text-primary hover:text-primary" : "text-muted-foreground hover:text-foreground"
       }`}
     >
       <ThumbsUp className={`${iconSize} ${liked ? "fill-current" : ""}`} />

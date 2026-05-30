@@ -17,7 +17,7 @@ vi.mock("@/features/source-control/hooks/keyboardNavigation", () => ({
   focusInputById: mocks.focusInputById,
 }));
 
-import { clearInboxSelection, setInboxSelectedPRId } from "@/features/inbox/inboxSlice";
+import { clearInboxSelection, setInboxSelectedPRId } from "../inboxSlice";
 
 import { useInboxKeyboardNav } from "./useInboxKeyboardNav";
 

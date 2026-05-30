@@ -17,7 +17,7 @@ vi.mock("react", async (importOriginal) => {
   return { ...actual, startTransition: (fn: () => void) => fn() };
 });
 
-import { setPullRequestPreviewActiveFilePath } from "@/features/pull-requests/pullRequestsSlice";
+import { setPullRequestPreviewActiveFilePath } from "../pullRequestsSlice";
 
 import { usePullRequestReviewHotkeys } from "./usePullRequestReviewHotkeys";
 

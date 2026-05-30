@@ -51,7 +51,8 @@ export function PullRequestMergeControl({
   }
 
   const isOpen = detail.state === "open";
-  const mergeable = isOpen && !detail.isDraft && Boolean(repoPath) && Number.isFinite(pullRequestNumber);
+  const mergeable =
+    isOpen && !detail.isDraft && Boolean(repoPath) && Number.isFinite(pullRequestNumber);
 
   const disabledReason = !isOpen
     ? `This pull request is ${detail.state}.`

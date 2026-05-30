@@ -98,9 +98,7 @@ describe("pull request electron methods (bitbucket)", () => {
   describe("getPullRequestBuildStatuses", () => {
     it("maps commit statuses for the PR head commit", async () => {
       fetchMock
-        .mockResolvedValueOnce(
-          jsonResponse({ id: 7, source: { commit: { hash: "headsha7" } } }),
-        )
+        .mockResolvedValueOnce(jsonResponse({ id: 7, source: { commit: { hash: "headsha7" } } }))
         .mockResolvedValueOnce(
           jsonResponse({
             values: [
@@ -214,7 +212,9 @@ describe("pull request electron methods (bitbucket)", () => {
         jsonResponse({
           id: 12,
           state: "MERGED",
-          links: { html: { href: "https://bitbucket.org/workspace-slug/repo-slug/pull-requests/12" } },
+          links: {
+            html: { href: "https://bitbucket.org/workspace-slug/repo-slug/pull-requests/12" },
+          },
         }),
       );
 
